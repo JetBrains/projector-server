@@ -1,0 +1,296 @@
+/*
+ * GNU General Public License version 2
+ *
+ * Copyright (C) 2019-2020 JetBrains s.r.o.
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with this program; if not, write to the Free Software Foundation, Inc.,
+ * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+ */
+import java.util.zip.ZipFile
+
+plugins {
+  id("org.jetbrains.kotlin.jvm")
+  id("application")
+}
+
+application {
+  mainClassName = "org.jetbrains.projector.server.ProjectorLauncher"
+}
+
+dependencies {
+  implementation("org.jetbrains:projector-common")
+  api project(":projector-awt")
+
+  api "org.java-websocket:Java-WebSocket:$javaWebSocketVersion"
+
+  testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$mockitoKotlinVersion"
+
+  // todo: remove this dependencies: they should be exported from projector-common but now it seems not working
+  testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
+  testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion"
+}
+
+jar {
+  manifest {
+    attributes(
+      "Main-Class": application.mainClassName,
+    )
+  }
+}
+
+//Server running tasks
+Properties localProperties = new Properties()
+if (project.rootProject.file('local.properties').canRead()) {
+  localProperties.load(project.rootProject.file("local.properties").newDataInputStream())
+}
+
+def serverTargetClasspath = localProperties['projectorLauncher.targetClassPath']
+def serverClassToLaunch = localProperties['projectorLauncher.classToLaunch']
+println("----------- Server launch config ---------------")
+println("Classpath: $serverTargetClasspath")
+println("ClassToLaunch: $serverClassToLaunch")
+println("------------------------------------------------")
+if (serverTargetClasspath != null && serverClassToLaunch != null) {
+  task runServer(type: JavaExec) {
+    group = "projector"
+    main = "org.jetbrains.projector.server.ProjectorLauncher"
+    classpath(sourceSets.main.runtimeClasspath, jar, "$serverTargetClasspath")
+    jvmArgs = [
+      "-Dorg.jetbrains.projector.server.classToLaunch=$serverClassToLaunch",
+      "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+      "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+    ]
+  }
+}
+
+def ideaPath = localProperties['projectorLauncher.ideaPath']
+println("----------- Idea launch config ---------------")
+println("Idea path: $ideaPath")
+println("------------------------------------------------")
+if (ideaPath != null) {
+  def ideaLib = "$ideaPath/lib"
+  def ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar:$ideaLib/trove4j.jar"
+  def jdkHome = System.getProperty('java.home')
+
+  println(jdkHome)
+
+  def ideaPathsSelector = "ProjectorIntelliJIdea"
+
+  def userHome = System.getProperty("user.home")
+
+  // trying to match for Linux:
+  // https://www.jetbrains.com/help/idea/2019.3/tuning-the-ide.html
+  // https://www.jetbrains.com/help/idea/2020.1/tuning-the-ide.html
+  // please note that IDEs installed from Toolbox can have their own dirs for plugins
+  def ideaConfigPath
+  def ideaPluginsPath
+  if ("-19" in ideaPath) {
+    ideaConfigPath = "$userHome/.$ideaPathsSelector/config"
+    ideaPluginsPath ="$userHome/.$ideaPathsSelector/config/plugins"
+  } else {
+    ideaConfigPath = "$userHome/.config/JetBrains/$ideaPathsSelector"
+    ideaPluginsPath = "$userHome/.local/share/JetBrains/$ideaPathsSelector"
+  }
+
+  task disableBundledMarkdownPlugin {
+    group = "projector"
+
+    doLast {
+      print("Disabling bundled markdown plugin (in $ideaConfigPath): ")
+      new File(ideaConfigPath).mkdirs()
+
+      def disabledPluginsFilePath = "${ideaConfigPath}/disabled_plugins.txt"
+
+      def disabledPluginsFile = new File(disabledPluginsFilePath)
+
+      disabledPluginsFile.createNewFile()
+
+      def bundledMarkdownPluginName = "org.intellij.plugins.markdown"
+
+      if (bundledMarkdownPluginName in disabledPluginsFile.readLines()) {
+        println("already disabled")
+      }
+      else {
+        disabledPluginsFile.text = bundledMarkdownPluginName + "\n" + disabledPluginsFile.text
+        println("disabled")
+      }
+    }
+  }
+
+  task deleteMarkdownPlugin(type: Delete) {
+    group = "projector"
+
+    delete "${ideaPluginsPath}/projector-plugin-markdown"
+  }
+
+  task copyMarkdownPlugin {
+    dependsOn(deleteMarkdownPlugin)
+    dependsOn(gradle.includedBuild("projector-markdown-plugin").task(":buildPlugin"))
+
+    gradle.includedBuild("projector-markdown-plugin")
+
+    group = "projector"
+
+    doLast {
+      print("Copying markdown plugin (to $ideaPluginsPath): ")
+
+      def mdProjectDir = gradle.includedBuild("projector-markdown-plugin").projectDir
+      def mdDistributionsDir = new File(mdProjectDir, "build/distributions")
+
+      def zipDistribution = mdDistributionsDir.listFiles().find { file ->
+        file.name.startsWith("projector-markdown-plugin-") &&
+          file.name.endsWith(".zip")
+      }
+
+      def destination = file(ideaPluginsPath)
+      destination.mkdirs()
+
+      copy {
+        from zipTree(zipDistribution)
+        into destination
+      }
+
+      println("done")
+    }
+  }
+
+  task runIdeaServer(type: JavaExec) {
+    dependsOn(disableBundledMarkdownPlugin, copyMarkdownPlugin)
+
+    group = "projector"
+    main = "org.jetbrains.projector.server.ProjectorLauncher"
+    classpath(sourceSets.main.runtimeClasspath, jar, "$ideaClassPath", "$jdkHome/../lib/tools.jar")
+    jvmArgs = [
+      "-Dorg.jetbrains.projector.server.classToLaunch=com.intellij.idea.Main",
+      "-Didea.paths.selector=$ideaPathsSelector",
+      "-Didea.jre.check=true",
+      "-Didea.is.internal=true",
+      "--add-exports=java.base/jdk.internal.vm=ALL-UNNAMED",
+      "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+      "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
+      "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+      "--add-opens=java.desktop/sun.swing=ALL-UNNAMED",
+      "--add-opens=java.desktop/javax.swing=ALL-UNNAMED",
+      "--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED",
+      "--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+    ]
+  }
+}
+
+def fontsPath = "src/main/resources/fonts"
+
+task downloadDefaultFonts {
+  def defaultFontsLink = "https://assets.ubuntu.com/v1/0cef8205-ubuntu-font-family-0.83.zip"
+
+  doLast {
+    def requiredFonts = [ "Default-R", "Default-RI", "Default-B", "Default-BI" ].stream().map { "$fontsPath/${it}.ttf" }.collect()
+
+    println("Checking default fonts: $requiredFonts")
+
+    def haveAll = requiredFonts.stream().allMatch { project.file(it).exists() }
+
+    if (haveAll) {
+      println("Default fonts already exist, skipping download.")
+    } else {
+      println("Some default fonts are missing, downloading... If some fonts exist, they will be overwritten.")
+
+      project.file(fontsPath).mkdirs()
+
+      def url = new URL(defaultFontsLink)
+      def tempFile = File.createTempFile("defaultFonts", "zip")
+      url.withInputStream { i -> tempFile.withOutputStream { it << i } }
+
+      def originalToDest = [
+        "Ubuntu-R": "Default-R",
+        "Ubuntu-RI": "Default-RI",
+        "Ubuntu-B": "Default-B",
+        "Ubuntu-BI": "Default-BI",
+      ]
+
+      def zipFile = new ZipFile(tempFile)
+
+      originalToDest.forEach { original, dest ->
+        def destFile = project.file("$fontsPath/${dest}.ttf")
+        def srcPath = "ubuntu-font-family-0.83/${original}.ttf"
+
+        destFile.delete()
+        destFile.createNewFile()
+
+        destFile.withOutputStream { it << zipFile.getInputStream(zipFile.getEntry(srcPath)) }
+      }
+
+      tempFile.delete()
+
+      println("Download complete")
+    }
+  }
+}
+
+task downloadMonoFonts {
+  def monoFontsLink = "https://download.jetbrains.com/fonts/JetBrainsMono-1.0.3.zip"
+
+  doLast {
+    def requiredFonts = [ "Mono-R", "Mono-RI", "Mono-B", "Mono-BI" ].stream().map { "$fontsPath/${it}.ttf" }.collect()
+
+    println("Checking mono fonts: $requiredFonts")
+
+    def haveAll = requiredFonts.stream().allMatch { project.file(it).exists() }
+
+    if (haveAll) {
+      println("Mono fonts already exist, skipping download.")
+    } else {
+      println("Some mono fonts are missing, downloading... If some fonts exist, they will be overwritten.")
+
+      project.file(fontsPath).mkdirs()
+
+      def url = new URL(monoFontsLink)
+      def tempFile = File.createTempFile("monoFonts", "zip")
+      url.withInputStream { i -> tempFile.withOutputStream { it << i } }
+
+      def originalToDest = [
+        "JetBrainsMono-Regular": "Mono-R",
+        "JetBrainsMono-Italic": "Mono-RI",
+        "JetBrainsMono-Bold": "Mono-B",
+        "JetBrainsMono-Bold-Italic": "Mono-BI",
+      ]
+
+      def zipFile = new ZipFile(tempFile)
+
+      originalToDest.forEach { original, dest ->
+        def destFile = project.file("$fontsPath/${dest}.ttf")
+        def srcPath = "JetBrainsMono-1.0.3/ttf/${original}.ttf"
+
+        destFile.delete()
+        destFile.createNewFile()
+
+        destFile.withOutputStream { it << zipFile.getInputStream(zipFile.getEntry(srcPath)) }
+      }
+
+      tempFile.delete()
+
+      println("Download complete")
+    }
+  }
+}
+
+task downloadFonts {
+  dependsOn(downloadDefaultFonts, downloadMonoFonts)
+}
+
+// Modify existing task which puts resources to the target dir:
+processResources {
+  dependsOn(downloadFonts)
+}

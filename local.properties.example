@@ -1,0 +1,6 @@
+# The :projector-server:runServer task requires the following two declarations. It's example for projector-demo, don't forget to fix path:
+projectorLauncher.targetClassPath=/home/<USERNAME>/IdeaProjects/projector-demo/build/libs/projector-demo-original-1.0-SNAPSHOT.jar
+projectorLauncher.classToLaunch=org.jetbrains.projector.demo.OriginalMain
+
+# The :projector-server:runIdeaServer task requires the following single declaration. Don't forget to fix path:
+projectorLauncher.ideaPath=/home/<USERNAME>/.local/share/JetBrains/Toolbox/apps/IDEA-U/ch-2/193.6494.35
