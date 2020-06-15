@@ -4,3 +4,6 @@ projectorLauncher.classToLaunch=org.jetbrains.projector.demo.OriginalMain
 
 # The :projector-server:runIdeaServer task requires the following single declaration. Don't forget to fix path:
 projectorLauncher.ideaPath=/home/<USERNAME>/.local/share/JetBrains/Toolbox/apps/IDEA-U/ch-2/193.6494.35
+
+# If you want to use local projector-client:projector-common module, define the following property:
+useLocalProjectorClient=true

@@ -27,8 +27,13 @@ application {
   mainClassName = "org.jetbrains.projector.server.ProjectorLauncher"
 }
 
+configurations.all {
+  // disable caching of -SNAPSHOT dependencies
+  resolutionStrategy.cacheChangingModulesFor(0, "seconds")
+}
+
 dependencies {
-  implementation("org.jetbrains:projector-common")
+  implementation("com.github.JetBrains.projector-client:projector-common:$projectorClientVersion")
   api project(":projector-awt")
 
   api "org.java-websocket:Java-WebSocket:$javaWebSocketVersion"
