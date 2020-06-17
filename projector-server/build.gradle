@@ -21,10 +21,19 @@ import java.util.zip.ZipFile
 plugins {
   id("org.jetbrains.kotlin.jvm")
   id("application")
+  id("maven-publish")
 }
 
 application {
   mainClassName = "org.jetbrains.projector.server.ProjectorLauncher"
+}
+
+publishing {
+  publications {
+    maven(MavenPublication) {
+      from components.java
+    }
+  }
 }
 
 configurations.all {
