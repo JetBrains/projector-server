@@ -27,5 +27,7 @@ abstract class PMenuComponentPeer : MenuComponentPeer {
 
   override fun setFont(f: Font?) {}
 
-  override fun dispose() {}
+  override fun dispose() {
+    // todo: call targetDisposedPeer(target, this)
+  }
 }

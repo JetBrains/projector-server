@@ -20,6 +20,7 @@
 
 package org.jetbrains.projector.awt.peer
 
+import org.jetbrains.projector.awt.PToolkit
 import org.jetbrains.projector.awt.PWindow
 import org.jetbrains.projector.awt.image.PVolatileImage
 import sun.awt.image.ToolkitImage
@@ -45,6 +46,7 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
   val pWindow = PWindow(target)
 
   override fun dispose() {
+    PToolkit.targetDisposedPeer(pWindow.target, this)
     pWindow.dispose()
   }
 

@@ -21,10 +21,7 @@
 package org.jetbrains.projector.awt
 
 import org.jetbrains.projector.awt.peer.*
-import sun.awt.AppContext
-import sun.awt.ComponentFactory
-import sun.awt.KeyboardFocusManagerPeerProvider
-import sun.awt.SoftCache
+import sun.awt.*
 import sun.awt.image.ByteArrayImageSource
 import sun.awt.image.FileImageSource
 import sun.awt.image.ToolkitImage
@@ -54,83 +51,113 @@ class PToolkit : Toolkit(), KeyboardFocusManagerPeerProvider, ComponentFactory {
   }
 
   override fun createButton(target: Button): ButtonPeer {
-    return PButtonPeer(target)
+    return PButtonPeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createTextField(target: TextField): TextFieldPeer {
-    return PTextFieldPeer(target)
+    return PTextFieldPeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createLabel(target: Label): LabelPeer {
-    return PLabelPeer(target)
+    return PLabelPeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createList(target: List): ListPeer {
-    return PListPeer(target)
+    return PListPeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createCheckbox(target: Checkbox): CheckboxPeer {
-    return PCheckboxPeer(target)
+    return PCheckboxPeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createScrollbar(target: Scrollbar): ScrollbarPeer {
-    return PScrollbarPeer(target)
+    return PScrollbarPeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createScrollPane(target: ScrollPane): ScrollPanePeer {
-    return PScrollPanePeer(target)
+    return PScrollPanePeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createTextArea(target: TextArea): TextAreaPeer {
-    return PTextAreaPeer(target)
+    return PTextAreaPeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createChoice(target: Choice): ChoicePeer {
-    return PChoicePeer(target)
+    return PChoicePeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createFrame(target: Frame): FramePeer {
-    return PFramePeer(target)
+    return PFramePeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createCanvas(target: Canvas): CanvasPeer {
-    return PCanvasPeer(target)
+    return PCanvasPeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createPanel(target: Panel): PanelPeer {
-    return PPanelPeer(target)
+    return PPanelPeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createWindow(target: Window): WindowPeer {
-    return PWindowPeer(target)
+    return PWindowPeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createDialog(target: Dialog): DialogPeer {
-    return PDialogPeer(target)
+    return PDialogPeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createMenuBar(target: MenuBar): MenuBarPeer {
-    return PMenuBarPeer()
+    return PMenuBarPeer()  // todo: call targetCreatedPeer(target, it)
   }
 
   override fun createMenu(target: Menu): MenuPeer {
-    return PMenuPeer()
+    return PMenuPeer()  // todo: call targetCreatedPeer(target, it)
   }
 
   override fun createPopupMenu(target: PopupMenu): PopupMenuPeer {
-    return PPopupMenuPeer()
+    return PPopupMenuPeer()  // todo: call targetCreatedPeer(target, it)
   }
 
   override fun createMenuItem(target: MenuItem): MenuItemPeer {
-    return PMenuItemPeer()
+    return PMenuItemPeer()  // todo: call targetCreatedPeer(target, it)
   }
 
   override fun createFileDialog(target: FileDialog): FileDialogPeer {
-    return PFileDialogPeer(target)
+    return PFileDialogPeer(target).also {
+      targetCreatedPeer(target, it)
+    }
   }
 
   override fun createCheckboxMenuItem(target: CheckboxMenuItem): CheckboxMenuItemPeer {
-    return PCheckboxMenuItemPeer()
+    return PCheckboxMenuItemPeer()  // todo: call targetCreatedPeer(target, it)
   }
 
   override fun getFontPeer(name: String, style: Int): FontPeer? {
@@ -292,6 +319,26 @@ class PToolkit : Toolkit(), KeyboardFocusManagerPeerProvider, ComponentFactory {
   }
 
   companion object {
+
+    private val registerPeerMethod = AWTAutoShutdown::class.java.getDeclaredMethod("registerPeer", Any::class.java, Any::class.java).apply {
+      isAccessible = true
+    }
+
+    private val unregisterPeerMethod = AWTAutoShutdown::class.java.getDeclaredMethod("unregisterPeer", Any::class.java,
+                                                                                     Any::class.java).apply {
+      isAccessible = true
+    }
+
+    // Target can be MenuComponent or Component
+    // Peer can be MenuComponentPeer or ComponentPeer
+
+    private fun targetCreatedPeer(target: Any, peer: Any) {
+      registerPeerMethod.invoke(AWTAutoShutdown.getInstance(), target, peer)
+    }
+
+    internal fun targetDisposedPeer(target: Any, peer: Any) {
+      unregisterPeerMethod.invoke(AWTAutoShutdown.getInstance(), target, peer)
+    }
 
     private val imgCache = SoftCache()  // todo
 
