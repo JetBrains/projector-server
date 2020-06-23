@@ -57,6 +57,12 @@ class PWindow(val target: Component) {
   var icons: List<Any>? = null
     private set
 
+  val headerHeight: Int?
+    get() = when (target) {
+      is Container -> target.insets?.top ?: 0
+      else -> null
+    }
+
   init {
     updateIcons()
   }

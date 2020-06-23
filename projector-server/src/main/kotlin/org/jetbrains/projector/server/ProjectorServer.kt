@@ -209,6 +209,7 @@ class ProjectorServer private constructor(
           isShowing = window.target.isShowing,
           zOrder = i,
           bounds = window.target.shiftBounds(PGraphicsDevice.clientShift),
+          headerHeight = window.headerHeight,
           cursorType = window.cursor?.type?.toCursorType(),
           resizable = window.resizable,
           modal = window.modal,
