@@ -63,7 +63,7 @@ object ProjectorFontProvider : FontProvider {
   override val defaultPlatformFont: Array<String> get() = arrayOf(DEFAULT_FONT_NAME, DEFAULT_FONT_PATH)
 
   override fun findFont2D(name: String, style: Int, fallback: Int): Font2D {
-    if ("mono" in name.toLowerCase()) {
+    if (isMonospacedFont(name)) {
       return when (style) {
         Font.BOLD or Font.ITALIC -> monoBoldItalic
 
@@ -85,6 +85,10 @@ object ProjectorFontProvider : FontProvider {
         else -> defaultRegular
       }
     }
+  }
+
+  private fun isMonospacedFont(name: String): Boolean {
+    return "mono" in name.toLowerCase() || name.toLowerCase() == "menlo"
   }
 
   private fun loadFont(fontName: String, fontPath: String): PhysicalFont {
