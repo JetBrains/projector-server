@@ -83,7 +83,8 @@ import java.awt.Point as AwtPoint
 
 class ProjectorServer private constructor(
   port: Int,
-  private val laterInvokator: LaterInvokator
+  private val laterInvokator: LaterInvokator,
+  private val isAgent: Boolean
 ) : WebSocketServer(InetSocketAddress(port)) {
 
   private lateinit var updateThread: Thread
@@ -361,7 +362,11 @@ class ProjectorServer private constructor(
 
       is ClientOpenLinkEvent -> markdownPanelUpdater.openInExternalBrowser(message.link)
 
-      is ClientSetKeymapEvent -> KeymapSetter.setKeymap(message.keymap)
+      is ClientSetKeymapEvent -> if (isAgent) {
+        logger.info { "Client keymap was ignored!" }
+      } else {
+        KeymapSetter.setKeymap(message.keymap)
+      }
 
       is ClientWindowMoveEvent -> {
         SwingUtilities.invokeLater { PWindow.getWindow(message.windowId)?.apply { move(message.deltaX, message.deltaY) } }
@@ -841,7 +846,7 @@ class ProjectorServer private constructor(
         logger.info { "Currently collections will log size if it exceeds $BIG_COLLECTIONS_CHECKS_START_SIZE" }
       }
 
-      return ProjectorServer(port, LaterInvokator.defaultLaterInvokator).also {
+      return ProjectorServer(port, LaterInvokator.defaultLaterInvokator, isAgent).also {
         Do exhaustive when (val hint = setSsl(
           it::setWebSocketFactory)) {
           null -> logger.info { "WebSocket SSL is disabled" }
