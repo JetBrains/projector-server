@@ -276,10 +276,7 @@ class ProjectorServer private constructor(
       is ClientKeyEvent -> {
         val keyEventType = message.keyEventType.toAwtKeyEventId()
 
-        val key = message.key.toJavaCharOrNull() ?: run {
-          logger.error { "$message: unknown key, skipping" }
-          return
-        }
+        val key = message.key.singleOrNull() ?: KeyEvent.CHAR_UNDEFINED
         val code = message.code.toJavaCodeOrNull() ?: run {
           logger.error { "$message: unknown code, skipping" }
           return
