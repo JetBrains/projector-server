@@ -249,6 +249,14 @@ class ProjectorServer private constructor(
   }
 
   private fun processMessage(clientSettings: ReadyClientSettings, message: ClientEvent) {
+    if (
+      !clientSettings.setUpClientData.hasWriteAccess &&
+      message !is ClientRequestImageDataEvent &&
+      message !is ClientRequestPingEvent
+    ) {
+      return
+    }
+
     Do exhaustive when (message) {
       is ClientResizeEvent -> SwingUtilities.invokeLater { resize(message.size.width, message.size.height) }
 
@@ -401,10 +409,14 @@ class ProjectorServer private constructor(
     }
 
     val toServerHandshakeEvent = KotlinxJsonToServerHandshakeDecoder.decode(message)
-    if (toServerHandshakeEvent.token != System.getenv(TOKEN_ENV_NAME)) {
-      sendHandshakeFailureEvent("Bad handshake token")
 
-      return
+    val hasWriteAccess = when (toServerHandshakeEvent.token) {
+      System.getenv(TOKEN_ENV_NAME) -> true
+      System.getenv(RO_TOKEN_ENV_NAME) -> false
+      else -> {
+        sendHandshakeFailureEvent("Bad handshake token")
+        return
+      }
     }
 
     if (toServerHandshakeEvent.commonVersion != COMMON_VERSION) {
@@ -466,6 +478,7 @@ class ProjectorServer private constructor(
       SetUpClientSettings(
         connectionMillis = connectedClientSettings.connectionMillis,
         setUpClientData = SetUpClientData(
+          hasWriteAccess = hasWriteAccess,
           toClientMessageEncoder = toClientEncoder,
           toClientMessageCompressor = toClientCompressor,
           toServerMessageDecoder = toServerDecoder,
@@ -474,7 +487,9 @@ class ProjectorServer private constructor(
       )
     )
 
-    with(toServerHandshakeEvent.initialSize) { resize(width, height) }
+    if (hasWriteAccess) {
+      with(toServerHandshakeEvent.initialSize) { resize(width, height) }
+    }
   }
 
   override fun onMessage(conn: WebSocket, message: String) {
@@ -484,8 +499,7 @@ class ProjectorServer private constructor(
       is SetUpClientSettings -> {
         // this means that the client has loaded fonts and is ready to draw
 
-        conn.setAttachment(ReadyClientSettings(clientSettings.connectionMillis,
-                                               clientSettings.setUpClientData))
+        conn.setAttachment(ReadyClientSettings(clientSettings.connectionMillis, clientSettings.setUpClientData))
 
         PVolatileImage.images.forEach(PVolatileImage::invalidate)
         PWindow.windows.forEach {
@@ -903,6 +917,7 @@ class ProjectorServer private constructor(
     const val PORT_PROPERTY_NAME = "org.jetbrains.projector.server.port"
     private const val DEFAULT_PORT = 8887
     const val TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HANDSHAKE_TOKEN"
+    const val RO_TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RO_HANDSHAKE_TOKEN"
 
     const val SSL_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_SSL_PROPERTIES_PATH"
     const val SSL_STORE_TYPE = "STORE_TYPE"

@@ -37,6 +37,7 @@ sealed class ClientSettings {
 data class ConnectedClientSettings(override val connectionMillis: Long) : ClientSettings()
 
 data class SetUpClientData(
+  val hasWriteAccess: Boolean,
   val toClientMessageEncoder: ToClientMessageEncoder,
   val toClientMessageCompressor: MessageCompressor<ToClientTransferableType>,
   val toServerMessageDecoder: ToServerMessageDecoder,
