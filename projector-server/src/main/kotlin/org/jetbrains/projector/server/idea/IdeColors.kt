@@ -19,6 +19,7 @@
 package org.jetbrains.projector.server.idea
 
 import org.jetbrains.projector.common.protocol.data.PaintValue
+import org.jetbrains.projector.common.protocol.toClient.ServerWindowColorsEvent
 import org.jetbrains.projector.server.log.Logger
 import java.awt.Color
 import java.lang.reflect.InvocationHandler
@@ -29,31 +30,34 @@ import java.lang.reflect.Proxy
  * Subscribe on LafManager and update colors on LAF change.
  * Calls provided in constructor onColorsChanged action on LAF change.
  */
-class IdeColors(private val onColorsChanged: (Map<String, PaintValue.Color>) -> Unit) {
+class IdeColors(private val onColorsChanged: (ServerWindowColorsEvent.ColorsStorage) -> Unit) {
 
   private val logger = Logger(IdeColors::class.simpleName!!)
 
-  var colors = emptyMap<String, PaintValue.Color>()
+  var colors: ServerWindowColorsEvent.ColorsStorage? = null
     private set
 
   init {
     invokeWhenIdeaIsInitialized("Getting IDE colors") { ideaClassLoader ->
-      colors = getColors(ideaClassLoader)
-      onColorsChanged(colors)
+      getColors(ideaClassLoader)?.let {
+        colors = it
+        onColorsChanged(it)
+      }
       subscribeToIdeLafManager(ideaClassLoader)
     }
   }
 
   private fun subscribeToIdeLafManager(ideaClassLoader: ClassLoader) {
-
     try {
       val lafManagerClass = Class.forName("com.intellij.ide.ui.LafManager", false, ideaClassLoader)
       val lafManagerListenerClass = Class.forName("com.intellij.ide.ui.LafManagerListener", false, ideaClassLoader)
 
       val obj = InvocationHandler { _, method, _ ->
         if (method.declaringClass == lafManagerListenerClass && method.name == "lookAndFeelChanged") {
-          colors = getColors(ideaClassLoader)
-          onColorsChanged(colors)
+          getColors(ideaClassLoader)?.let {
+            colors = it
+            onColorsChanged(it)
+          }
         }
         null
       }
@@ -68,32 +72,36 @@ class IdeColors(private val onColorsChanged: (Map<String, PaintValue.Color>) -> 
     }
   }
 
-  private fun getColors(ideaClassLoader: ClassLoader): Map<String, PaintValue.Color> {
-
+  private fun getColors(ideaClassLoader: ClassLoader): ServerWindowColorsEvent.ColorsStorage? {
     try {
-      val result = mutableMapOf<String, PaintValue.Color>()
-
       val popupClass = Class.forName("com.intellij.util.ui.JBUI\$CurrentTheme\$Popup", false, ideaClassLoader)
 
       val headerBackgroundMethod = popupClass.getDeclaredMethod("headerBackground", Boolean::class.java)
-      result["windowHeaderActiveBackground"] = PaintValue.Color((headerBackgroundMethod.invoke(null, true) as Color).rgb)
-      result["windowHeaderInactiveBackground"] = PaintValue.Color((headerBackgroundMethod.invoke(null, false) as Color).rgb)
+      val windowHeaderActiveBackground = PaintValue.Color((headerBackgroundMethod.invoke(null, true) as Color).rgb)
+      val windowHeaderInactiveBackground = PaintValue.Color((headerBackgroundMethod.invoke(null, false) as Color).rgb)
 
       val borderColorMethod = popupClass.getDeclaredMethod("borderColor", Boolean::class.java)
-      result["windowActiveBorder"] = PaintValue.Color((borderColorMethod.invoke(null, true) as Color).rgb)
-      result["windowInactiveBorder"] = PaintValue.Color((borderColorMethod.invoke(null, false) as Color).rgb)
+      val windowActiveBorder = PaintValue.Color((borderColorMethod.invoke(null, true) as Color).rgb)
+      val windowInactiveBorder = PaintValue.Color((borderColorMethod.invoke(null, false) as Color).rgb)
 
       val labelClass = Class.forName("com.intellij.util.ui.JBUI\$CurrentTheme\$Label", false, ideaClassLoader)
 
       val labelForegroundMethod = labelClass.getDeclaredMethod("foreground")
-      result["windowHeaderActiveText"] = PaintValue.Color((labelForegroundMethod.invoke(null) as Color).rgb)
-      result["windowHeaderInactiveText"] = result["windowHeaderActiveText"]!!
+      val windowHeaderActiveText = PaintValue.Color((labelForegroundMethod.invoke(null) as Color).rgb)
+      val windowHeaderInactiveText = windowHeaderActiveText
 
-      return result
+      return ServerWindowColorsEvent.ColorsStorage(
+        windowHeaderActiveBackground = windowHeaderActiveBackground,
+        windowHeaderInactiveBackground = windowHeaderInactiveBackground,
+        windowActiveBorder = windowActiveBorder,
+        windowInactiveBorder = windowInactiveBorder,
+        windowHeaderActiveText = windowHeaderActiveText,
+        windowHeaderInactiveText = windowHeaderInactiveText
+      )
     }
     catch (e: Exception) {
       logger.error(e) { "Failed to get IDE color scheme." }
-      return emptyMap()
+      return null
     }
   }
 }

@@ -101,9 +101,7 @@ class ProjectorServer private constructor(
   private var windowColorsEvent: ServerWindowColorsEvent? = null
 
   private val ideaColors = IdeColors { colors ->
-    if (colors.isNotEmpty()) {
-      windowColorsEvent = ServerWindowColorsEvent(colors)
-    }
+    windowColorsEvent = ServerWindowColorsEvent(colors)
   }
 
   private val markdownPanelUpdater = MarkdownPanelUpdater(
