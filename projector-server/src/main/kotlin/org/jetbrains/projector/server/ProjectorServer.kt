@@ -43,6 +43,7 @@ import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.handshake.COMMON_VERSION
 import org.jetbrains.projector.common.protocol.handshake.ToClientHandshakeFailureEvent
 import org.jetbrains.projector.common.protocol.handshake.ToClientHandshakeSuccessEvent
+import org.jetbrains.projector.common.protocol.handshake.commonVersionList
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.common.protocol.toServer.*
 import org.jetbrains.projector.server.idea.*
@@ -420,7 +421,10 @@ class ProjectorServer private constructor(
     }
 
     if (toServerHandshakeEvent.commonVersion != COMMON_VERSION) {
-      sendHandshakeFailureEvent("Incompatible common versions: server - $COMMON_VERSION, client - ${toServerHandshakeEvent.commonVersion}")
+      val reason =
+        "Incompatible common protocol versions: server - $COMMON_VERSION (#${commonVersionList.indexOf(COMMON_VERSION)}), " +
+        "client - ${toServerHandshakeEvent.commonVersion} (#${toServerHandshakeEvent.commonVersionId})"
+      sendHandshakeFailureEvent(reason)
 
       return
     }
