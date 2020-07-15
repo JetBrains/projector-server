@@ -27,14 +27,10 @@ import org.jetbrains.projector.common.protocol.data.ImageId
 import org.jetbrains.projector.common.protocol.toClient.ServerImageDataReplyEvent
 import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.util.SizeAware
-import org.jetbrains.projector.server.util.unprotect
 import sun.awt.image.SunVolatileImage
 import sun.awt.image.ToolkitImage
-import sun.java2d.StateTrackable
 import java.awt.Image
-import java.awt.image.BufferedImage
-import java.awt.image.DataBuffer
-import java.awt.image.MultiResolutionImage
+import java.awt.image.*
 import java.io.ByteArrayOutputStream
 import java.lang.ref.SoftReference
 import java.util.*
@@ -74,8 +70,7 @@ object ProjectorImageCacher : ImageCacher {
     synchronized(this) {
       if (imageId !in idToImage) {
         val imageData = image.imageConverter()
-        idToImage[imageId] =
-          LivingImage(SoftReference(image), imageData)
+        idToImage[imageId] = LivingImage(SoftReference(image), imageData)
 
         newImages.add(ServerImageDataReplyEvent(imageId, imageData))
       }
@@ -83,14 +78,9 @@ object ProjectorImageCacher : ImageCacher {
   }
 
   fun putImage(image: BufferedImage): ImageId {
-    val id = ImageId.BufferedImageId(
-      identityHash = System.identityHashCode(image),
-      stateHash = image.stateHash
-    )
-
-    putImageIfNeeded(id, image, BufferedImage::toImageData)
-
-    return id
+    return image.imageId.also {
+      putImageIfNeeded(it, image, BufferedImage::toImageData)
+    }
   }
 
   fun getImage(id: ImageId): ImageData? {
@@ -139,14 +129,25 @@ fun BufferedImage.toImageData(): ImageData {
   return ImageData.PngBase64(this.toPngBase64())
 }
 
-private val theTrackableField = DataBuffer::class.java.getDeclaredField("theTrackable").apply {
-  unprotect()
-}
+val BufferedImage.imageId: ImageId
+  get() = when(raster.dataBuffer) {
+    is DataBufferByte -> {
 
-val BufferedImage.stateHash
-  get(): Int {
-    val stateTrackable = theTrackableField.get(this.raster.dataBuffer) as StateTrackable
-    val stateTracker = stateTrackable.stateTracker
+      val pixels = (raster.dataBuffer as DataBufferByte).data
 
-    return System.identityHashCode(stateTracker)
+      ImageId.BufferedImageId(
+        length = pixels.size,
+        contentHash = pixels?.contentHashCode() ?: 0
+      )
+    }
+    is DataBufferInt -> {
+      val pixels = (raster.dataBuffer as DataBufferInt).data
+
+      ImageId.BufferedImageId(
+        length = pixels.size,
+        contentHash = pixels?.contentHashCode() ?: 0
+      )
+    }
+    else -> error("Unsupported BufferedImage type")
   }
+
