@@ -20,6 +20,8 @@ package org.jetbrains.projector.server.util
 
 import java.awt.event.KeyEvent
 
+fun Int.toJavaControlCharOrNull() = jControlCharMap[this]
+
 fun String.toJavaCharOrNull(): Char? {
   singleOrNull()?.let { return it }
 
@@ -118,7 +120,7 @@ val jsCodeMap = mapOf(
   "Numpad1" to KeyEvent.VK_NUMPAD1,
   "Numpad2" to KeyEvent.VK_NUMPAD2,
   "Numpad3" to KeyEvent.VK_NUMPAD3,
-  "Numpad0" to KeyEvent.VK_NUMPAD4,
+  "Numpad0" to KeyEvent.VK_NUMPAD0,
   "NumpadDecimal" to KeyEvent.VK_DECIMAL,
   "IntlBackslash" to KeyEvent.VK_BACK_SLASH,  // Java does not have this
   "F11" to KeyEvent.VK_F11,
@@ -203,4 +205,37 @@ val jsCodeMap = mapOf(
   "F23" to KeyEvent.VK_F23,
   "F24" to KeyEvent.VK_F24
   //"BrowserSearch" to KeyEvent.VK_  // Java does not have this
+)
+
+// other keys do not change when control is pressed
+val jControlCharMap = mapOf(
+  KeyEvent.VK_A to '\u0001',
+  KeyEvent.VK_B to '\u0002',
+  KeyEvent.VK_C to '\u0003',
+  KeyEvent.VK_D to '\u0004',
+  KeyEvent.VK_E to '\u0005',
+  KeyEvent.VK_F to '\u0006',
+  KeyEvent.VK_G to '\u0007',
+  KeyEvent.VK_H to '\u0008',
+  KeyEvent.VK_I to '\u0009',
+  KeyEvent.VK_J to '\u000a',
+  KeyEvent.VK_K to '\u000b',
+  KeyEvent.VK_L to '\u000c',
+  KeyEvent.VK_M to '\u000d',
+  KeyEvent.VK_N to '\u000e',
+  KeyEvent.VK_O to '\u000f',
+  KeyEvent.VK_P to '\u0010',
+  KeyEvent.VK_Q to '\u0011',
+  KeyEvent.VK_R to '\u0012',
+  KeyEvent.VK_S to '\u0013',
+  KeyEvent.VK_T to '\u0014',
+  KeyEvent.VK_U to '\u0015',
+  KeyEvent.VK_V to '\u0016',
+  KeyEvent.VK_W to '\u0017',
+  KeyEvent.VK_X to '\u0018',
+  KeyEvent.VK_Y to '\u0019',
+  KeyEvent.VK_Z to '\u001a',
+  KeyEvent.VK_OPEN_BRACKET to '\u001b',
+  KeyEvent.VK_BACK_SLASH to '\u001c',
+  KeyEvent.VK_CLOSE_BRACKET to '\u001d'
 )
