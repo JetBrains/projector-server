@@ -27,8 +27,10 @@ import org.jetbrains.projector.common.protocol.data.ImageId
 import org.jetbrains.projector.common.protocol.toClient.ServerImageDataReplyEvent
 import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.util.SizeAware
+import org.jetbrains.projector.server.util.unprotect
 import sun.awt.image.SunVolatileImage
 import sun.awt.image.ToolkitImage
+import sun.java2d.StateTrackable
 import java.awt.Image
 import java.awt.image.*
 import java.io.ByteArrayOutputStream
@@ -49,10 +51,10 @@ object ProjectorImageCacher : ImageCacher {
     is SunVolatileImage -> getImageId(image.snapshot, "$methodName, extracted snapshot from SunVolatileImage")
 
     is MultiResolutionImage -> image.resolutionVariants
-                                 .singleOrNull()
-                                 ?.let { getImageId(it, "$methodName, extracted single variant") }
-                               ?: ImageId.Unknown(
-                                 "$methodName received MultiResolutionImage with bad variant count (${image.resolutionVariants.size}): $image")
+                                .singleOrNull()
+                                ?.let { getImageId(it, "$methodName, extracted single variant") }
+                                ?: ImageId.Unknown(
+                                  "$methodName received MultiResolutionImage with bad variant count (${image.resolutionVariants.size}): $image")
 
     else -> ImageId.Unknown("$methodName received ${this::class.qualifiedName}: $this")
   }
@@ -64,23 +66,37 @@ object ProjectorImageCacher : ImageCacher {
 
   private data class LivingImage(val reference: SoftReference<Image>, val data: ImageData)
 
+  private data class IdentityImageId(val identityHash: Int, val stateHash: Int)
+
   private var idToImage = mutableMapOf<ImageId, LivingImage>()
 
-  private fun <T : Image> putImageIfNeeded(imageId: ImageId, image: T, imageConverter: T.() -> ImageData) {
-    synchronized(this) {
-      if (imageId !in idToImage) {
-        val imageData = image.imageConverter()
-        idToImage[imageId] = LivingImage(SoftReference(image), imageData)
+  private val identityIdToImageId = mutableMapOf<IdentityImageId, ImageId>()
 
-        newImages.add(ServerImageDataReplyEvent(imageId, imageData))
+  private fun <T : Image> putImageIfNeeded(identityImageId: IdentityImageId, image: T, imageIdBuilder: T.() -> ImageId,  imageConverter: T.() -> ImageData) {
+    synchronized(this) {
+      if (identityImageId !in identityIdToImageId) {
+        val imageId = image.imageIdBuilder()
+
+        identityIdToImageId[identityImageId] = imageId
+        if (imageId !in idToImage) {
+          val imageData = image.imageConverter()
+          idToImage[imageId] = LivingImage(SoftReference(image), imageData)
+
+          newImages.add(ServerImageDataReplyEvent(imageId, imageData))
+        }
       }
     }
   }
 
   fun putImage(image: BufferedImage): ImageId {
-    return image.imageId.also {
-      putImageIfNeeded(it, image, BufferedImage::toImageData)
-    }
+    val id = IdentityImageId(
+      identityHash = System.identityHashCode(image),
+      stateHash = image.stateHash
+    )
+
+    putImageIfNeeded(id, image, BufferedImage::imageId, BufferedImage::toImageData)
+
+    return identityIdToImageId[id]!!
   }
 
   fun getImage(id: ImageId): ImageData? {
@@ -90,6 +106,7 @@ object ProjectorImageCacher : ImageCacher {
   fun collectGarbage() {
     synchronized(this) {
       filterNullsOutOfMutableMap(idToImage)
+      identityIdToImageId.removeAllImageIdsWithoutImages()
     }
   }
 
@@ -104,6 +121,18 @@ object ProjectorImageCacher : ImageCacher {
       val next = iterator.next()
 
       if (!isAlive(next)) {
+        iterator.remove()
+      }
+    }
+  }
+
+  private fun <K> MutableMap<K, ImageId>.removeAllImageIdsWithoutImages() {
+    val iterator = iterator()
+
+    while (iterator.hasNext()) {
+      val next = iterator.next()
+
+      if (next.value !in idToImage) {
         iterator.remove()
       }
     }
@@ -129,25 +158,45 @@ fun BufferedImage.toImageData(): ImageData {
   return ImageData.PngBase64(this.toPngBase64())
 }
 
+private val dataFieldByte = DataBufferByte::class.java.getDeclaredField("data").apply {
+  unprotect()
+}
+
+private val dataFieldInt = DataBufferInt::class.java.getDeclaredField("data").apply {
+  unprotect()
+}
+
 val BufferedImage.imageId: ImageId
   get() = when(raster.dataBuffer) {
     is DataBufferByte -> {
 
-      val pixels = (raster.dataBuffer as DataBufferByte).data
+      val pixels = dataFieldByte.get(raster.dataBuffer) as ByteArray
 
       ImageId.BufferedImageId(
         length = pixels.size,
-        contentHash = pixels?.contentHashCode() ?: 0
+        contentHash = pixels.contentHashCode()
       )
     }
     is DataBufferInt -> {
-      val pixels = (raster.dataBuffer as DataBufferInt).data
+      val pixels = dataFieldInt.get(raster.dataBuffer) as IntArray
 
       ImageId.BufferedImageId(
         length = pixels.size,
-        contentHash = pixels?.contentHashCode() ?: 0
+        contentHash = pixels.contentHashCode()
       )
     }
     else -> error("Unsupported BufferedImage type")
   }
 
+
+private val theTrackableField = DataBuffer::class.java.getDeclaredField("theTrackable").apply {
+  unprotect()
+}
+
+val BufferedImage.stateHash
+  get(): Int {
+    val stateTrackable = theTrackableField.get(this.raster.dataBuffer) as StateTrackable
+    val stateTracker = stateTrackable.stateTracker
+
+    return System.identityHashCode(stateTracker)
+  }
