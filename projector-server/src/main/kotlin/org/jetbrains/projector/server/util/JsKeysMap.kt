@@ -207,7 +207,7 @@ val jsCodeMap = mapOf(
   //"BrowserSearch" to KeyEvent.VK_  // Java does not have this
 )
 
-// other keys do not change when control is pressed
+// Maps symbol to control character when Ctrl is pressed
 val jControlCharMap = mapOf(
   KeyEvent.VK_A to '\u0001',
   KeyEvent.VK_B to '\u0002',
