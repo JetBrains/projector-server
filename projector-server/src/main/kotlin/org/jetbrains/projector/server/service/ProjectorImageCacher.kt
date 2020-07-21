@@ -172,7 +172,7 @@ val BufferedImage.imageId: ImageId
       val pixels = dataFieldByte.get(raster.dataBuffer) as ByteArray
 
       ImageId.BufferedImageId(
-        length = pixels.size,
+        rasterDataBufferSize = pixels.size,
         contentHash = pixels.contentHashCode()
       )
     }
@@ -180,7 +180,7 @@ val BufferedImage.imageId: ImageId
       val pixels = dataFieldInt.get(raster.dataBuffer) as IntArray
 
       ImageId.BufferedImageId(
-        length = pixels.size,
+        rasterDataBufferSize = pixels.size,
         contentHash = pixels.contentHashCode()
       )
     }
