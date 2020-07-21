@@ -169,7 +169,6 @@ private val dataFieldInt = DataBufferInt::class.java.getDeclaredField("data").ap
 val BufferedImage.imageId: ImageId
   get() = when(raster.dataBuffer) {
     is DataBufferByte -> {
-
       val pixels = dataFieldByte.get(raster.dataBuffer) as ByteArray
 
       ImageId.BufferedImageId(
@@ -187,7 +186,6 @@ val BufferedImage.imageId: ImageId
     }
     else -> error("Unsupported BufferedImage type")
   }
-
 
 private val theTrackableField = DataBuffer::class.java.getDeclaredField("theTrackable").apply {
   unprotect()
