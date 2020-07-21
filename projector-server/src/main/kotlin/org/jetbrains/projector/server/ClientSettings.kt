@@ -54,10 +54,32 @@ data class ReadyClientSettings(
   val setUpClientData: SetUpClientData
 ) : ClientSettings() {
 
+  var touchState: TouchState = TouchState.Released
+
   val requestedData by SizeAware(ConcurrentLinkedQueue<ServerEvent>(), logger)
 
   companion object {
 
     private val logger = Logger(ReadyClientSettings::class.simpleName!!)
+  }
+
+  sealed class TouchState {
+
+    object Released : TouchState()
+
+    data class OnlyPressed(val connectionMillis: Int, override val lastX: Int, override val lastY: Int) : TouchState(), WithCoordinates
+
+    object Dragging : TouchState()
+
+    data class Scrolling(
+      val initialX: Int, val initialY: Int,
+      override val lastX: Int, override val lastY: Int
+    ) : TouchState(), WithCoordinates
+
+    interface WithCoordinates {
+
+      val lastX: Int
+      val lastY: Int
+    }
   }
 }

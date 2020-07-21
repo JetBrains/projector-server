@@ -46,6 +46,7 @@ import org.jetbrains.projector.common.protocol.handshake.ToClientHandshakeSucces
 import org.jetbrains.projector.common.protocol.handshake.commonVersionList
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.common.protocol.toServer.*
+import org.jetbrains.projector.server.ReadyClientSettings.TouchState
 import org.jetbrains.projector.server.idea.*
 import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.protocol.HandshakeTypesSelector
@@ -266,7 +267,33 @@ class ProjectorServer private constructor(
 
         val window = PWindow.findWindowAt(shiftedMessage.x, shiftedMessage.y)?.target ?: return@invokeLater
 
-        val mouseEvent = createMouseEvent(window, shiftedMessage, clientSettings.connectionMillis)
+        fun isEnoughDeltaForScrolling(previousTouchState: TouchState.Scrolling, newX: Int, newY: Int): Boolean {
+          // reduce number of scroll events to make deltas bigger.
+          // this helps when to generate proper MouseWheelEvents with correct transformation of pixels to scroll units
+
+          return (newX - previousTouchState.lastX).absoluteValue > PIXEL_DELTA_ENOUGH_FOR_SCROLLING ||
+                 (newY - previousTouchState.lastY).absoluteValue > PIXEL_DELTA_ENOUGH_FOR_SCROLLING
+        }
+
+        val newTouchState = when (shiftedMessage.mouseEventType) {
+          ClientMouseEvent.MouseEventType.UP -> TouchState.Released
+          ClientMouseEvent.MouseEventType.DOWN -> TouchState.OnlyPressed(message.timeStamp, shiftedMessage.x, shiftedMessage.y)
+          ClientMouseEvent.MouseEventType.TOUCH_DRAG -> when (val touchState = clientSettings.touchState) {
+            is TouchState.Scrolling -> when (isEnoughDeltaForScrolling(touchState, shiftedMessage.x, shiftedMessage.y)) {
+              true -> TouchState.Scrolling(touchState.initialX, touchState.initialY, shiftedMessage.x, shiftedMessage.y)
+              false -> return@invokeLater
+            }
+            is TouchState.Dragging -> TouchState.Dragging
+            is TouchState.OnlyPressed -> when (touchState.connectionMillis + 500 < shiftedMessage.timeStamp) {
+              true -> TouchState.Dragging
+              false -> TouchState.Scrolling(touchState.lastX, touchState.lastY, shiftedMessage.x, shiftedMessage.y)
+            }
+            is TouchState.Released -> TouchState.Released  // drag events shouldn't come when touch is not pressing so let's skip it
+          }
+          else -> clientSettings.touchState
+        }
+        val mouseEvent = createMouseEvent(window, shiftedMessage, clientSettings.touchState, newTouchState, clientSettings.connectionMillis)
+        clientSettings.touchState = newTouchState
         laterInvokator(mouseEvent)
       }
 
@@ -645,8 +672,55 @@ class ProjectorServer private constructor(
     )
   }
 
-  private fun createMouseEvent(source: Component, event: ClientMouseEvent, connectionMillis: Long): MouseEvent {
-    val id = event.mouseEventType.toAwtMouseEventId()
+  private fun createMouseEvent(
+    source: Component,
+    event: ClientMouseEvent,
+    previousTouchState: TouchState,
+    newTouchState: TouchState,
+    connectionMillis: Long
+  ): MouseEvent {
+    val locationOnScreen = source.locationOnScreen
+
+    val id = when (event.mouseEventType) {
+      ClientMouseEvent.MouseEventType.MOVE -> MouseEvent.MOUSE_MOVED
+      ClientMouseEvent.MouseEventType.DOWN -> MouseEvent.MOUSE_PRESSED
+      ClientMouseEvent.MouseEventType.UP -> MouseEvent.MOUSE_RELEASED
+      ClientMouseEvent.MouseEventType.CLICK -> MouseEvent.MOUSE_CLICKED
+      ClientMouseEvent.MouseEventType.OUT -> MouseEvent.MOUSE_EXITED
+      ClientMouseEvent.MouseEventType.DRAG -> MouseEvent.MOUSE_DRAGGED
+      ClientMouseEvent.MouseEventType.TOUCH_DRAG -> {
+        if (previousTouchState is TouchState.WithCoordinates && newTouchState is TouchState.Scrolling) {
+          val deltaX = newTouchState.lastX - previousTouchState.lastX
+          val deltaY = newTouchState.lastY - previousTouchState.lastY
+
+          fun isHorizontal(): Boolean {
+            return deltaX.absoluteValue > deltaY.absoluteValue
+          }
+
+          val (wheelDelta, modifiers) = if (isHorizontal()) {
+            deltaX to (event.modifiers.toMouseInt() or InputEvent.SHIFT_DOWN_MASK)
+          }
+          else {
+            deltaY to event.modifiers.toMouseInt()
+          }
+
+          val negatedWheelDelta = -wheelDelta  // touch scrolling is usually treated in reverse direction
+
+          val normalizedWheelDelta = negatedWheelDelta.toDouble() / TOUCH_PIXEL_PER_UNIT
+          val notNullNormalizedWheelDelta = roundToInfinity(normalizedWheelDelta).toInt()
+
+          return MouseWheelEvent(
+            source,
+            MouseEvent.MOUSE_WHEEL, connectionMillis + event.timeStamp, modifiers,
+            newTouchState.initialX - locationOnScreen.x, newTouchState.initialY - locationOnScreen.y,
+            newTouchState.initialX - locationOnScreen.x, newTouchState.initialY - locationOnScreen.y, 0, false,
+            MouseWheelEvent.WHEEL_UNIT_SCROLL, DEFAULT_SCROLL_AMOUNT, notNullNormalizedWheelDelta, normalizedWheelDelta
+          )
+        }
+
+        MouseEvent.MOUSE_DRAGGED
+      }
+    }
 
     val awtEventButton = when (event.mouseEventType) {
       ClientMouseEvent.MouseEventType.MOVE,
@@ -662,8 +736,6 @@ class ProjectorServer private constructor(
     else {
       InputEvent.getMaskForButton(awtEventButton)
     }
-
-    val locationOnScreen = source.locationOnScreen
 
     val canTriggerPopup = awtEventButton == MouseEvent.BUTTON3
 
@@ -716,6 +788,10 @@ class ProjectorServer private constructor(
     //       need to calculate this number from the context,
     //       maybe use the client's scaling ratio
     private const val PIXEL_PER_UNIT = 100
+
+    // todo: 3 is a wild guess (scaling factor of mobile devices), need to get this number from the context
+    private const val TOUCH_PIXEL_PER_UNIT = 3 * PIXEL_PER_UNIT
+    private const val PIXEL_DELTA_ENOUGH_FOR_SCROLLING = 10
 
     @JvmStatic
     val isEnabled: Boolean

@@ -28,13 +28,11 @@ import org.jetbrains.projector.common.protocol.data.*
 import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.common.protocol.toServer.ClientKeyEvent
-import org.jetbrains.projector.common.protocol.toServer.ClientMouseEvent
 import org.jetbrains.projector.common.protocol.toServer.ResizeDirection
 import org.jetbrains.projector.server.log.Logger
 import java.awt.*
 import java.awt.Cursor.*
 import java.awt.event.KeyEvent
-import java.awt.event.MouseEvent
 import java.awt.geom.PathIterator
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
@@ -230,15 +228,6 @@ fun Composite.toCommonComposite(): CommonComposite = when (this) {
   is AlphaComposite -> this.toCommonAlphaComposite()
 
   else -> UnknownComposite("Unknown composite class: ${this::class.java.canonicalName}")
-}
-
-fun ClientMouseEvent.MouseEventType.toAwtMouseEventId() = when (this) {
-  ClientMouseEvent.MouseEventType.MOVE -> MouseEvent.MOUSE_MOVED
-  ClientMouseEvent.MouseEventType.DOWN -> MouseEvent.MOUSE_PRESSED
-  ClientMouseEvent.MouseEventType.UP -> MouseEvent.MOUSE_RELEASED
-  ClientMouseEvent.MouseEventType.CLICK -> MouseEvent.MOUSE_CLICKED
-  ClientMouseEvent.MouseEventType.OUT -> MouseEvent.MOUSE_EXITED
-  ClientMouseEvent.MouseEventType.DRAG -> MouseEvent.MOUSE_DRAGGED
 }
 
 fun ClientKeyEvent.KeyEventType.toAwtKeyEventId() = when (this) {
