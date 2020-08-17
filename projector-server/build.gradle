@@ -16,6 +16,9 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+
+import groovy.json.JsonSlurper
+
 import java.util.zip.ZipFile
 
 plugins {
@@ -59,7 +62,7 @@ jar {
   manifest {
     attributes(
       "Main-Class": application.mainClassName,
-    )
+      )
   }
 }
 
@@ -89,6 +92,26 @@ if (serverTargetClasspath != null && serverClassToLaunch != null) {
   }
 }
 
+static def getIdeaVersion(path) {
+  def jsonFile = new File("$path/product-info.json")
+  def json = new JsonSlurper().parseText(jsonFile.text)
+
+  return json.version
+}
+
+def getIdeaConfigPaths(path, pathsSelector) {
+  def userHome = System.getProperty("user.home")
+  def version = getIdeaVersion(path)
+
+  if (version.contains("2019.")) {
+    return ["$userHome/.$pathsSelector/config",
+            "$userHome/.$pathsSelector/config/plugins"]
+  }
+
+  return ["$userHome/.config/JetBrains/$pathsSelector",
+          "$userHome/.local/share/JetBrains/$pathsSelector"]
+}
+
 def ideaPath = localProperties['projectorLauncher.ideaPath']
 println("----------- Idea launch config ---------------")
 println("Idea path: $ideaPath")
@@ -102,21 +125,12 @@ if (ideaPath != null) {
 
   def ideaPathsSelector = "ProjectorIntelliJIdea"
 
-  def userHome = System.getProperty("user.home")
-
   // trying to match for Linux:
   // https://www.jetbrains.com/help/idea/2019.3/tuning-the-ide.html
   // https://www.jetbrains.com/help/idea/2020.1/tuning-the-ide.html
   // please note that IDEs installed from Toolbox can have their own dirs for plugins
-  def ideaConfigPath
-  def ideaPluginsPath
-  if ("-19" in ideaPath) {
-    ideaConfigPath = "$userHome/.$ideaPathsSelector/config"
-    ideaPluginsPath ="$userHome/.$ideaPathsSelector/config/plugins"
-  } else {
-    ideaConfigPath = "$userHome/.config/JetBrains/$ideaPathsSelector"
-    ideaPluginsPath = "$userHome/.local/share/JetBrains/$ideaPathsSelector"
-  }
+
+  def (String ideaConfigPath, String ideaPluginsPath) = getIdeaConfigPaths(ideaPath, ideaPathsSelector)
 
   task disableBundledMarkdownPlugin {
     group = "projector"
@@ -165,7 +179,7 @@ if (ideaPath != null) {
 
       def zipDistribution = mdDistributionsDir.listFiles().find { file ->
         file.name.startsWith("projector-markdown-plugin-") &&
-          file.name.endsWith(".zip")
+        file.name.endsWith(".zip")
       }
 
       def destination = file(ideaPluginsPath)
@@ -211,7 +225,7 @@ task downloadDefaultFonts {
   def defaultFontsLink = "https://assets.ubuntu.com/v1/0cef8205-ubuntu-font-family-0.83.zip"
 
   doLast {
-    def requiredFonts = [ "Default-R", "Default-RI", "Default-B", "Default-BI" ].stream().map { "$fontsPath/${it}.ttf" }.collect()
+    def requiredFonts = ["Default-R", "Default-RI", "Default-B", "Default-BI"].stream().map { "$fontsPath/${it}.ttf" }.collect()
 
     println("Checking default fonts: $requiredFonts")
 
@@ -219,7 +233,8 @@ task downloadDefaultFonts {
 
     if (haveAll) {
       println("Default fonts already exist, skipping download.")
-    } else {
+    }
+    else {
       println("Some default fonts are missing, downloading... If some fonts exist, they will be overwritten.")
 
       project.file(fontsPath).mkdirs()
@@ -229,9 +244,9 @@ task downloadDefaultFonts {
       url.withInputStream { i -> tempFile.withOutputStream { it << i } }
 
       def originalToDest = [
-        "Ubuntu-R": "Default-R",
+        "Ubuntu-R" : "Default-R",
         "Ubuntu-RI": "Default-RI",
-        "Ubuntu-B": "Default-B",
+        "Ubuntu-B" : "Default-B",
         "Ubuntu-BI": "Default-BI",
       ]
 
@@ -258,7 +273,7 @@ task downloadMonoFonts {
   def monoFontsLink = "https://download.jetbrains.com/fonts/JetBrainsMono-1.0.3.zip"
 
   doLast {
-    def requiredFonts = [ "Mono-R", "Mono-RI", "Mono-B", "Mono-BI" ].stream().map { "$fontsPath/${it}.ttf" }.collect()
+    def requiredFonts = ["Mono-R", "Mono-RI", "Mono-B", "Mono-BI"].stream().map { "$fontsPath/${it}.ttf" }.collect()
 
     println("Checking mono fonts: $requiredFonts")
 
@@ -266,7 +281,8 @@ task downloadMonoFonts {
 
     if (haveAll) {
       println("Mono fonts already exist, skipping download.")
-    } else {
+    }
+    else {
       println("Some mono fonts are missing, downloading... If some fonts exist, they will be overwritten.")
 
       project.file(fontsPath).mkdirs()
@@ -276,9 +292,9 @@ task downloadMonoFonts {
       url.withInputStream { i -> tempFile.withOutputStream { it << i } }
 
       def originalToDest = [
-        "JetBrainsMono-Regular": "Mono-R",
-        "JetBrainsMono-Italic": "Mono-RI",
-        "JetBrainsMono-Bold": "Mono-B",
+        "JetBrainsMono-Regular"    : "Mono-R",
+        "JetBrainsMono-Italic"     : "Mono-RI",
+        "JetBrainsMono-Bold"       : "Mono-B",
         "JetBrainsMono-Bold-Italic": "Mono-BI",
       ]
 
