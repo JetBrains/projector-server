@@ -33,7 +33,7 @@ class PVolatileImage(
   private val width: Int,
   private val height: Int,
   transparency: Int,
-  private val caps: ImageCapabilities?
+  private val caps: ImageCapabilities?,
 ) : VolatileImage() {
 
   init {
@@ -155,6 +155,6 @@ class PVolatileImage(
   class Descriptor(
     val pVolatileImageId: Long,
     val width: Int,
-    val height: Int
+    val height: Int,
   )
 }

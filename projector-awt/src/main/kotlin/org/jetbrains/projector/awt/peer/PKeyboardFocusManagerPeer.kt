@@ -62,7 +62,7 @@ object PKeyboardFocusManagerPeer : KeyboardFocusManagerPeerImpl() {
     temporary: Boolean,
     focusedWindowChangeAllowed: Boolean,
     time: Long,
-    cause: FocusEvent.Cause
+    cause: FocusEvent.Cause,
   ): Boolean {
     focusOwnerLock.read {
       return deliverFocus(

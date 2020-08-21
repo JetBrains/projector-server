@@ -86,7 +86,7 @@ import java.awt.Point as AwtPoint
 class ProjectorServer private constructor(
   port: Int,
   private val laterInvokator: LaterInvokator,
-  private val isAgent: Boolean
+  private val isAgent: Boolean,
 ) : WebSocketServer(InetSocketAddress(port)) {
 
   private lateinit var updateThread: Thread
@@ -318,7 +318,8 @@ class ProjectorServer private constructor(
         val isKeystroke = KeyModifier.CTRL_KEY in message.modifiers
         val key = if (isKeystroke) {
           code.toJavaControlCharOrNull()
-        } else {
+        }
+                  else {
           message.key.singleOrNull()
         } ?: KeyEvent.CHAR_UNDEFINED
 
@@ -401,7 +402,8 @@ class ProjectorServer private constructor(
 
       is ClientSetKeymapEvent -> if (isAgent) {
         logger.info { "Client keymap was ignored!" }
-      } else {
+      }
+      else {
         KeymapSetter.setKeymap(message.keymap)
       }
 
@@ -656,7 +658,7 @@ class ProjectorServer private constructor(
     key: Char,
     code: Int,
     location: Int,
-    modifiers: Set<KeyModifier>
+    modifiers: Set<KeyModifier>,
   ): KeyEvent {
     val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
     val focusedComponent = manager.focusOwner ?: source
@@ -677,7 +679,7 @@ class ProjectorServer private constructor(
     event: ClientMouseEvent,
     previousTouchState: TouchState,
     newTouchState: TouchState,
-    connectionMillis: Long
+    connectionMillis: Long,
   ): MouseEvent {
     val locationOnScreen = source.locationOnScreen
 
@@ -724,7 +726,8 @@ class ProjectorServer private constructor(
 
     val awtEventButton = when (event.mouseEventType) {
       ClientMouseEvent.MouseEventType.MOVE,
-      ClientMouseEvent.MouseEventType.OUT -> MouseEvent.NOBUTTON
+      ClientMouseEvent.MouseEventType.OUT,
+      -> MouseEvent.NOBUTTON
 
       else -> event.button + 1
     }

@@ -51,10 +51,10 @@ object ProjectorImageCacher : ImageCacher {
     is SunVolatileImage -> getImageId(image.snapshot, "$methodName, extracted snapshot from SunVolatileImage")
 
     is MultiResolutionImage -> image.resolutionVariants
-                                .singleOrNull()
-                                ?.let { getImageId(it, "$methodName, extracted single variant") }
-                                ?: ImageId.Unknown(
-                                  "$methodName received MultiResolutionImage with bad variant count (${image.resolutionVariants.size}): $image")
+                                 .singleOrNull()
+                                 ?.let { getImageId(it, "$methodName, extracted single variant") }
+                               ?: ImageId.Unknown(
+                                 "$methodName received MultiResolutionImage with bad variant count (${image.resolutionVariants.size}): $image")
 
     else -> ImageId.Unknown("$methodName received ${this::class.qualifiedName}: $this")
   }
@@ -72,7 +72,12 @@ object ProjectorImageCacher : ImageCacher {
 
   private val identityIdToImageId = mutableMapOf<IdentityImageId, ImageId>()
 
-  private fun <T : Image> putImageIfNeeded(identityImageId: IdentityImageId, image: T, imageIdBuilder: T.() -> ImageId,  imageConverter: T.() -> ImageData) {
+  private fun <T : Image> putImageIfNeeded(
+    identityImageId: IdentityImageId,
+    image: T,
+    imageIdBuilder: T.() -> ImageId,
+    imageConverter: T.() -> ImageData,
+  ) {
     synchronized(this) {
       if (identityImageId !in identityIdToImageId) {
         val imageId = image.imageIdBuilder()
@@ -167,7 +172,7 @@ private val dataFieldInt = DataBufferInt::class.java.getDeclaredField("data").ap
 }
 
 val BufferedImage.imageId: ImageId
-  get() = when(raster.dataBuffer) {
+  get() = when (raster.dataBuffer) {
     is DataBufferByte -> {
       val pixels = dataFieldByte.get(raster.dataBuffer) as ByteArray
 

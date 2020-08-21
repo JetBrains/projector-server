@@ -57,7 +57,7 @@ class PGraphics2D private constructor(
   private var paint: Paint,
   private var foregroundColor: Color,
   private var stroke: Stroke,
-  private var font: Font
+  private var font: Font,
 ) : Graphics2D() {
 
   private var backingFontRenderContext = FontRenderContext(
@@ -142,7 +142,7 @@ class PGraphics2D private constructor(
     backgroundColor: Color?,
     paint: Paint?,
     foregroundColor: Color?,
-    font: Font?
+    font: Font?,
   ) : this(
     drawEventQueue = drawEventQueue,
     backingComposite = AlphaComposite.SrcOver,  // from Graphics2D "Default Rendering Attributes" java doc
@@ -713,7 +713,7 @@ class PGraphics2D private constructor(
     img: Image?,
     dx1: Int, dy1: Int, dx2: Int, dy2: Int,
     sx1: Int, sy1: Int, sx2: Int, sy2: Int,
-    observer: ImageObserver?
+    observer: ImageObserver?,
   ): Boolean {
     return drawImage(
       img = img,
@@ -729,7 +729,7 @@ class PGraphics2D private constructor(
     dx1: Int, dy1: Int, dx2: Int, dy2: Int,
     sx1: Int, sy1: Int, sx2: Int, sy2: Int,
     bgcolor: Color?,
-    observer: ImageObserver?
+    observer: ImageObserver?,
   ): Boolean {
     val info = AwtImageInfo.Area(
       dx1 = dx1, dy1 = dy1, dx2 = dx2, dy2 = dy2,

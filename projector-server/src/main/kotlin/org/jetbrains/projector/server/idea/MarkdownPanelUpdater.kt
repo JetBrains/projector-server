@@ -33,7 +33,7 @@ class MarkdownPanelUpdater(
   private val setHtmlCallback: BiConsumer<Int, String>,
   private val setCssCallback: BiConsumer<Int, String>,
   private val scrollCallback: BiConsumer<Int, Int>,
-  private val browseUriCallback: Consumer<String>
+  private val browseUriCallback: Consumer<String>,
 ) {
 
   private lateinit var ideaClassLoader: ClassLoader

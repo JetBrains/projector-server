@@ -149,7 +149,7 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
     temporary: Boolean,
     focusedWindowChangeAllowed: Boolean,
     time: Long,
-    cause: FocusEvent.Cause
+    cause: FocusEvent.Cause,
   ): Boolean {
     pWindow.target.let {
       return PKeyboardFocusManagerPeer.deliverFocus(

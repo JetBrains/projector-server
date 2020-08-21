@@ -58,7 +58,7 @@ object ConnectionUtil {
 
   data class SenderReceiver(
     val sender: suspend (ToClientMessageType) -> Unit,
-    val receiver: suspend () -> ToServerMessageType
+    val receiver: suspend () -> ToServerMessageType,
   )
 
   private suspend fun DefaultWebSocketServerSession.doHandshake(): SenderReceiver {
@@ -108,8 +108,10 @@ object ConnectionUtil {
     )
   }
 
-  fun startServerAndDoHandshake(port: Int = 8887,
-                                afterHandshake: suspend DefaultWebSocketServerSession.(senderReceiver: SenderReceiver) -> Unit): ApplicationEngine =
+  fun startServerAndDoHandshake(
+    port: Int = 8887,
+    afterHandshake: suspend DefaultWebSocketServerSession.(senderReceiver: SenderReceiver) -> Unit,
+  ): ApplicationEngine =
     embeddedServer(Netty, port) {
       install(WebSockets)
 

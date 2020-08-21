@@ -36,7 +36,7 @@ private fun isIdeaInProperState(ideaClassLoader: ClassLoader?): Boolean {
 fun invokeWhenIdeaIsInitialized(
   purpose: String,
   onNoIdeaFound: (() -> Unit)? = null,
-  onInitialized: (ideaClassLoader: ClassLoader) -> Unit
+  onInitialized: (ideaClassLoader: ClassLoader) -> Unit,
 ) {
   thread(isDaemon = true) {
     if (onNoIdeaFound == null) {

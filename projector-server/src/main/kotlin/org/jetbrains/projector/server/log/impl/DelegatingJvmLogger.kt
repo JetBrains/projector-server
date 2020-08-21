@@ -102,7 +102,7 @@ internal class DelegatingJvmLogger(tag: String) : JvmLogger {
       logFunction: JvmLogger.(t: Throwable?, lazyMessage: () -> String) -> Unit,
       loggingEventConstructor: (t: Throwable?, lazyMessage: () -> String) -> LoggingEvent,
       t: Throwable?,
-      lazyMessage: () -> String
+      lazyMessage: () -> String,
     ) {
       consoleJvmLogger.logFunction(t, lazyMessage)
 

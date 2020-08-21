@@ -41,17 +41,17 @@ data class SetUpClientData(
   val toClientMessageEncoder: ToClientMessageEncoder,
   val toClientMessageCompressor: MessageCompressor<ToClientTransferableType>,
   val toServerMessageDecoder: ToServerMessageDecoder,
-  val toServerMessageDecompressor: MessageDecompressor<ToServerTransferableType>
+  val toServerMessageDecompressor: MessageDecompressor<ToServerTransferableType>,
 )
 
 data class SetUpClientSettings(
   override val connectionMillis: Long,
-  val setUpClientData: SetUpClientData
+  val setUpClientData: SetUpClientData,
 ) : ClientSettings()
 
 data class ReadyClientSettings(
   override val connectionMillis: Long,
-  val setUpClientData: SetUpClientData
+  val setUpClientData: SetUpClientData,
 ) : ClientSettings() {
 
   var touchState: TouchState = TouchState.Released
@@ -73,7 +73,7 @@ data class ReadyClientSettings(
 
     data class Scrolling(
       val initialX: Int, val initialY: Int,
-      override val lastX: Int, override val lastY: Int
+      override val lastX: Int, override val lastY: Int,
     ) : TouchState(), WithCoordinates
 
     interface WithCoordinates {

@@ -25,7 +25,7 @@ sealed class AwtImageInfo {
   data class Area(
     val dx1: Int, val dy1: Int, val dx2: Int, val dy2: Int,
     val sx1: Int, val sy1: Int, val sx2: Int, val sy2: Int,
-    val argbBackgroundColor: Int?
+    val argbBackgroundColor: Int?,
   ) : AwtImageInfo()
 
   data class Transformation(val tx: List<Double>) : AwtImageInfo()

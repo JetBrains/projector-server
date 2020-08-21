@@ -53,7 +53,7 @@ fun intersectRectShape(
   r: Rectangle2D,
   s: Shape,
   keepR: Boolean,
-  keepS: Boolean
+  keepS: Boolean,
 ): Shape {
   if (r.contains(s.bounds2D)) {
     if (keepS) {
