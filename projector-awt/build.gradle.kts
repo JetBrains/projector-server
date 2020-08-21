@@ -32,8 +32,6 @@ publishing {
 val kotlinVersion: String by project
 
 dependencies {
-  implementation(kotlin("stdlib-jdk8", kotlinVersion))
-
   testImplementation(kotlin("test", kotlinVersion))
   testImplementation(kotlin("test-junit", kotlinVersion))
 }
