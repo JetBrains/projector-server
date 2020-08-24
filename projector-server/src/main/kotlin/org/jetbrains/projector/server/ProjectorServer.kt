@@ -73,8 +73,6 @@ import java.nio.ByteBuffer
 import java.security.KeyStore
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.function.BiConsumer
-import java.util.function.Consumer
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
@@ -106,19 +104,19 @@ class ProjectorServer private constructor(
   }
 
   private val markdownPanelUpdater = MarkdownPanelUpdater(
-    showCallback = BiConsumer { id, show ->
+    showCallback = { id, show ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownShowEvent(id, show))
     },
-    resizeCallback = BiConsumer { id, size ->
+    resizeCallback = { id, size ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownResizeEvent(id, size.toCommonIntSize()))
     },
-    moveCallback = BiConsumer { id, point ->
+    moveCallback = { id, point ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownMoveEvent(id, point.shift(PGraphicsDevice.clientShift)))
     },
-    disposeCallback = Consumer { id ->
+    disposeCallback = { id ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownDisposeEvent(id))
     },
-    placeToWindowCallback = BiConsumer { id, rootComponent ->
+    placeToWindowCallback = { id, rootComponent ->
       rootComponent?.let {
         val peer = AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(it)
 
@@ -129,16 +127,16 @@ class ProjectorServer private constructor(
         markdownQueue.add(ServerMarkdownEvent.ServerMarkdownPlaceToWindowEvent(id, peer.pWindow.id))
       }
     },
-    setHtmlCallback = BiConsumer { id, html ->
+    setHtmlCallback = { id, html ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownSetHtmlEvent(id, html))
     },
-    setCssCallback = BiConsumer { id, css ->
+    setCssCallback = { id, css ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownSetCssEvent(id, css))
     },
-    scrollCallback = BiConsumer { id, offset ->
+    scrollCallback = { id, offset ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownScrollEvent(id, offset))
     },
-    browseUriCallback = Consumer { link ->
+    browseUriCallback = { link ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownBrowseUriEvent(link))
     }
   )
