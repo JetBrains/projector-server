@@ -154,7 +154,7 @@ class ProjectorServer private constructor(
   }
 
   private fun calculateMainWindowShift() {
-    getMainWindow()?.let { window ->
+    getMainWindows().firstOrNull()?.let { window ->
       synchronized(window.treeLock) {
         var x = 0.0
         var y = 0.0
@@ -427,10 +427,15 @@ class ProjectorServer private constructor(
       ge.setSize(width, height)
     }
 
-    getMainWindow()?.run {
+    getMainWindows().let { mainWindows ->
       SwingUtilities.invokeLater {
-        setSize(width, height)
-        revalidate()
+        mainWindows.forEach {
+          it.setBounds(
+            PGraphicsDevice.clientShift.x, PGraphicsDevice.clientShift.y,
+            width, height
+          )
+          it.revalidate()
+        }
       }
     }
   }
@@ -893,12 +898,14 @@ class ProjectorServer private constructor(
       setupRepaintManager()
     }
 
-    private fun getMainWindow(): Component? {
-      return findIdeaWindow() ?: PWindow.windows.firstOrNull()?.target
-    }
+    private fun getMainWindows(): List<Component> {
+      val ideWindows = PWindow.windows.filter { it.windowType == WindowType.IDEA_WINDOW }.map(PWindow::target)
 
-    private fun findIdeaWindow(): Component? {
-      return PWindow.windows.find { it.windowType == WindowType.IDEA_WINDOW }?.target
+      if (ideWindows.isNotEmpty()) {
+        return ideWindows
+      }
+
+      return PWindow.windows.firstOrNull()?.target?.let(::listOf).orEmpty()
     }
 
     private fun Component.shiftBounds(shift: AwtPoint): CommonRectangle {
