@@ -20,7 +20,7 @@
 
 package org.jetbrains.projector.awt.peer
 
-import org.jetbrains.projector.awt.PWindow
+import java.awt.Component
 import java.awt.Point
 import java.awt.Window
 import java.awt.peer.MouseInfoPeer
@@ -30,6 +30,7 @@ object PMouseInfoPeer : MouseInfoPeer {
   private const val PRIMARY_SCREEN_DEVICE_ID = 0
 
   val lastMouseCoords = Point()
+  var lastWindowUnderMouse: Component? = null
 
   override fun fillPointWithCoords(point: Point): Int {
     point.location = lastMouseCoords
@@ -37,6 +38,6 @@ object PMouseInfoPeer : MouseInfoPeer {
   }
 
   override fun isWindowUnderMouse(w: Window): Boolean {
-    return PWindow.findWindowAt(lastMouseCoords.x, lastMouseCoords.y)?.target == w
+    return w == lastWindowUnderMouse
   }
 }

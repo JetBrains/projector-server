@@ -131,9 +131,9 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
   }
 
   override fun updateCursorImmediately() {
-    // todo: delegate to GlobalCursorManager (like in XComponentPeer) and change logic (don't search for container under mouse)
+    // todo: delegate to GlobalCursorManager (like in XComponentPeer)
     val mousePoint = PMouseInfoPeer.lastMouseCoords
-    val containerUnderMouse = PWindow.findWindowAt(mousePoint.x, mousePoint.y)?.target as? Container
+    val containerUnderMouse = PMouseInfoPeer.lastWindowUnderMouse as? Container
 
     val cursorUnderMouse = containerUnderMouse?.let {
       val location = it.location

@@ -168,10 +168,6 @@ class PWindow(val target: Component) {
     }
 
     fun getWindow(windowId: Int): PWindow? = windows.find { it.id == windowId }
-
-    fun findWindowAt(x: Int, y: Int): PWindow? {
-      return windows.lastOrNull { it.target.isShowing && it.target.bounds.contains(x, y) }
-    }
   }
 
   class Descriptor(val windowId: Int)

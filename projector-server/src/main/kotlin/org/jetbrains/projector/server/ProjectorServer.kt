@@ -263,7 +263,10 @@ class ProjectorServer private constructor(
 
         PMouseInfoPeer.lastMouseCoords.setLocation(shiftedMessage.x, shiftedMessage.y)
 
-        val window = PWindow.getWindow(message.windowId)?.target ?: return@invokeLater
+        val window = PWindow.getWindow(message.windowId)?.target
+        PMouseInfoPeer.lastWindowUnderMouse = window
+
+        window ?: return@invokeLater
 
         fun isEnoughDeltaForScrolling(previousTouchState: TouchState.Scrolling, newX: Int, newY: Int): Boolean {
           // reduce number of scroll events to make deltas bigger.
@@ -299,7 +302,10 @@ class ProjectorServer private constructor(
         val shiftedMessage = message.shift(PGraphicsDevice.clientShift)
         PMouseInfoPeer.lastMouseCoords.setLocation(shiftedMessage.x, shiftedMessage.y)
 
-        val window = PWindow.getWindow(message.windowId)?.target ?: return@invokeLater
+        val window = PWindow.getWindow(message.windowId)?.target
+        PMouseInfoPeer.lastWindowUnderMouse = window
+
+        window ?: return@invokeLater
 
         val mouseWheelEvent = createMouseWheelEvent(window, shiftedMessage, clientSettings.connectionMillis)
         laterInvokator(mouseWheelEvent)
