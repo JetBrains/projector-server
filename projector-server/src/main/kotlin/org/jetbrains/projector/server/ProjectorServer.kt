@@ -47,11 +47,11 @@ import org.jetbrains.projector.common.protocol.handshake.commonVersionList
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.common.protocol.toServer.*
 import org.jetbrains.projector.server.ReadyClientSettings.TouchState
+import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
+import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshakeEncoder
+import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshakeDecoder
 import org.jetbrains.projector.server.idea.*
 import org.jetbrains.projector.server.log.Logger
-import org.jetbrains.projector.server.protocol.HandshakeTypesSelector
-import org.jetbrains.projector.server.protocol.KotlinxJsonToClientHandshakeEncoder
-import org.jetbrains.projector.server.protocol.KotlinxJsonToServerHandshakeDecoder
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
 import org.jetbrains.projector.server.service.ProjectorImageCacher

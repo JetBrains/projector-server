@@ -47,6 +47,7 @@ configurations.all {
 
 dependencies {
   implementation("com.github.JetBrains.projector-client:projector-common:$projectorClientVersion")
+  implementation("com.github.JetBrains.projector-client:projector-server-core:$projectorClientVersion")
   api project(":projector-awt")
 
   api "org.java-websocket:Java-WebSocket:$javaWebSocketVersion"
@@ -324,47 +325,4 @@ task downloadFonts {
 // Modify existing task which puts resources to the target dir:
 processResources {
   dependsOn(downloadFonts)
-}
-
-sourceSets {
-  intTest {
-    compileClasspath += sourceSets.main.output
-    runtimeClasspath += sourceSets.main.output
-  }
-}
-
-configurations {
-  intTestImplementation.extendsFrom implementation
-  intTestRuntimeOnly.extendsFrom runtimeOnly
-}
-
-dependencies {
-  intTestImplementation("com.codeborne:selenide:$selenideVersion")
-  intTestImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
-  intTestImplementation("io.ktor:ktor-server-core:$ktorVersion")
-  intTestImplementation("io.ktor:ktor-server-netty:$ktorVersion")
-  intTestImplementation("io.ktor:ktor-websockets:$ktorVersion")
-
-  // todo: remove this dependencies: they should be exported from projector-common but now it seems not working
-  intTestImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
-  intTestImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
-}
-
-task integrationTest(type: Test) {
-  description = "Runs integration tests."
-  group = "verification"
-
-  testClassesDirs = sourceSets.intTest.output.classesDirs
-  classpath = sourceSets.intTest.runtimeClasspath
-  shouldRunAfter test
-}
-
-// todo: define this dependency only when using local projector-client; add dependency to build projector-client
-//check.dependsOn integrationTest
-
-idea {
-  module {
-    testSourceDirs = testSourceDirs + sourceSets["intTest"].allJava.srcDirs
-    testResourceDirs = testResourceDirs + sourceSets["intTest"].resources.srcDirs
-  }
 }

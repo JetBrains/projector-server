@@ -23,6 +23,7 @@ if (localProperties["useLocalProjectorClient"] == "true") {
   includeBuild("../projector-client") {
     dependencySubstitution {
       substitute(module("com.github.JetBrains.projector-client:projector-common")).with(project(":projector-common"))
+      substitute(module("com.github.JetBrains.projector-client:projector-server-core")).with(project(":projector-server-core"))
     }
   }
 }
