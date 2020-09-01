@@ -453,9 +453,13 @@ class ProjectorServer private constructor(
 
     val toServerHandshakeEvent = KotlinxJsonToServerHandshakeDecoder.decode(message)
 
+    fun getToken(tokenName: String): String? {
+      return System.getProperty(tokenName) ?: System.getenv(tokenName)
+    }
+
     val hasWriteAccess = when (toServerHandshakeEvent.token) {
-      System.getenv(TOKEN_ENV_NAME) -> true
-      System.getenv(RO_TOKEN_ENV_NAME) -> false
+      getToken(TOKEN_ENV_NAME) -> true
+      getToken(RO_TOKEN_ENV_NAME) -> false
       else -> {
         sendHandshakeFailureEvent("Bad handshake token")
         return
