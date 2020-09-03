@@ -27,12 +27,10 @@ import org.jetbrains.projector.awt.data.Direction
 import org.jetbrains.projector.common.protocol.data.*
 import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.toClient.*
-import org.jetbrains.projector.common.protocol.toServer.ClientKeyEvent
 import org.jetbrains.projector.common.protocol.toServer.ResizeDirection
 import org.jetbrains.projector.server.log.Logger
 import java.awt.*
 import java.awt.Cursor.*
-import java.awt.event.KeyEvent
 import java.awt.geom.PathIterator
 import java.awt.geom.Point2D
 import java.awt.geom.Rectangle2D
@@ -228,18 +226,6 @@ fun Composite.toCommonComposite(): CommonComposite = when (this) {
   is AlphaComposite -> this.toCommonAlphaComposite()
 
   else -> UnknownComposite("Unknown composite class: ${this::class.java.canonicalName}")
-}
-
-fun ClientKeyEvent.KeyEventType.toAwtKeyEventId() = when (this) {
-  ClientKeyEvent.KeyEventType.DOWN -> KeyEvent.KEY_PRESSED
-  ClientKeyEvent.KeyEventType.UP -> KeyEvent.KEY_RELEASED
-}
-
-fun ClientKeyEvent.KeyLocation.toJavaLocation() = when (this) {
-  ClientKeyEvent.KeyLocation.STANDARD -> KeyEvent.KEY_LOCATION_STANDARD
-  ClientKeyEvent.KeyLocation.LEFT -> KeyEvent.KEY_LOCATION_LEFT
-  ClientKeyEvent.KeyLocation.RIGHT -> KeyEvent.KEY_LOCATION_RIGHT
-  ClientKeyEvent.KeyLocation.NUMPAD -> KeyEvent.KEY_LOCATION_NUMPAD
 }
 
 fun roundToInfinity(x: Double): Double = when {

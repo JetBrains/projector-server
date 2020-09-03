@@ -47,6 +47,7 @@ import org.jetbrains.projector.common.protocol.handshake.commonVersionList
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.common.protocol.toServer.*
 import org.jetbrains.projector.server.ReadyClientSettings.TouchState
+import org.jetbrains.projector.server.core.convert.toAwt.toAwtKeyEvent
 import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshakeEncoder
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshakeDecoder
@@ -63,7 +64,6 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.awt.event.InputEvent
-import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 import java.awt.peer.ComponentPeer
@@ -311,57 +311,27 @@ class ProjectorServer private constructor(
         laterInvokator(mouseWheelEvent)
       }
 
-      is ClientKeyEvent -> {
-        val keyEventType = message.keyEventType.toAwtKeyEventId()
-
-        val code = message.code.toJavaCodeOrNull() ?: run {
-          logger.error { "$message: unknown code, skipping" }
-          return
+      is ClientKeyEvent -> message.toAwtKeyEvent(
+        connectionMillis = clientSettings.connectionMillis,
+        target = focusOwnerOrTarget(PWindow.windows.last().target),
+        errorLogger = { logger.error(lazyMessage = it) }
+      )
+        ?.let {
+          SwingUtilities.invokeLater {
+            laterInvokator(it)
+          }
         }
 
-        val isKeystroke = KeyModifier.CTRL_KEY in message.modifiers
-        val key = if (isKeystroke) {
-          code.toJavaControlCharOrNull()
+      is ClientKeyPressEvent -> message.toAwtKeyEvent(
+        connectionMillis = clientSettings.connectionMillis,
+        target = focusOwnerOrTarget(PWindow.windows.last().target),
+        errorLogger = { logger.error(lazyMessage = it) }
+      )
+        ?.let {
+          SwingUtilities.invokeLater {
+            laterInvokator(it)
+          }
         }
-                  else {
-          message.key.singleOrNull()
-        } ?: KeyEvent.CHAR_UNDEFINED
-
-        val keyEvent = createKeyEvent(
-          message.timeStamp + clientSettings.connectionMillis,
-          keyEventType,
-          PWindow.windows.last().target,
-          location = message.location.toJavaLocation(),
-          key = key,
-          code = code,
-          modifiers = message.modifiers
-        )
-
-        SwingUtilities.invokeLater {
-          laterInvokator(keyEvent)
-        }
-      }
-
-      is ClientKeyPressEvent -> {
-        val key = message.key.toJavaCharOrNull() ?: run {
-          logger.error { "$message: unknown key, skipping" }
-          return
-        }
-
-        val keyEvent = createKeyEvent(
-          message.timeStamp + clientSettings.connectionMillis,
-          KeyEvent.KEY_TYPED,
-          PWindow.windows.last().target,
-          key = key,
-          code = KeyEvent.VK_UNDEFINED,
-          location = KeyEvent.KEY_LOCATION_UNKNOWN,
-          modifiers = message.modifiers
-        )
-
-        SwingUtilities.invokeLater {
-          laterInvokator(keyEvent)
-        }
-      }
 
       is ClientRequestImageDataEvent -> {
         val imageData = ProjectorImageCacher.getImage(message.imageId) ?: ImageData.Empty
@@ -664,27 +634,9 @@ class ProjectorServer private constructor(
     caretInfoUpdater.stop()
   }
 
-  private fun createKeyEvent(
-    timeStamp: Long,
-    id: Int,
-    source: Component,
-    key: Char,
-    code: Int,
-    location: Int,
-    modifiers: Set<KeyModifier>,
-  ): KeyEvent {
+  private fun focusOwnerOrTarget(target: Component): Component {
     val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-    val focusedComponent = manager.focusOwner ?: source
-
-    return KeyEvent(
-      focusedComponent,
-      id,
-      timeStamp,
-      modifiers.toKeyInt(),
-      code,
-      key,
-      location
-    )
+    return manager.focusOwner ?: target
   }
 
   private fun createMouseEvent(
@@ -812,18 +764,6 @@ class ProjectorServer private constructor(
     @JvmStatic
     val isEnabled: Boolean
       get() = System.getProperty(ENABLE_PROPERTY_NAME)?.toBoolean() ?: false
-
-    private val keyModifierMask = mapOf(
-      KeyModifier.ALT_KEY to InputEvent.ALT_DOWN_MASK,
-      KeyModifier.CTRL_KEY to InputEvent.CTRL_DOWN_MASK,
-      KeyModifier.SHIFT_KEY to InputEvent.SHIFT_DOWN_MASK,
-      KeyModifier.META_KEY to InputEvent.META_DOWN_MASK,
-      KeyModifier.REPEAT to 0 // todo: find a way to use this key
-    )
-
-    private fun Set<KeyModifier>.toKeyInt(): Int {
-      return map(keyModifierMask::getValue).fold(0, Int::or)
-    }
 
     private val mouseModifierMask = mapOf(
       MouseModifier.ALT_KEY to InputEvent.ALT_DOWN_MASK,
