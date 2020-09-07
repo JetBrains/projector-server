@@ -423,13 +423,9 @@ class ProjectorServer private constructor(
 
     val toServerHandshakeEvent = KotlinxJsonToServerHandshakeDecoder.decode(message)
 
-    fun getToken(tokenName: String): String? {
-      return System.getProperty(tokenName) ?: System.getenv(tokenName)
-    }
-
     val hasWriteAccess = when (toServerHandshakeEvent.token) {
-      getToken(TOKEN_ENV_NAME) -> true
-      getToken(RO_TOKEN_ENV_NAME) -> false
+      getProperty(TOKEN_ENV_NAME) -> true
+      getProperty(RO_TOKEN_ENV_NAME) -> false
       else -> {
         sendHandshakeFailureEvent("Bad handshake token")
         return
@@ -765,6 +761,10 @@ class ProjectorServer private constructor(
     val isEnabled: Boolean
       get() = System.getProperty(ENABLE_PROPERTY_NAME)?.toBoolean() ?: false
 
+    private fun getProperty(propName: String): String? {
+      return System.getProperty(propName) ?: System.getenv(propName)
+    }
+
     private val mouseModifierMask = mapOf(
       MouseModifier.ALT_KEY to InputEvent.ALT_DOWN_MASK,
       MouseModifier.CTRL_KEY to InputEvent.CTRL_DOWN_MASK,
@@ -913,7 +913,7 @@ class ProjectorServer private constructor(
     }
 
     private fun setSsl(setWebSocketFactory: (WebSocketServerFactory) -> Unit): String? {
-      val sslPropertiesFilePath = System.getenv(SSL_ENV_NAME) ?: return null
+      val sslPropertiesFilePath = getProperty(SSL_ENV_NAME) ?: return null
 
       try {
         val properties = Properties().apply {
