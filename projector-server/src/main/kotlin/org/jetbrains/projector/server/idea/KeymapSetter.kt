@@ -43,11 +43,11 @@ object KeymapSetter {
 
         val keymapManagerExInstance = keymapManagerExClass
           .getDeclaredMethod("getInstanceEx")
-          .invoke(null)
+          .invoke(null)!!
 
         val keymapInstance = keymapManagerClass
           .getDeclaredMethod("getKeymap", String::class.java)
-          .invoke(keymapManagerExInstance, userKeymapName)
+          .invoke(keymapManagerExInstance, userKeymapName)!!
 
         val keymapClass = Class.forName("com.intellij.openapi.keymap.Keymap", false, ideaClassLoader)
 
