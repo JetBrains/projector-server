@@ -19,9 +19,12 @@
 package org.jetbrains.projector.server.idea
 
 import org.jetbrains.projector.common.protocol.data.UserKeymap
+import org.jetbrains.projector.server.log.Logger
 import javax.swing.SwingUtilities
 
 object KeymapSetter {
+
+  private val logger = Logger(KeymapSetter::class.simpleName!!)
 
   private fun UserKeymap.toKeyMapManagerFieldName() = when (this) {
     UserKeymap.WINDOWS -> "X_WINDOW_KEYMAP"
@@ -43,11 +46,21 @@ object KeymapSetter {
 
         val keymapManagerExInstance = keymapManagerExClass
           .getDeclaredMethod("getInstanceEx")
-          .invoke(null)!!
+          .invoke(null)
+
+        if (keymapManagerExInstance == null) {
+          logger.error { "getInstanceEx() == null - skipping setting keymap" }
+          return@invokeLater
+        }
 
         val keymapInstance = keymapManagerClass
           .getDeclaredMethod("getKeymap", String::class.java)
-          .invoke(keymapManagerExInstance, userKeymapName)!!
+          .invoke(keymapManagerExInstance, userKeymapName)
+
+        if (keymapInstance == null) {
+          logger.error { "getKeymap($userKeymapName) == null - skipping setting keymap" }
+          return@invokeLater
+        }
 
         val keymapClass = Class.forName("com.intellij.openapi.keymap.Keymap", false, ideaClassLoader)
 
