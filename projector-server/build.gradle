@@ -25,7 +25,6 @@ plugins {
   id("org.jetbrains.kotlin.jvm")
   id("application")
   id("maven-publish")
-  id("idea")
 }
 
 application {
