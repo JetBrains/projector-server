@@ -2,9 +2,11 @@ import java.util.*
 
 pluginManagement {
   val kotlinVersion: String by settings
+  val intellijPluginVersion: String by settings
 
   plugins {
     kotlin("jvm") version kotlinVersion apply false
+    id("org.jetbrains.intellij") version intellijPluginVersion apply false
   }
 }
 
@@ -32,5 +34,7 @@ if (localProperties["projectorLauncher.ideaPath"] != null) {
   includeBuild("../projector-markdown-plugin")
 }
 
+include("projector-agent")
 include("projector-awt")
+include("projector-plugin")
 include("projector-server")
