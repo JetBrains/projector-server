@@ -375,7 +375,10 @@ class ProjectorServer private constructor(
       is ClientOpenLinkEvent -> markdownPanelUpdater.openInExternalBrowser(message.link)
 
       is ClientSetKeymapEvent -> if (isAgent) {
-        logger.info { "Client keymap was ignored!" }
+        logger.info { "Client keymap was ignored (agent mode)!" }
+      }
+      else if (getProperty(ENABLE_AUTO_KEYMAP_SETTING)?.toBoolean() == false) {
+        logger.info { "Client keymap was ignored (property specified)!" }
       }
       else {
         KeymapSetter.setKeymap(message.keymap)
@@ -972,5 +975,7 @@ class ProjectorServer private constructor(
     var BIG_COLLECTIONS_CHECKS_START_SIZE =
       System.getProperty("org.jetbrains.projector.server.debug.collections.checks.size")?.toIntOrNull()
       ?: DEFAULT_BIG_COLLECTIONS_CHECKS_SIZE
+
+    const val ENABLE_AUTO_KEYMAP_SETTING = "ORG_JETBRAINS_PROJECTOR_SERVER_AUTO_KEYMAP"
   }
 }
