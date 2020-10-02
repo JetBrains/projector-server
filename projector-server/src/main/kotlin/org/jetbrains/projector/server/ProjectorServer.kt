@@ -76,6 +76,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import javax.net.ssl.KeyManagerFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
+import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
 import kotlin.math.absoluteValue
@@ -478,6 +479,37 @@ class ProjectorServer private constructor(
       )
 
       return
+    }
+
+    if (isAgent && getProperty(ENABLE_CONNECTION_CONFIRMATION)?.toBoolean() != false) {
+      logger.info { "Asking for connection confirmation because of agent mode..." }
+
+      var selectedOption = -1
+
+      SwingUtilities.invokeAndWait {
+        val accessType = when (hasWriteAccess) {
+          true -> "read-write"
+          false -> "read-only"
+        }
+
+        selectedOption = JOptionPane.showOptionDialog(
+          null,
+          "Somebody (${conn.remoteSocketAddress}) wants to connect with $accessType access. Allow the connection?",
+          "New connection",
+          JOptionPane.YES_NO_OPTION,
+          JOptionPane.QUESTION_MESSAGE,
+          null,
+          null,
+          null,
+        )
+      }
+
+      if (selectedOption != 0) {  // 0=yes
+        logger.info { "User has disallowed this connection..." }
+        sendHandshakeFailureEvent("Other user has disallowed this connection.")
+        return
+      }
+      logger.info { "User has allowed this connection..." }
     }
 
     val successEvent = ToClientHandshakeSuccessEvent(
@@ -977,5 +1009,6 @@ class ProjectorServer private constructor(
       ?: DEFAULT_BIG_COLLECTIONS_CHECKS_SIZE
 
     const val ENABLE_AUTO_KEYMAP_SETTING = "ORG_JETBRAINS_PROJECTOR_SERVER_AUTO_KEYMAP"
+    const val ENABLE_CONNECTION_CONFIRMATION = "ORG_JETBRAINS_PROJECTOR_SERVER_CONNECTION_CONFIRMATION"
   }
 }
