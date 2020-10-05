@@ -408,10 +408,15 @@ class ProjectorServer private constructor(
     getMainWindows().let { mainWindows ->
       SwingUtilities.invokeLater {
         mainWindows.forEach {
-          it.setBounds(
-            PGraphicsDevice.clientShift.x, PGraphicsDevice.clientShift.y,
-            width, height
-          )
+          val point = AwtPoint(PGraphicsDevice.clientShift)
+          if (it is Frame) {
+            it.insets?.let { i ->
+              point.x -= i.left
+              point.y -= i.top
+            }
+          }
+
+          it.setBounds(point.x, point.y, width, height)
           it.revalidate()
         }
       }
