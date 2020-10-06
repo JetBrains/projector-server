@@ -23,9 +23,7 @@ package org.jetbrains.projector.server
 import org.java_websocket.WebSocket
 import org.java_websocket.WebSocketServerFactory
 import org.java_websocket.exceptions.WebsocketNotConnectedException
-import org.java_websocket.handshake.ClientHandshake
 import org.java_websocket.server.DefaultSSLWebSocketServerFactory
-import org.java_websocket.server.WebSocketServer
 import org.jetbrains.projector.awt.PClipboard
 import org.jetbrains.projector.awt.PToolkit
 import org.jetbrains.projector.awt.PWindow
@@ -51,6 +49,7 @@ import org.jetbrains.projector.server.core.convert.toAwt.toAwtKeyEvent
 import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshakeEncoder
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshakeDecoder
+import org.jetbrains.projector.server.core.util.HttpWsServer
 import org.jetbrains.projector.server.idea.*
 import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
@@ -68,7 +67,6 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 import java.awt.peer.ComponentPeer
 import java.io.FileInputStream
-import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.security.KeyStore
 import java.util.*
@@ -86,7 +84,90 @@ class ProjectorServer private constructor(
   port: Int,
   private val laterInvokator: LaterInvokator,
   private val isAgent: Boolean,
-) : WebSocketServer(InetSocketAddress(port)) {
+) {
+
+  private val httpWsServer = object : HttpWsServer(port) {
+
+    override fun onStart() {
+      logger.info { "Server started on port $port" }
+
+      updateThread = thread(isDaemon = true) {
+        // TODO: remove this thread: encapsulate the logic in an extracted class and maybe even don't use threads but coroutines' channels
+        logger.debug { "Daemon thread starts" }
+        while (!Thread.currentThread().isInterrupted) {
+          try {
+            val dataToSend = createDataToSend()  // creating data even if there are no clients to avoid memory leaks
+
+            sendPictures(dataToSend)
+
+            Thread.sleep(10)
+          }
+          catch (ex: InterruptedException) {
+            Thread.currentThread().interrupt()
+          }
+          catch (t: Throwable) {
+            logger.error(t) { "Unhandled in daemon thread has happened" }
+          }
+        }
+        logger.debug { "Daemon thread finishes" }
+      }
+
+      caretInfoUpdater.start()
+      markdownPanelUpdater.setUpCallbacks()
+    }
+
+    override fun onGetRequest(path: String): ByteArray {
+      return "<h1>Requested path: $path</h1>".toByteArray()
+    }
+
+    override fun onWsMessage(connection: WebSocket, message: ByteBuffer) {
+      throw RuntimeException("Unsupported message type: $message")
+    }
+
+    override fun onWsMessage(connection: WebSocket, message: String) {
+      when (val clientSettings = connection.getAttachment<ClientSettings>()!!) {
+        is ConnectedClientSettings -> setUpClient(connection, clientSettings, message)
+
+        is SetUpClientSettings -> {
+          // this means that the client has loaded fonts and is ready to draw
+
+          connection.setAttachment(ReadyClientSettings(clientSettings.connectionMillis, clientSettings.setUpClientData))
+
+          PVolatileImage.images.forEach(PVolatileImage::invalidate)
+          PWindow.windows.forEach {
+            SwingUtilities.invokeAndWait { it.target.revalidate() }  // this solves PRJ-69
+          }
+          PWindow.windows.forEach(PWindow::repaint)
+          previousWindowEvents = emptySet()
+          caretInfoUpdater.createCaretInfoEvent()
+          markdownPanelUpdater.updateAll()
+        }
+
+        is ReadyClientSettings -> {
+          val events = with(clientSettings.setUpClientData) {
+            val decompressed = toServerMessageDecompressor.decompress(message)
+            toServerMessageDecoder.decode(decompressed)
+          }
+
+          events.forEach { processMessage(clientSettings, it) }
+        }
+      }
+    }
+
+    override fun onWsClose(connection: WebSocket) {
+      // todo: we need more informative message, add parameters to this method inside the superclass
+      logger.info { "${connection.remoteSocketAddress?.address?.hostAddress} disconnected." }
+    }
+
+    override fun onWsOpen(connection: WebSocket) {
+      connection.setAttachment(ConnectedClientSettings(connectionMillis = System.currentTimeMillis()))
+      logger.info { "${connection.remoteSocketAddress.address.hostAddress} connected." }
+    }
+
+    override fun onError(connection: WebSocket?, e: Exception) {
+      logger.error(e) { "onError" }
+    }
+  }
 
   private lateinit var updateThread: Thread
 
@@ -141,15 +222,6 @@ class ProjectorServer private constructor(
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownBrowseUriEvent(link))
     }
   )
-
-  override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
-    conn.setAttachment(ConnectedClientSettings(connectionMillis = System.currentTimeMillis()))
-    logger.info { "${conn.remoteSocketAddress.address.hostAddress} connected." }
-  }
-
-  override fun onClose(conn: WebSocket, code: Int, reason: String, remote: Boolean) {
-    logger.info { "${conn.remoteSocketAddress?.address?.hostAddress} disconnected." }  // todo: we need more informative message
-  }
 
   private fun calculateMainWindowShift() {
     getMainWindows().firstOrNull()?.let { window ->
@@ -547,46 +619,16 @@ class ProjectorServer private constructor(
     }
   }
 
-  override fun onMessage(conn: WebSocket, message: String) {
-    when (val clientSettings = conn.getAttachment<ClientSettings>()!!) {
-      is ConnectedClientSettings -> setUpClient(conn, clientSettings, message)
-
-      is SetUpClientSettings -> {
-        // this means that the client has loaded fonts and is ready to draw
-
-        conn.setAttachment(ReadyClientSettings(clientSettings.connectionMillis, clientSettings.setUpClientData))
-
-        PVolatileImage.images.forEach(PVolatileImage::invalidate)
-        PWindow.windows.forEach {
-          SwingUtilities.invokeAndWait { it.target.revalidate() }  // this solves PRJ-69
-        }
-        PWindow.windows.forEach(PWindow::repaint)
-        previousWindowEvents = emptySet()
-        caretInfoUpdater.createCaretInfoEvent()
-        markdownPanelUpdater.updateAll()
-      }
-
-      is ReadyClientSettings -> {
-        val events = with(clientSettings.setUpClientData) {
-          val decompressed = toServerMessageDecompressor.decompress(message)
-          toServerMessageDecoder.decode(decompressed)
-        }
-
-        events.forEach { processMessage(clientSettings, it) }
-      }
-    }
-  }
-
   private fun sendPictures(dataToSend: List<ServerEvent>) {
-    connections.filter(WebSocket::isOpen).forEach { client ->
-      val readyClientSettings = client.getAttachment<ClientSettings?>() as? ReadyClientSettings ?: return@forEach
+    httpWsServer.forEachOpenedConnection { client ->
+      val readyClientSettings = client.getAttachment<ClientSettings?>() as? ReadyClientSettings ?: return@forEachOpenedConnection
 
       val compressed = with(readyClientSettings.setUpClientData) {
         val requestedData = extractData(readyClientSettings.requestedData)
         val message = requestedData + dataToSend
 
         if (message.isEmpty()) {
-          return@forEach
+          return@forEachOpenedConnection
         }
 
         val encoded = toClientMessageEncoder.encode(message)
@@ -600,47 +642,6 @@ class ProjectorServer private constructor(
         logger.debug(e) { "While generating message, client disconnected" }
       }
     }
-  }
-
-  override fun onMessage(conn: WebSocket, message: ByteBuffer?) {
-    throw RuntimeException("Unsupported message type: $message")
-  }
-
-  override fun onError(conn: WebSocket?, ex: Exception) {
-    logger.error(ex) { "onError" }
-  }
-
-  override fun onStart() {
-    connectionLostTimeout = 100
-
-    logger.info { "Server started" }
-    logger.info { "You CANNOT open url like 'http://localhost:$port' directly IN BROWSER!!!" }
-    logger.info { "Please, as client use index.html of the projector-client-web module." }
-    logger.info { "If you want to change the server address, you can modify it using the ?host=localhost&port=$port parameters." }
-
-    updateThread = thread(isDaemon = true) {
-      // TODO: remove this thread: encapsulate the logic in an extracted class and maybe even don't use threads but coroutines' channels
-      logger.debug { "Daemon thread starts" }
-      while (!Thread.currentThread().isInterrupted) {
-        try {
-          val dataToSend = createDataToSend()  // creating data even if there are no clients to avoid memory leaks
-
-          sendPictures(dataToSend)
-
-          Thread.sleep(10)
-        }
-        catch (ex: InterruptedException) {
-          Thread.currentThread().interrupt()
-        }
-        catch (t: Throwable) {
-          logger.error(t) { "Unhandled in daemon thread has happened" }
-        }
-      }
-      logger.debug { "Daemon thread finishes" }
-    }
-
-    caretInfoUpdater.start()
-    markdownPanelUpdater.setUpCallbacks()
   }
 
   private var previousWindowEvents: Set<WindowData> = emptySet()
@@ -658,8 +659,13 @@ class ProjectorServer private constructor(
     return false
   }
 
-  override fun stop(timeout: Int) {
-    super.stop(timeout)
+  fun start() {
+    httpWsServer.start()
+  }
+
+  @JvmOverloads
+  fun stop(timeout: Int = 0) {
+    httpWsServer.stop(timeout)
 
     if (::updateThread.isInitialized) {
       updateThread.interrupt()
@@ -938,14 +944,11 @@ class ProjectorServer private constructor(
       }
 
       return ProjectorServer(port, LaterInvokator.defaultLaterInvokator, isAgent).also {
-        Do exhaustive when (val hint = setSsl(it::setWebSocketFactory)) {
+        Do exhaustive when (val hint = setSsl(it.httpWsServer::setWebSocketFactory)) {
           null -> logger.info { "WebSocket SSL is disabled" }
 
           else -> logger.info { "WebSocket SSL is enabled: $hint" }
         }
-
-        it.isReuseAddr = true
-        it.isTcpNoDelay = true
         it.start()
       }
     }

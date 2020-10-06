@@ -49,8 +49,6 @@ dependencies {
   implementation("com.github.JetBrains.projector-client:projector-server-core:$projectorClientVersion")
   api project(":projector-awt")
 
-  api "org.java-websocket:Java-WebSocket:$javaWebSocketVersion"
-
   testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$mockitoKotlinVersion"
 
   // todo: remove this dependencies: they should be exported from projector-common but now it seems not working
