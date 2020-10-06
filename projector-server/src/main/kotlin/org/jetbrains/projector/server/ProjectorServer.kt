@@ -143,8 +143,7 @@ class ProjectorServer private constructor(
   )
 
   override fun onOpen(conn: WebSocket, handshake: ClientHandshake) {
-    conn.setAttachment(
-      ConnectedClientSettings(connectionMillis = System.currentTimeMillis()))
+    conn.setAttachment(ConnectedClientSettings(connectionMillis = System.currentTimeMillis()))
     logger.info { "${conn.remoteSocketAddress.address.hostAddress} connected." }
   }
 
@@ -580,8 +579,7 @@ class ProjectorServer private constructor(
 
   private fun sendPictures(dataToSend: List<ServerEvent>) {
     connections.filter(WebSocket::isOpen).forEach { client ->
-      val readyClientSettings = client.getAttachment<ClientSettings?>() as? ReadyClientSettings
-                                ?: return@forEach
+      val readyClientSettings = client.getAttachment<ClientSettings?>() as? ReadyClientSettings ?: return@forEach
 
       val compressed = with(readyClientSettings.setUpClientData) {
         val requestedData = extractData(readyClientSettings.requestedData)
@@ -940,8 +938,7 @@ class ProjectorServer private constructor(
       }
 
       return ProjectorServer(port, LaterInvokator.defaultLaterInvokator, isAgent).also {
-        Do exhaustive when (val hint = setSsl(
-          it::setWebSocketFactory)) {
+        Do exhaustive when (val hint = setSsl(it::setWebSocketFactory)) {
           null -> logger.info { "WebSocket SSL is disabled" }
 
           else -> logger.info { "WebSocket SSL is enabled: $hint" }
@@ -965,8 +962,7 @@ class ProjectorServer private constructor(
 
         val storetype = properties.getOrThrow(SSL_STORE_TYPE)
         val filePath = properties.getOrThrow(SSL_FILE_PATH)
-        val storePassword = properties.getOrThrow(
-          SSL_STORE_PASSWORD)
+        val storePassword = properties.getOrThrow(SSL_STORE_PASSWORD)
         val keyPassword = properties.getOrThrow(SSL_KEY_PASSWORD)
 
         val keyStore = KeyStore.getInstance(storetype).apply {
