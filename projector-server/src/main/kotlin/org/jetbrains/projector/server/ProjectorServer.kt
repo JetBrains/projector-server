@@ -948,6 +948,7 @@ class ProjectorServer private constructor(
         }
 
         it.isReuseAddr = true
+        it.isTcpNoDelay = true
         it.start()
       }
     }
