@@ -45,11 +45,11 @@ import org.jetbrains.projector.common.protocol.handshake.commonVersionList
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.common.protocol.toServer.*
 import org.jetbrains.projector.server.ReadyClientSettings.TouchState
+import org.jetbrains.projector.server.core.ProjectorHttpWsServer
 import org.jetbrains.projector.server.core.convert.toAwt.toAwtKeyEvent
 import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshakeEncoder
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshakeDecoder
-import org.jetbrains.projector.server.core.util.HttpWsServer
 import org.jetbrains.projector.server.idea.*
 import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
@@ -86,7 +86,7 @@ class ProjectorServer private constructor(
   private val isAgent: Boolean,
 ) {
 
-  private val httpWsServer = object : HttpWsServer(port) {
+  private val httpWsServer = object : ProjectorHttpWsServer(port) {
 
     override fun onStart() {
       logger.info { "Server started on port $port" }
@@ -114,10 +114,6 @@ class ProjectorServer private constructor(
 
       caretInfoUpdater.start()
       markdownPanelUpdater.setUpCallbacks()
-    }
-
-    override fun onGetRequest(path: String): ByteArray {
-      return "<h1>Requested path: $path</h1>".toByteArray()
     }
 
     override fun onWsMessage(connection: WebSocket, message: ByteBuffer) {
