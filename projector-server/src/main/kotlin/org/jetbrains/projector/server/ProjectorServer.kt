@@ -223,29 +223,6 @@ class ProjectorServer private constructor(
     }
   )
 
-  private fun calculateMainWindowShift() {
-    getMainWindows().firstOrNull()?.let { window ->
-      synchronized(window.treeLock) {
-        var x = 0.0
-        var y = 0.0
-
-        if (window is Frame) {
-          window.insets?.let {
-            x += it.left
-            y += it.top
-          }
-        }
-
-        window.bounds?.let {
-          x += it.x
-          y += it.y
-        }
-
-        PGraphicsDevice.clientShift.setLocation(x, y)
-      }
-    }
-  }
-
   @OptIn(ExperimentalStdlibApi::class)
   private fun createDataToSend(): List<ServerEvent> {
     val clipboardEvent = when (val clipboardContents = PClipboard.extractLastContents()) {
@@ -470,30 +447,6 @@ class ProjectorServer private constructor(
     }
   }
 
-  private fun resize(width: Int, height: Int) {
-    val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
-    if (ge is PGraphicsEnvironment) {
-      ge.setSize(width, height)
-    }
-
-    getMainWindows().let { mainWindows ->
-      SwingUtilities.invokeLater {
-        mainWindows.forEach {
-          val point = AwtPoint(PGraphicsDevice.clientShift)
-          if (it is Frame) {
-            it.insets?.let { i ->
-              point.x -= i.left
-              point.y -= i.top
-            }
-          }
-
-          it.setBounds(point.x, point.y, width, height)
-          it.revalidate()
-        }
-      }
-    }
-  }
-
   private fun setUpClient(conn: WebSocket, connectedClientSettings: ConnectedClientSettings, message: String) {
     fun sendHandshakeFailureEvent(reason: String) {
       val failureEvent = ToClientHandshakeFailureEvent(reason)
@@ -674,118 +627,6 @@ class ProjectorServer private constructor(
     caretInfoUpdater.stop()
   }
 
-  private fun focusOwnerOrTarget(target: Component): Component {
-    val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-    return manager.focusOwner ?: target
-  }
-
-  private fun createMouseEvent(
-    source: Component,
-    event: ClientMouseEvent,
-    previousTouchState: TouchState,
-    newTouchState: TouchState,
-    connectionMillis: Long,
-  ): MouseEvent {
-    val locationOnScreen = source.locationOnScreen
-
-    val id = when (event.mouseEventType) {
-      ClientMouseEvent.MouseEventType.MOVE -> MouseEvent.MOUSE_MOVED
-      ClientMouseEvent.MouseEventType.DOWN -> MouseEvent.MOUSE_PRESSED
-      ClientMouseEvent.MouseEventType.UP -> MouseEvent.MOUSE_RELEASED
-      ClientMouseEvent.MouseEventType.CLICK -> MouseEvent.MOUSE_CLICKED
-      ClientMouseEvent.MouseEventType.OUT -> MouseEvent.MOUSE_EXITED
-      ClientMouseEvent.MouseEventType.DRAG -> MouseEvent.MOUSE_DRAGGED
-      ClientMouseEvent.MouseEventType.TOUCH_DRAG -> {
-        if (previousTouchState is TouchState.WithCoordinates && newTouchState is TouchState.Scrolling) {
-          val deltaX = newTouchState.lastX - previousTouchState.lastX
-          val deltaY = newTouchState.lastY - previousTouchState.lastY
-
-          fun isHorizontal(): Boolean {
-            return deltaX.absoluteValue > deltaY.absoluteValue
-          }
-
-          val (wheelDelta, modifiers) = if (isHorizontal()) {
-            deltaX to (event.modifiers.toMouseInt() or InputEvent.SHIFT_DOWN_MASK)
-          }
-          else {
-            deltaY to event.modifiers.toMouseInt()
-          }
-
-          val negatedWheelDelta = -wheelDelta  // touch scrolling is usually treated in reverse direction
-
-          val normalizedWheelDelta = negatedWheelDelta.toDouble() / TOUCH_PIXEL_PER_UNIT
-          val notNullNormalizedWheelDelta = roundToInfinity(normalizedWheelDelta).toInt()
-
-          return MouseWheelEvent(
-            source,
-            MouseEvent.MOUSE_WHEEL, connectionMillis + event.timeStamp, modifiers,
-            newTouchState.initialX - locationOnScreen.x, newTouchState.initialY - locationOnScreen.y,
-            newTouchState.initialX - locationOnScreen.x, newTouchState.initialY - locationOnScreen.y, 0, false,
-            MouseWheelEvent.WHEEL_UNIT_SCROLL, DEFAULT_SCROLL_AMOUNT, notNullNormalizedWheelDelta, normalizedWheelDelta
-          )
-        }
-
-        MouseEvent.MOUSE_DRAGGED
-      }
-    }
-
-    val awtEventButton = when (event.mouseEventType) {
-      ClientMouseEvent.MouseEventType.MOVE,
-      ClientMouseEvent.MouseEventType.OUT,
-      -> MouseEvent.NOBUTTON
-
-      else -> event.button + 1
-    }
-
-    val modifiers = event.modifiers.toMouseInt()
-    val buttonModifier = if (awtEventButton == MouseEvent.NOBUTTON || event.mouseEventType == ClientMouseEvent.MouseEventType.UP) {
-      0
-    }
-    else {
-      InputEvent.getMaskForButton(awtEventButton)
-    }
-
-    val canTriggerPopup = awtEventButton == MouseEvent.BUTTON3
-
-    return MouseEvent(
-      source,
-      id,
-      connectionMillis + event.timeStamp,
-      modifiers or buttonModifier,
-      event.x - locationOnScreen.x, event.y - locationOnScreen.y,
-      event.clickCount, canTriggerPopup, awtEventButton
-    )
-  }
-
-  private fun createMouseWheelEvent(source: Component, event: ClientWheelEvent, connectionMillis: Long): MouseWheelEvent {
-    fun isHorizontal(event: ClientWheelEvent): Boolean {
-      return event.deltaX.absoluteValue > event.deltaY.absoluteValue
-    }
-
-    val (wheelDelta, modifiers) = if (isHorizontal(event)) {
-      event.deltaX to (event.modifiers.toMouseInt() or InputEvent.SHIFT_DOWN_MASK)
-    }
-    else {
-      event.deltaY to event.modifiers.toMouseInt()
-    }
-
-    val (mode, normalizedWheelDelta) = when (event.mode) {
-      ClientWheelEvent.ScrollingMode.PIXEL -> MouseWheelEvent.WHEEL_UNIT_SCROLL to wheelDelta / PIXEL_PER_UNIT
-      ClientWheelEvent.ScrollingMode.LINE -> MouseWheelEvent.WHEEL_UNIT_SCROLL to wheelDelta
-      ClientWheelEvent.ScrollingMode.PAGE -> MouseWheelEvent.WHEEL_BLOCK_SCROLL to wheelDelta
-    }
-    val notNullNormalizedWheelDelta = roundToInfinity(normalizedWheelDelta).toInt()
-
-    val locationOnScreen = source.locationOnScreen
-
-    return MouseWheelEvent(
-      source, MouseEvent.MOUSE_WHEEL, connectionMillis + event.timeStamp, modifiers,
-      event.x - locationOnScreen.x, event.y - locationOnScreen.y,
-      event.x - locationOnScreen.x, event.y - locationOnScreen.y, 0, false,
-      mode, DEFAULT_SCROLL_AMOUNT, notNullNormalizedWheelDelta, normalizedWheelDelta
-    )
-  }
-
   companion object {
 
     private val logger = Logger(ProjectorServer::class.simpleName!!)
@@ -809,6 +650,11 @@ class ProjectorServer private constructor(
       return System.getProperty(propName) ?: System.getenv(propName)
     }
 
+    private fun focusOwnerOrTarget(target: Component): Component {
+      val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
+      return manager.focusOwner ?: target
+    }
+
     private val mouseModifierMask = mapOf(
       MouseModifier.ALT_KEY to InputEvent.ALT_DOWN_MASK,
       MouseModifier.CTRL_KEY to InputEvent.CTRL_DOWN_MASK,
@@ -818,6 +664,113 @@ class ProjectorServer private constructor(
 
     private fun Set<MouseModifier>.toMouseInt(): Int {
       return map(mouseModifierMask::getValue).fold(0, Int::or)
+    }
+
+    private fun createMouseEvent(
+      source: Component,
+      event: ClientMouseEvent,
+      previousTouchState: TouchState,
+      newTouchState: TouchState,
+      connectionMillis: Long,
+    ): MouseEvent {
+      val locationOnScreen = source.locationOnScreen
+
+      val id = when (event.mouseEventType) {
+        ClientMouseEvent.MouseEventType.MOVE -> MouseEvent.MOUSE_MOVED
+        ClientMouseEvent.MouseEventType.DOWN -> MouseEvent.MOUSE_PRESSED
+        ClientMouseEvent.MouseEventType.UP -> MouseEvent.MOUSE_RELEASED
+        ClientMouseEvent.MouseEventType.CLICK -> MouseEvent.MOUSE_CLICKED
+        ClientMouseEvent.MouseEventType.OUT -> MouseEvent.MOUSE_EXITED
+        ClientMouseEvent.MouseEventType.DRAG -> MouseEvent.MOUSE_DRAGGED
+        ClientMouseEvent.MouseEventType.TOUCH_DRAG -> {
+          if (previousTouchState is TouchState.WithCoordinates && newTouchState is TouchState.Scrolling) {
+            val deltaX = newTouchState.lastX - previousTouchState.lastX
+            val deltaY = newTouchState.lastY - previousTouchState.lastY
+
+            fun isHorizontal(): Boolean {
+              return deltaX.absoluteValue > deltaY.absoluteValue
+            }
+
+            val (wheelDelta, modifiers) = if (isHorizontal()) {
+              deltaX to (event.modifiers.toMouseInt() or InputEvent.SHIFT_DOWN_MASK)
+            }
+            else {
+              deltaY to event.modifiers.toMouseInt()
+            }
+
+            val negatedWheelDelta = -wheelDelta  // touch scrolling is usually treated in reverse direction
+
+            val normalizedWheelDelta = negatedWheelDelta.toDouble() / TOUCH_PIXEL_PER_UNIT
+            val notNullNormalizedWheelDelta = roundToInfinity(normalizedWheelDelta).toInt()
+
+            return MouseWheelEvent(
+              source,
+              MouseEvent.MOUSE_WHEEL, connectionMillis + event.timeStamp, modifiers,
+              newTouchState.initialX - locationOnScreen.x, newTouchState.initialY - locationOnScreen.y,
+              newTouchState.initialX - locationOnScreen.x, newTouchState.initialY - locationOnScreen.y, 0, false,
+              MouseWheelEvent.WHEEL_UNIT_SCROLL, DEFAULT_SCROLL_AMOUNT, notNullNormalizedWheelDelta, normalizedWheelDelta
+            )
+          }
+
+          MouseEvent.MOUSE_DRAGGED
+        }
+      }
+
+      val awtEventButton = when (event.mouseEventType) {
+        ClientMouseEvent.MouseEventType.MOVE,
+        ClientMouseEvent.MouseEventType.OUT,
+        -> MouseEvent.NOBUTTON
+
+        else -> event.button + 1
+      }
+
+      val modifiers = event.modifiers.toMouseInt()
+      val buttonModifier = if (awtEventButton == MouseEvent.NOBUTTON || event.mouseEventType == ClientMouseEvent.MouseEventType.UP) {
+        0
+      }
+      else {
+        InputEvent.getMaskForButton(awtEventButton)
+      }
+
+      val canTriggerPopup = awtEventButton == MouseEvent.BUTTON3
+
+      return MouseEvent(
+        source,
+        id,
+        connectionMillis + event.timeStamp,
+        modifiers or buttonModifier,
+        event.x - locationOnScreen.x, event.y - locationOnScreen.y,
+        event.clickCount, canTriggerPopup, awtEventButton
+      )
+    }
+
+    private fun createMouseWheelEvent(source: Component, event: ClientWheelEvent, connectionMillis: Long): MouseWheelEvent {
+      fun isHorizontal(event: ClientWheelEvent): Boolean {
+        return event.deltaX.absoluteValue > event.deltaY.absoluteValue
+      }
+
+      val (wheelDelta, modifiers) = if (isHorizontal(event)) {
+        event.deltaX to (event.modifiers.toMouseInt() or InputEvent.SHIFT_DOWN_MASK)
+      }
+      else {
+        event.deltaY to event.modifiers.toMouseInt()
+      }
+
+      val (mode, normalizedWheelDelta) = when (event.mode) {
+        ClientWheelEvent.ScrollingMode.PIXEL -> MouseWheelEvent.WHEEL_UNIT_SCROLL to wheelDelta / PIXEL_PER_UNIT
+        ClientWheelEvent.ScrollingMode.LINE -> MouseWheelEvent.WHEEL_UNIT_SCROLL to wheelDelta
+        ClientWheelEvent.ScrollingMode.PAGE -> MouseWheelEvent.WHEEL_BLOCK_SCROLL to wheelDelta
+      }
+      val notNullNormalizedWheelDelta = roundToInfinity(normalizedWheelDelta).toInt()
+
+      val locationOnScreen = source.locationOnScreen
+
+      return MouseWheelEvent(
+        source, MouseEvent.MOUSE_WHEEL, connectionMillis + event.timeStamp, modifiers,
+        event.x - locationOnScreen.x, event.y - locationOnScreen.y,
+        event.x - locationOnScreen.x, event.y - locationOnScreen.y, 0, false,
+        mode, DEFAULT_SCROLL_AMOUNT, notNullNormalizedWheelDelta, normalizedWheelDelta
+      )
     }
 
     private fun setupGraphicsEnvironment() {
@@ -917,6 +870,53 @@ class ProjectorServer private constructor(
         (x - shift.x).toDouble(),
         (y - shift.y).toDouble()
       )
+    }
+
+    private fun calculateMainWindowShift() {
+      getMainWindows().firstOrNull()?.let { window ->
+        synchronized(window.treeLock) {
+          var x = 0.0
+          var y = 0.0
+
+          if (window is Frame) {
+            window.insets?.let {
+              x += it.left
+              y += it.top
+            }
+          }
+
+          window.bounds?.let {
+            x += it.x
+            y += it.y
+          }
+
+          PGraphicsDevice.clientShift.setLocation(x, y)
+        }
+      }
+    }
+
+    private fun resize(width: Int, height: Int) {
+      val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
+      if (ge is PGraphicsEnvironment) {
+        ge.setSize(width, height)
+      }
+
+      getMainWindows().let { mainWindows ->
+        SwingUtilities.invokeLater {
+          mainWindows.forEach {
+            val point = AwtPoint(PGraphicsDevice.clientShift)
+            if (it is Frame) {
+              it.insets?.let { i ->
+                point.x -= i.left
+                point.y -= i.top
+              }
+            }
+
+            it.setBounds(point.x, point.y, width, height)
+            it.revalidate()
+          }
+        }
+      }
     }
 
     @JvmStatic
