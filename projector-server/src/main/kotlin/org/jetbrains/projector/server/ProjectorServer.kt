@@ -163,6 +163,16 @@ class ProjectorServer private constructor(
     override fun onError(connection: WebSocket?, e: Exception) {
       logger.error(e) { "onError" }
     }
+
+    override fun getMainWindows(): List<MainWindow> = ProjectorServer.getMainWindows().map {
+      MainWindow(
+        title = it.title,
+        pngBase64Icon = it.icons
+          ?.firstOrNull()
+          ?.let { imageId -> ProjectorImageCacher.getImage(imageId as ImageId) as? ImageData.PngBase64 }
+          ?.pngBase64,
+      )
+    }
   }
 
   private lateinit var updateThread: Thread
@@ -839,14 +849,14 @@ class ProjectorServer private constructor(
       setupRepaintManager()
     }
 
-    private fun getMainWindows(): List<Component> {
-      val ideWindows = PWindow.windows.filter { it.windowType == WindowType.IDEA_WINDOW }.map(PWindow::target)
+    private fun getMainWindows(): List<PWindow> {
+      val ideWindows = PWindow.windows.filter { it.windowType == WindowType.IDEA_WINDOW }
 
       if (ideWindows.isNotEmpty()) {
         return ideWindows
       }
 
-      return PWindow.windows.firstOrNull()?.target?.let(::listOf).orEmpty()
+      return PWindow.windows.firstOrNull()?.let(::listOf).orEmpty()
     }
 
     private fun Component.shiftBounds(shift: AwtPoint): CommonRectangle {
@@ -869,7 +879,7 @@ class ProjectorServer private constructor(
     }
 
     private fun calculateMainWindowShift() {
-      getMainWindows().firstOrNull()?.let { window ->
+      getMainWindows().firstOrNull()?.target?.let { window ->
         synchronized(window.treeLock) {
           var x = 0.0
           var y = 0.0
@@ -897,7 +907,7 @@ class ProjectorServer private constructor(
         ge.setSize(width, height)
       }
 
-      getMainWindows().let { mainWindows ->
+      getMainWindows().map(PWindow::target).let { mainWindows ->
         SwingUtilities.invokeLater {
           mainWindows.forEach {
             val point = AwtPoint(PGraphicsDevice.clientShift)
