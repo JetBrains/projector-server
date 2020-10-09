@@ -4,6 +4,8 @@ This document describes the ecosystem as a whole.
 ## TL;DR
 Projector is a way to run Swing applications without any windowing system and accessing them either locally or remotely.
 
+If you seek for clear info of how this can be practically used, we advise you to read [README-JETBRAINS.md](../README-JETBRAINS.md) about accessing remotely run JetBrains IDEs.
+
 ## The system
 Here you can find some info on how this works.
 
