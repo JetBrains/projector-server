@@ -15,7 +15,7 @@ The following command creates a zip file with the whole runtime classpath:
 
 You can find the file here: `projector-server/build/distibution/projector-server-VERSION.zip`.
 
-By default, the latest master revision of `projector-client:projector-common` at GitHub will be used as a dependency. If you want to use local `projector-client`, please specify a special local property. You can find an example in [local.properties.example](local.properties.example) file.
+By default, a proper revision of `projector-client:projector-common` at GitHub will be used as a dependency. If you want to use local `projector-client`, please specify a special local property. You can find an example in [local.properties.example](local.properties.example) file.
 
 ## How to run my application using this?
 There are two ways.
