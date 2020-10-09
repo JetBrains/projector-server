@@ -94,6 +94,9 @@ There are two gradle tasks for running server. They are handy when developing. T
 2. `runIdeaServer` &mdash; launch IntelliJ IDEA with Projector Server. Required property:
     * `projectorLauncher.ideaPath` &mdash; path to IDEA's root directory.
 
+## Connection from browser
+When the server is launched, you can open `localhost:8887` in the browser to access the app.
+
 ## Notes
 Currently, `projector-server` supports only Linux and JetBrains Runtime 11 as JRE.
 
