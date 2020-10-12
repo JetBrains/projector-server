@@ -516,7 +516,13 @@ class ProjectorServer private constructor(
       return
     }
 
-    if (isAgent && getProperty(ENABLE_CONNECTION_CONFIRMATION)?.toBoolean() != false) {
+    val ipString = conn.remoteSocketAddress?.address?.hostAddress
+
+    if (
+      isAgent &&
+      getProperty(ENABLE_CONNECTION_CONFIRMATION)?.toBoolean() != false &&
+      ipString !in setOf("127.0.0.1", "0:0:0:0:0:0:0:1")
+    ) {
       logger.info { "Asking for connection confirmation because of agent mode..." }
 
       var selectedOption = -1
@@ -529,7 +535,7 @@ class ProjectorServer private constructor(
 
         selectedOption = JOptionPane.showOptionDialog(
           null,
-          "Somebody (${conn.remoteSocketAddress}) wants to connect with $accessType access. Allow the connection?",
+          "Somebody ($ipString) wants to connect with $accessType access. Allow the connection?",
           "New connection",
           JOptionPane.YES_NO_OPTION,
           JOptionPane.QUESTION_MESSAGE,
