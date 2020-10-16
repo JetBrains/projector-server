@@ -16,14 +16,14 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.net.Inet4Address
 import java.net.NetworkInterface
 
-class CopyUrlAction : AnAction() {
+class CopyUrlAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val dockerVendor = byteArrayOf(0x02.toByte(), 0x42.toByte())
 
@@ -47,7 +47,7 @@ class CopyUrlAction : AnAction() {
       ips.joinToString(",", prefix = "[", postfix = "]")
     }
 
-    val connectionURL = "ws://$ipsString:8887"
+    val connectionURL = "http://$ipsString:8887"
     Toolkit
       .getDefaultToolkit()
       .systemClipboard
@@ -56,5 +56,6 @@ class CopyUrlAction : AnAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabled = ProjectorService.instance.enabled
+    e.presentation.isVisible = ProjectorService.instance.enabled
   }
 }

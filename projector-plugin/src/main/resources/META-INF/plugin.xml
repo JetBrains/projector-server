@@ -37,8 +37,8 @@
   <actions>
     <group id="projector.menu" text="Projector" description="Projector menu">
       <add-to-group group-id="MainMenu" anchor="last"/>
-      <action id="projector.enable" class="EnableAction" text="Enable" description="Enable projector"/>
-      <action id="projector.disable" class="DisableAction" text="Disable" description="Disable projector"/>
+      <action id="projector.enable" class="EnableAction" text="Enable Remote Access to IDE" description="Enable projector"/>
+      <action id="projector.disable" class="DisableAction" text="Disable Remote Access to IDE" description="Disable projector"/>
       <action id="projector.copy" class="CopyUrlAction" text="Copy URL" description="Copy client url"/>
     </group>
   </actions>

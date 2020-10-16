@@ -18,7 +18,9 @@
  */
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceManager
@@ -26,8 +28,10 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import java.io.File
+import java.util.function.Function
 
 class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
   var enabled: Boolean = false
@@ -63,6 +67,8 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
 
 
   fun disable() {
+    if (!confirmRestart()) return
+
     getVMOptions()?.let { (content, writeFile) ->
       content
         .lineSequence()
@@ -76,6 +82,8 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   }
 
   fun enable() {
+    if (!confirmRestart()) return
+
     val agentJar = "${plugin.path}/lib/projector-agent-${plugin.version}.jar"
     val agentOption = "-javaagent:$agentJar=$agentJar"
     logger.warn("agentOption: $agentOption")
@@ -115,6 +123,14 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
 
     return Pair(s, writeFile)
   }
+
+  private fun confirmRestart() : Boolean {
+    val title = "Restart to ${if (enabled) "disable" else "enable"} Projector"
+    val message = Function<String, String> { action: String? ->
+      "$action ${ApplicationNamesInfo.getInstance().fullProductName} to ${if (enabled) "remove" else "add"} java agent?"}
+    return PluginManagerConfigurable.showRestartDialog(title, message) == Messages.YES
+  }
+
 
   private fun exit() {
     (ApplicationManager.getApplication() as ApplicationEx).restart(true)
