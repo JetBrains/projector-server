@@ -36,7 +36,7 @@ import java.awt.image.BufferedImage
 import java.awt.image.BufferedImageOp
 import javax.swing.UIManager
 
-object CommandsHandler {
+internal object CommandsHandler {
 
   fun isSupportedCommand(commandName: String) = commandName in commandsMap
 

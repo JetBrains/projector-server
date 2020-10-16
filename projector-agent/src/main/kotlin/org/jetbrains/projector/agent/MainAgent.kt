@@ -16,29 +16,44 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package org.jetbrains.projector.agent
 
 import javassist.ClassPool
+import javassist.LoaderClassPath
 import org.jetbrains.projector.server.log.Logger
 import java.lang.instrument.Instrumentation
-import java.util.jar.JarFile
 
-object MainAgent {
+public object MainAgent {
+
   private val logger = Logger(MainAgent::class.simpleName!!)
 
   @JvmStatic
-  fun premain(args: String?, instrumentation: Instrumentation) {
-    logger.info { "Projector agent working..." }
+  public fun agentmain(args: String?, instrumentation: Instrumentation) {
+    logger.info { "agentmain start, args=$args" }
+
+    val threads = Thread.getAllStackTraces().keys
+    val classLoaders = threads.mapNotNull { it.contextClassLoader }.toSet()
+    logger.info { "Found classloaders, appending to Javassist: ${classLoaders.joinToString()}" }
+    classLoaders.forEach { ClassPool.getDefault().appendClassPath(LoaderClassPath(it)) }
 
     // Override swing property before swing initialized. Need for MacOS.
-    System.setProperty("swing.bufferPerWindow", false.toString())
+    //System.setProperty("swing.bufferPerWindow", false.toString())  // todo: this doesn't work because Swing is initialized already
 
     // Make DrawHandler class visible for System classloader
-    instrumentation.appendToSystemClassLoaderSearch(JarFile(args))
-
-    // Make DrawHandler class visible for Javassist
-    ClassPool.getDefault().insertClassPath(args)
+    //instrumentation.appendToSystemClassLoaderSearch(JarFile(args)) // todo: seems not needed (maybe after appending all classloaders)
 
     instrumentation.addTransformer(GraphicsTransformer(), true)
+
+    instrumentation.retransformClasses(
+      sun.java2d.SunGraphics2D::class.java,
+      sun.awt.image.SunVolatileImage::class.java,
+      java.awt.image.BufferedImage::class.java,
+      java.awt.Component::class.java,
+      javax.swing.JComponent::class.java,
+      //Class.forName("com.intellij.ui.BalloonImpl\$MyComponent"),  // todo
+    )
+
+    logger.info { "agentmain finish" }
   }
 }

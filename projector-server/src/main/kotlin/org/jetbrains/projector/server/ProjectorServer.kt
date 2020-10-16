@@ -917,14 +917,20 @@ class ProjectorServer private constructor(
         SwingUtilities.invokeLater {
           mainWindows.forEach {
             val point = AwtPoint(PGraphicsDevice.clientShift)
+            var widthWithInsets = width
+            var heightWithInsets = height
             if (it is Frame) {
               it.insets?.let { i ->
                 point.x -= i.left
                 point.y -= i.top
+
+                // since main windows have no borders on the client now, we should move insets out of client's viewport:
+                widthWithInsets += i.left + i.right
+                heightWithInsets += i.top + i.bottom
               }
             }
 
-            it.setBounds(point.x, point.y, width, height)
+            it.setBounds(point.x, point.y, widthWithInsets, heightWithInsets)
             it.revalidate()
           }
         }
@@ -936,8 +942,9 @@ class ProjectorServer private constructor(
       ProjectorAwtInitializer.initProjectorAwt()
 
       if (isAgent) {
-        setupAgentSystemProperties()
-        setupAgentSingletons()
+        // todo: make it work with dynamic agent
+        //setupAgentSystemProperties()
+        //setupAgentSingletons()
       }
       else {
         setupSystemProperties()

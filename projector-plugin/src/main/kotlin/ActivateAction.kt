@@ -16,31 +16,18 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-import org.jetbrains.intellij.tasks.PatchPluginXmlTask
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
 
-plugins {
-  kotlin("jvm")
-  id("org.jetbrains.intellij")
-}
+class ActivateAction : DumbAwareAction() {
 
-dependencies {
-  implementation(project(":projector-agent"))
-}
+  override fun actionPerformed(e: AnActionEvent) {
+    ProjectorService.activate()
+  }
 
-intellij {
-  version = "2019.3"
-  updateSinceUntilBuild = false
-}
-
-(tasks["runIde"] as JavaExec).apply {
-  jvmArgs = jvmArgs.orEmpty() + listOf("-Djdk.attach.allowAttachSelf=true", "-Dswing.bufferPerWindow=false")
-}
-
-tasks.withType<PatchPluginXmlTask> {
-  changeNotes(
-    """
-    Add change notes here.<br>
-    <em>most HTML tags may be used</em>
-    """
-  )
+  override fun update(e: AnActionEvent) {
+    val state = ProjectorService.enabled == EnabledState.NO_VM_OPTIONS_AND_DISABLED
+    e.presentation.isEnabled = state
+    e.presentation.isVisible = state
+  }
 }

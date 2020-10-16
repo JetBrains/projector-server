@@ -28,7 +28,7 @@ import java.lang.instrument.IllegalClassFormatException
 import java.security.ProtectionDomain
 
 
-class GraphicsTransformer : ClassFileTransformer {
+internal class GraphicsTransformer : ClassFileTransformer {
   @Throws(IllegalClassFormatException::class)
   override fun transform(
     loader: ClassLoader?,
@@ -83,6 +83,7 @@ class GraphicsTransformer : ClassFileTransformer {
   ): ByteArray {
     logger.debug { "Loading SunGraphics2D..." }
     val clazz = getClassFromClassfileBuffer(classPath, classfileBuffer)
+    clazz.defrost()
     clazz.declaredBehaviors.forEach {
       if (CommandsHandler.isSupportedCommand(it.longName)) {
         if ((it.methodInfo.accessFlags and AccessFlag.STATIC) > 0) {
@@ -106,6 +107,7 @@ class GraphicsTransformer : ClassFileTransformer {
   ): ByteArray {
     logger.debug { "Loading SunVolatileImage..." }
     val clazz = getClassFromClassfileBuffer(classPath, classfileBuffer)
+    clazz.defrost()
     val createGraphicsMethod = clazz.getDeclaredMethod("createGraphics")
     createGraphicsMethod.insertBefore("""
       $DRAW_HANDLER_CLASS_LOADING
@@ -123,6 +125,7 @@ class GraphicsTransformer : ClassFileTransformer {
   ): ByteArray {
     logger.debug { "Loading BufferedImage..." }
     val clazz = getClassFromClassfileBuffer(classPath, classfileBuffer)
+    clazz.defrost()
     val createGraphicsMethod = clazz.getDeclaredMethod("createGraphics")
     createGraphicsMethod.insertBefore("""
       $DRAW_HANDLER_CLASS_LOADING
@@ -140,6 +143,7 @@ class GraphicsTransformer : ClassFileTransformer {
   ): ByteArray {
     logger.debug { "Loading BalloonImpl..." }
     val clazz = getClassFromClassfileBuffer(classPath, classfileBuffer)
+    clazz.defrost()
     println(clazz)
     val initImage = clazz.getDeclaredMethod("initComponentImage")
     initImage.insertBefore("""
@@ -165,6 +169,7 @@ class GraphicsTransformer : ClassFileTransformer {
   ): ByteArray {
     logger.debug { "Loading Component..." }
     val clazz = getClassFromClassfileBuffer(classPath, classfileBuffer)
+    clazz.defrost()
     val updateCursorImmediatelyMethod = clazz.getDeclaredMethod("updateCursorImmediately")
     updateCursorImmediatelyMethod.insertAfter("""
       $DRAW_HANDLER_CLASS_LOADING
@@ -182,6 +187,7 @@ class GraphicsTransformer : ClassFileTransformer {
   ): ByteArray {
     logger.debug { "Loading JComponent..." }
     val clazz = getClassFromClassfileBuffer(classPath, classfileBuffer)
+    clazz.defrost()
     val paintToOffscreenMethod = clazz.getDeclaredMethod("paintToOffscreen")
     paintToOffscreenMethod.insertBefore("""
           $DRAW_HANDLER_CLASS_LOADING

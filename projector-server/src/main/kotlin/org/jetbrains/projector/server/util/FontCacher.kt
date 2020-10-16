@@ -22,6 +22,7 @@ package org.jetbrains.projector.server.util
 
 import org.jetbrains.projector.common.protocol.data.FontDataHolder
 import org.jetbrains.projector.common.protocol.data.TtfFontData
+import org.jetbrains.projector.server.service.ProjectorFontProvider
 import sun.font.CompositeFont
 import sun.font.FileFont
 import sun.font.Font2D
@@ -74,9 +75,6 @@ object FontCacher {
   }
 
   private fun Font.getFilePath(): String? {
-    // don't use the font2DHandle field here because it is initialized in the getFont2D() method
-    val font2D = getFont2DMethod.invoke(this) as Font2D
-
-    return font2D.getFilePath()
+    return ProjectorFontProvider.findFont2D(this.name, this.style, 0).getFilePath()
   }
 }

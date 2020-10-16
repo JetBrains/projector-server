@@ -26,7 +26,7 @@ import sun.java2d.SunGraphics2D
 import java.awt.*
 import java.awt.geom.AffineTransform
 
-data class GraphicsState(
+internal data class GraphicsState(
   val transform: AffineTransform,
   val clip: Shape?,
   val paint: Paint,

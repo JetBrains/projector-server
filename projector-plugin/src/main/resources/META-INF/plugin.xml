@@ -30,7 +30,6 @@
   <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationService serviceImplementation="ProjectorService"/>
     <postStartupActivity implementation="RegisterPluginInstallerStateListener"/>
   </extensions>
 
@@ -40,6 +39,8 @@
       <action id="projector.enable" class="EnableAction" text="Enable Remote Access to IDE" description="Enable projector"/>
       <action id="projector.disable" class="DisableAction" text="Disable Remote Access to IDE" description="Disable projector"/>
       <action id="projector.copy" class="CopyUrlAction" text="Copy URL" description="Copy client url"/>
+      <action id="projector.activate" class="ActivateAction" text="Activate Remote Access to IDE (First Time Setup)"
+              description="Activate projector"/>
     </group>
   </actions>
 </idea-plugin>

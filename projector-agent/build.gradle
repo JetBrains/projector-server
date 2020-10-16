@@ -2,14 +2,15 @@ plugins {
   id("org.jetbrains.kotlin.jvm")
 }
 
-def preMainClassName = "org.jetbrains.projector.agent.MainAgent"
+def agentClassName = "org.jetbrains.projector.agent.MainAgent"
+def launcherClassName = "org.jetbrains.projector.agent.AgentLauncher"
+
+kotlin {
+  explicitApi()
+}
 
 compileKotlin {
   kotlinOptions.jvmTarget = targetJvm
-}
-
-repositories {
-  maven { url "https://jitpack.io" }
 }
 
 dependencies {
@@ -34,7 +35,8 @@ jar {
     attributes(
       "Can-Redefine-Classes": true,
       "Can-Retransform-Classes": true,
-      "Premain-Class": preMainClassName,
+      "Agent-Class": agentClassName,
+      "Main-Class": launcherClassName,
       )
   }
 
@@ -51,11 +53,15 @@ println("------------------------------------------------")
 if (serverTargetClasspath != null && serverClassToLaunch != null) {
   task runWithAgent(type: JavaExec) {
     group = "projector"
-    main = serverClassToLaunch
+    main = launcherClassName
     classpath(sourceSets.main.runtimeClasspath, jar, "$serverTargetClasspath")
     jvmArgs = [
-      "-javaagent:${jar.outputs.files.singleFile}=${jar.outputs.files.singleFile}",
+      "-Djdk.attach.allowAttachSelf=true",
+      "-Dswing.bufferPerWindow=false",
+      "-Dorg.jetbrains.projector.agent.path=${project.file("build/libs/${project.name}-${project.version}.jar")}",
+      "-Dorg.jetbrains.projector.agent.classToLaunch=$serverClassToLaunch",
     ]
+    dependsOn(jar)
   }
 }
 
@@ -72,11 +78,13 @@ if (ideaPath != null) {
 
   task runIdeaWithAgent(type: JavaExec) {
     group = "projector"
-    main = "com.intellij.idea.Main"
+    main = launcherClassName
     classpath(sourceSets.main.runtimeClasspath, jar, "$ideaClassPath", "$jdkHome/../lib/tools.jar")
     jvmArgs = [
-      "-javaagent:${jar.outputs.files.singleFile}=${jar.outputs.files.singleFile}",
-      "-Dorg.jetbrains.projector.server.classToLaunch=com.intellij.idea.Main",
+      "-Djdk.attach.allowAttachSelf=true",
+      "-Dswing.bufferPerWindow=false",
+      "-Dorg.jetbrains.projector.agent.path=${project.file("build/libs/${project.name}-${project.version}.jar")}",
+      "-Dorg.jetbrains.projector.agent.classToLaunch=com.intellij.idea.Main",
       "-Didea.paths.selector=ProjectorIntelliJIdea2019.3",
       "-Didea.jre.check=true",
       "-Didea.is.internal=true",

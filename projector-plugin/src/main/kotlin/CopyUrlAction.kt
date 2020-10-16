@@ -24,6 +24,7 @@ import java.net.Inet4Address
 import java.net.NetworkInterface
 
 class CopyUrlAction : DumbAwareAction() {
+
   override fun actionPerformed(e: AnActionEvent) {
     val dockerVendor = byteArrayOf(0x02.toByte(), 0x42.toByte())
 
@@ -55,7 +56,8 @@ class CopyUrlAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = ProjectorService.instance.enabled
-    e.presentation.isVisible = ProjectorService.instance.enabled
+    val state = ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_ENABLED
+    e.presentation.isEnabled = state
+    e.presentation.isVisible = state
   }
 }

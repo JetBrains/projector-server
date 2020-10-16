@@ -25,6 +25,7 @@ import org.jetbrains.projector.awt.peer.PMouseInfoPeer
 import org.jetbrains.projector.common.protocol.toClient.ServerDrawCommandsEvent
 import org.jetbrains.projector.common.protocol.toClient.ServerWindowEvent
 import org.jetbrains.projector.server.ProjectorServer
+import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
 import org.jetbrains.projector.server.util.unprotect
 import sun.awt.NullComponentPeer
@@ -33,7 +34,7 @@ import java.awt.*
 import java.awt.peer.ComponentPeer
 import javax.swing.JComponent
 
-object GraphicsInterceptor {
+internal object GraphicsInterceptor {
   private var commands = mutableListOf<ServerWindowEvent>()
 
   private var paintToOffscreenInProgress = false
@@ -93,7 +94,7 @@ object GraphicsInterceptor {
   @Suppress("unused")
   @JvmStatic
   fun endPaintToOffscreen() {
-    currentQueue!!.commands.add(commands)
+    currentQueue?.commands?.add(commands) ?: logger.debug { "currentQueue == null" }
     commands = mutableListOf()
     paintToOffscreenInProgress = false
     currentQueue = null
@@ -195,4 +196,6 @@ object GraphicsInterceptor {
   }
 
   private operator fun Point.minus(other: Point) = Point(x - other.x, y - other.y)
+
+  private val logger = Logger(GraphicsInterceptor::class.simpleName!!)
 }

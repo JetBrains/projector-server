@@ -20,85 +20,73 @@ import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.projector.agent.AgentLauncher
 import java.io.File
 import java.util.function.Function
+import javax.swing.JOptionPane
+import javax.swing.SwingUtilities
 
-class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
-  var enabled: Boolean = false
-  override fun getState(): ProjectorConfig? {
-    return this
-  }
+enum class EnabledState {
 
-  override fun loadState(state: ProjectorConfig) {
-    enabled = state.enabled
-  }
-
+  NO_VM_OPTIONS_AND_DISABLED,
+  HAS_VM_OPTIONS_AND_DISABLED,
+  HAS_VM_OPTIONS_AND_ENABLED,
 }
 
-@State(name = "Projector", storages = [Storage("ProjectorConfig.xml")])
-class ProjectorService : PersistentStateComponent<ProjectorConfig> {
-  private var config: ProjectorConfig = ProjectorConfig()
+object ProjectorService {
+
   private val logger = Logger.getInstance(ProjectorService::class.java)
   private val plugin = PluginManager.getPlugin(PluginId.getId("org.jetbrains.projector-plugin"))!!
 
+  var enabled: EnabledState = when (areRequiredVmOptionsPresented()) {
+    true -> EnabledState.HAS_VM_OPTIONS_AND_DISABLED
+    false -> EnabledState.NO_VM_OPTIONS_AND_DISABLED
+  }
+    private set
 
-  private fun vmoptions(): File? {
-    return try {
-      VMOptions.getWriteFile()?.also { logger.info("vmoptions: ${it.absolutePath}") }
-    }
-    catch (ex: Throwable) {
-      logger.warn("Failed to read vmoptions: $ex")
-      null
+  fun activate() {
+    if (confirmRestart(
+        "Before enabling Projector for the first time, some run arguments (VM properties) should be set. Can I set them and restart the IDE now?")) {
+      getVMOptions()?.let { (content, writeFile) ->
+        content
+          .lineSequence()
+          .filterNot { it.startsWith("-Dswing.bufferPerWindow") || it.startsWith("-Djdk.attach.allowAttachSelf") }
+          .plus("-Dswing.bufferPerWindow=false")
+          .plus("-Djdk.attach.allowAttachSelf=true")
+          .joinToString(separator = System.lineSeparator())
+          .let { FileUtil.writeToFile(writeFile, it) }
+
+        restartIde()
+      } ?: SwingUtilities.invokeLater {
+        JOptionPane.showMessageDialog(
+          null,
+          "Can't change VM options. Please see logs to understand the error",
+          "Can't set up...",
+          JOptionPane.ERROR_MESSAGE,
+        )
+      }
     }
   }
 
-  val enabled: Boolean
-    get() = config.enabled
-
-
   fun disable() {
-    if (!confirmRestart()) return
-
-    getVMOptions()?.let { (content, writeFile) ->
-      content
-        .lineSequence()
-        .filterNot { it.startsWith("-javaagent:") && it.contains("projector-plugin") }
-        .joinToString(separator = System.lineSeparator())
-        .let { FileUtil.writeToFile(writeFile, it) }
-
-      config.enabled = false
-      exit()
+    if (confirmRestart("To disable Projector, restart is needed. Can I restart the IDE now?")) {
+      restartIde()
     }
   }
 
   fun enable() {
-    if (!confirmRestart()) return
+    attachDynamicAgent()
+    enabled = EnabledState.HAS_VM_OPTIONS_AND_ENABLED
+  }
 
-    val agentJar = "${plugin.path}/lib/projector-agent-${plugin.version}.jar"
-    val agentOption = "-javaagent:$agentJar=$agentJar"
-    logger.warn("agentOption: $agentOption")
-
-    getVMOptions()?.let { (content, writeFile) ->
-      content
-        .lineSequence()
-        .filterNot { it.startsWith("-javaagent:") && it.contains("projector-plugin") }
-        .plus(agentOption)
-        .joinToString(separator = System.lineSeparator())
-        .let { FileUtil.writeToFile(writeFile, it) }
-
-      config.enabled = true
-      exit()
-    }
+  private fun areRequiredVmOptionsPresented(): Boolean {
+    return System.getProperty("swing.bufferPerWindow")?.toBoolean() == false &&
+           System.getProperty("jdk.attach.allowAttachSelf")?.toBoolean() == true
   }
 
   private fun getVMOptions(): Pair<String, File>? {
@@ -124,27 +112,18 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     return Pair(s, writeFile)
   }
 
-  private fun confirmRestart() : Boolean {
-    val title = "Restart to ${if (enabled) "disable" else "enable"} Projector"
-    val message = Function<String, String> { action: String? ->
-      "$action ${ApplicationNamesInfo.getInstance().fullProductName} to ${if (enabled) "remove" else "add"} java agent?"}
+  private fun confirmRestart(messageString: String): Boolean {
+    val title = "Restart is needed..."
+    val message = Function<String, String> { messageString }
     return PluginManagerConfigurable.showRestartDialog(title, message) == Messages.YES
   }
 
-
-  private fun exit() {
+  private fun restartIde() {
     (ApplicationManager.getApplication() as ApplicationEx).restart(true)
   }
 
-  companion object {
-    val instance: ProjectorService by lazy { ServiceManager.getService(ProjectorService::class.java)!! }
-  }
-
-  override fun getState(): ProjectorConfig? {
-    return config
-  }
-
-  override fun loadState(state: ProjectorConfig) {
-    config = state
+  private fun attachDynamicAgent() {
+    val agentJar = "${plugin.path}/lib/projector-agent-${plugin.version}.jar"
+    AgentLauncher.attachAgent(agentJar)
   }
 }
