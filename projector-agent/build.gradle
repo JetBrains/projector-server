@@ -1,5 +1,14 @@
 plugins {
   id("org.jetbrains.kotlin.jvm")
+  id("maven-publish")
+}
+
+publishing {
+  publications {
+    maven(MavenPublication) {
+      from components.java
+    }
+  }
 }
 
 def agentClassName = "org.jetbrains.projector.agent.MainAgent"
