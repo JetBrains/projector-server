@@ -19,7 +19,10 @@
 package org.jetbrains.projector.server.util
 
 import org.jetbrains.projector.common.misc.Do
+import org.jetbrains.projector.common.protocol.data.CommonRectangle
 import org.jetbrains.projector.common.protocol.toClient.*
+import java.awt.geom.AffineTransform
+import java.awt.geom.Rectangle2D
 
 fun <E> extractData(iterable: MutableIterable<E>): List<E> {
   val answer = mutableListOf<E>()
@@ -27,6 +30,45 @@ fun <E> extractData(iterable: MutableIterable<E>): List<E> {
   iterable.removeAll(answer::add)
 
   return answer
+}
+
+private fun Rectangle2D.isVisible(clip: ServerSetClipEvent, tx: ServerSetTransformEvent): Boolean {
+  val clipRect = clip.shape as? CommonRectangle ?: return true  // can't tell
+  val identityTransformStrBounds = AffineTransform(tx.tx.toDoubleArray()).createTransformedShape(this)
+
+  return identityTransformStrBounds.intersects(clipRect.x, clipRect.y, clipRect.width, clipRect.height)
+}
+
+private fun ServerDrawStringEvent.isVisible(font: ServerSetFontEvent?, clip: ServerSetClipEvent?, tx: ServerSetTransformEvent?): Boolean {
+  if (font == null || clip == null || tx == null) {
+    return true  // can't tell
+  }
+
+  val height = font.fontSize * 3  // todo: it's rough rounding up
+
+  val strBounds = Rectangle2D.Double(
+    this.x,
+    this.y - height,
+    this.desiredWidth,
+    2.0 * height,
+  )
+
+  return strBounds.isVisible(clip, tx)
+}
+
+private fun ServerPaintRectEvent.isVisible(clip: ServerSetClipEvent?, tx: ServerSetTransformEvent?): Boolean {
+  if (clip == null || tx == null) {
+    return true  // can't tell
+  }
+
+  val strBounds = Rectangle2D.Double(
+    this.x,
+    this.y,
+    this.width,
+    this.height,
+  )
+
+  return strBounds.isVisible(clip, tx)
 }
 
 fun List<List<ServerWindowEvent>>.convertToSimpleList(): List<ServerWindowEvent> {
@@ -40,7 +82,7 @@ fun List<List<ServerWindowEvent>>.convertToSimpleList(): List<ServerWindowEvent>
   var lastStrokeEvent: ServerSetStrokeEvent? = null
 
   this.forEach { packedEvents ->
-    packedEvents.forEach { event ->
+    packedEvents.forEach innerLoop@{ event ->
       Do exhaustive when (event) {
         is ServerWindowStateEvent -> Do exhaustive when (event) {
           is ServerSetCompositeEvent -> if (event == lastCompositeEvent) {
@@ -94,9 +136,26 @@ fun List<List<ServerWindowEvent>>.convertToSimpleList(): List<ServerWindowEvent>
           is ServerWindowToDoStateEvent -> answer.add(event)
         }
 
-        is ServerWindowPaintEvent -> answer.add(event)
+        is ServerWindowPaintEvent -> {
+          val visible = when (event) {
+            is ServerDrawStringEvent -> event.isVisible(lastFontEvent, lastClipEvent, lastTransformEvent)
+            is ServerPaintRectEvent -> event.isVisible(lastClipEvent, lastTransformEvent)
+            else -> true
+          }
+
+          if (visible) {
+            answer.add(event)
+          }
+          else {
+            Unit
+          }
+        }
       }
     }
+  }
+
+  while (answer.isNotEmpty() && answer.last() is ServerWindowStateEvent) {
+    answer.removeLast()
   }
 
   return answer
