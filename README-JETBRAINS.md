@@ -39,7 +39,7 @@ If you can't use Docker for some reasons (for example, due to any security limit
 
 If you can't even use this installation script, you need to dive deeper and understand how it works under the hood. You can check README here:[ https://github.com/JetBrains/projector-server/](https://github.com/JetBrains/projector-server/)
 
-As for the client-side, just open the URL (something like [https://127.0.0.1:8080](https://127.0.0.1:8080)) in the browser, and that’s it.
+As for the client-side, just open the URL (something like [https://127.0.0.1:8887](https://127.0.0.1:8887)) in the browser, and that’s it.
 
 
 ## Client-side
@@ -63,7 +63,7 @@ The Projector should run on popular VPN solutions like OpenVPN. It uses the HTTP
 Also, you can use the following SSH command to redirect these ports through a plain SSH tunnel :
 
 ```
-ssh -i key.pem -L 8887:127.0.0.1:8887 -L 8081:127.0.0.1:8080 user@server
+ssh -i key.pem -L 8887:127.0.0.1:8887 user@server
 ```
 
 You can try this on the Amazon cloud.
