@@ -16,18 +16,24 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.projector.server.ProjectorServer
 
-class ActivateAction : DumbAwareAction() {
+class Session(
+  val host: String,
+  val port: String,
+  tokenRW: String,
+  tokenRO: String,
+) {
 
-  override fun actionPerformed(e: AnActionEvent) {
-    ProjectorService.instance.activate()
+  init {
+    System.setProperty(ProjectorServer.PORT_PROPERTY_NAME, port)
+    System.setProperty(ProjectorServer.TOKEN_ENV_NAME, tokenRW)
+    System.setProperty(ProjectorServer.RO_TOKEN_ENV_NAME, tokenRO)
   }
 
-  override fun update(e: AnActionEvent) {
-    val state = ProjectorService.instance.enabled == EnabledState.NO_VM_OPTIONS_AND_DISABLED
-    e.presentation.isEnabled = state
-    e.presentation.isVisible = state
+  fun copyInvitationLink(tokenPropertyName: String) {
+    val token = System.getProperty(tokenPropertyName) ?: ""
+    val url = Utils.getUrl(host, port, token)
+    Utils.copyToClipboard(url)
   }
 }

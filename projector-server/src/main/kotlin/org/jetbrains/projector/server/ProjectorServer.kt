@@ -1016,7 +1016,7 @@ class ProjectorServer private constructor(
 
     const val ENABLE_PROPERTY_NAME = "org.jetbrains.projector.server.enable"
     const val PORT_PROPERTY_NAME = "org.jetbrains.projector.server.port"
-    private const val DEFAULT_PORT = 8887
+    const val DEFAULT_PORT = 8887
     const val TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HANDSHAKE_TOKEN"
     const val RO_TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RO_HANDSHAKE_TOKEN"
 

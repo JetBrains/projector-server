@@ -16,18 +16,25 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.projector.server.ProjectorServer
+import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 
-class ActivateAction : DumbAwareAction() {
+object Utils {
 
-  override fun actionPerformed(e: AnActionEvent) {
-    ProjectorService.instance.activate()
+  fun copyToClipboard(string: String) {
+    Toolkit
+      .getDefaultToolkit()
+      .systemClipboard
+      .setContents(StringSelection(string), null)
   }
 
-  override fun update(e: AnActionEvent) {
-    val state = ProjectorService.instance.enabled == EnabledState.NO_VM_OPTIONS_AND_DISABLED
-    e.presentation.isEnabled = state
-    e.presentation.isVisible = state
+  fun getPort(): String {
+    val port = System.getProperty(ProjectorServer.PORT_PROPERTY_NAME)?.toIntOrNull() ?: ProjectorServer.DEFAULT_PORT
+    return port.toString()
+  }
+
+  fun getUrl(host: String, port: String, token: String?): String {
+    return "http://${host}:${port}" + if (token.isNullOrEmpty()) "" else "/index.html?token=${token}"
   }
 }

@@ -21,6 +21,10 @@ import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Messages
@@ -38,10 +42,38 @@ enum class EnabledState {
   HAS_VM_OPTIONS_AND_ENABLED,
 }
 
-object ProjectorService {
+class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
+  var host: String? = null
+  var port: String? = null
 
+  override fun getState(): ProjectorConfig? {
+    return this
+  }
+
+  override fun loadState(state: ProjectorConfig) {
+    host = state.host
+    port = state.port
+  }
+}
+
+@State(name = "Projector", storages = [Storage("ProjectorConfig.xml")])
+class ProjectorService : PersistentStateComponent<ProjectorConfig> {
+  private var config: ProjectorConfig = ProjectorConfig()
   private val logger = Logger.getInstance(ProjectorService::class.java)
   private val plugin = PluginManager.getPlugin(PluginId.getId("org.jetbrains.projector-plugin"))!!
+
+  val host: String?
+    get() = config.host
+
+  val port: String?
+    get() = config.port
+
+  var currentSession: Session? = null
+    set(value) {
+      field = value
+      config.host = value?.host
+      config.port = value?.port
+    }
 
   var enabled: EnabledState = when (areRequiredVmOptionsPresented()) {
     true -> EnabledState.HAS_VM_OPTIONS_AND_DISABLED
@@ -125,5 +157,17 @@ object ProjectorService {
   private fun attachDynamicAgent() {
     val agentJar = "${plugin.path}/lib/projector-agent-${plugin.version}.jar"
     AgentLauncher.attachAgent(agentJar)
+  }
+
+  companion object {
+    val instance: ProjectorService by lazy { ServiceManager.getService(ProjectorService::class.java)!! }
+  }
+
+  override fun getState(): ProjectorConfig? {
+    return config
+  }
+
+  override fun loadState(state: ProjectorConfig) {
+    config = state
   }
 }
