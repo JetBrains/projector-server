@@ -30,10 +30,6 @@ if (localProperties["useLocalProjectorClient"] == "true") {
   }
 }
 
-if (localProperties["projectorLauncher.ideaPath"] != null) {
-  includeBuild("../projector-markdown-plugin")
-}
-
 include("projector-agent")
 include("projector-awt")
 include("projector-plugin")

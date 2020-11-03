@@ -17,8 +17,6 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-import groovy.json.JsonSlurper
-
 import java.util.zip.ZipFile
 
 plugins {
@@ -90,26 +88,6 @@ if (serverTargetClasspath != null && serverClassToLaunch != null) {
   }
 }
 
-static def getIdeaVersion(path) {
-  def jsonFile = new File("$path/product-info.json")
-  def json = new JsonSlurper().parseText(jsonFile.text)
-
-  return json.version
-}
-
-def getIdeaConfigPaths(path, pathsSelector) {
-  def userHome = System.getProperty("user.home")
-  def version = getIdeaVersion(path)
-
-  if (version.contains("2019.")) {
-    return ["$userHome/.$pathsSelector/config",
-            "$userHome/.$pathsSelector/config/plugins"]
-  }
-
-  return ["$userHome/.config/JetBrains/$pathsSelector",
-          "$userHome/.local/share/JetBrains/$pathsSelector"]
-}
-
 def ideaPath = localProperties['projectorLauncher.ideaPath']
 println("----------- Idea launch config ---------------")
 println("Idea path: $ideaPath")
@@ -123,78 +101,7 @@ if (ideaPath != null) {
 
   def ideaPathsSelector = "ProjectorIntelliJIdea"
 
-  // trying to match for Linux:
-  // https://www.jetbrains.com/help/idea/2019.3/tuning-the-ide.html
-  // https://www.jetbrains.com/help/idea/2020.1/tuning-the-ide.html
-  // please note that IDEs installed from Toolbox can have their own dirs for plugins
-
-  def (String ideaConfigPath, String ideaPluginsPath) = getIdeaConfigPaths(ideaPath, ideaPathsSelector)
-
-  task disableBundledMarkdownPlugin {
-    group = "projector"
-
-    doLast {
-      print("Disabling bundled markdown plugin (in $ideaConfigPath): ")
-      new File(ideaConfigPath).mkdirs()
-
-      def disabledPluginsFilePath = "${ideaConfigPath}/disabled_plugins.txt"
-
-      def disabledPluginsFile = new File(disabledPluginsFilePath)
-
-      disabledPluginsFile.createNewFile()
-
-      def bundledMarkdownPluginName = "org.intellij.plugins.markdown"
-
-      if (bundledMarkdownPluginName in disabledPluginsFile.readLines()) {
-        println("already disabled")
-      }
-      else {
-        disabledPluginsFile.text = bundledMarkdownPluginName + "\n" + disabledPluginsFile.text
-        println("disabled")
-      }
-    }
-  }
-
-  task deleteMarkdownPlugin(type: Delete) {
-    group = "projector"
-
-    delete "${ideaPluginsPath}/projector-plugin-markdown"
-  }
-
-  task copyMarkdownPlugin {
-    dependsOn(deleteMarkdownPlugin)
-    dependsOn(gradle.includedBuild("projector-markdown-plugin").task(":buildPlugin"))
-
-    gradle.includedBuild("projector-markdown-plugin")
-
-    group = "projector"
-
-    doLast {
-      print("Copying markdown plugin (to $ideaPluginsPath): ")
-
-      def mdProjectDir = gradle.includedBuild("projector-markdown-plugin").projectDir
-      def mdDistributionsDir = new File(mdProjectDir, "build/distributions")
-
-      def zipDistribution = mdDistributionsDir.listFiles().find { file ->
-        file.name.startsWith("projector-markdown-plugin-") &&
-        file.name.endsWith(".zip")
-      }
-
-      def destination = file(ideaPluginsPath)
-      destination.mkdirs()
-
-      copy {
-        from zipTree(zipDistribution)
-        into destination
-      }
-
-      println("done")
-    }
-  }
-
   task runIdeaServer(type: JavaExec) {
-    dependsOn(disableBundledMarkdownPlugin, copyMarkdownPlugin)
-
     group = "projector"
     main = "org.jetbrains.projector.server.ProjectorLauncher"
     classpath(sourceSets.main.runtimeClasspath, jar, "$ideaClassPath", "$jdkHome/../lib/tools.jar")
@@ -213,6 +120,7 @@ if (ideaPath != null) {
       "--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED",
       "--add-opens=java.base/java.lang=ALL-UNNAMED",
       "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+      "-Djdk.attach.allowAttachSelf=true",
     ]
   }
 }

@@ -19,6 +19,7 @@
 package org.jetbrains.projector.server.idea
 
 import org.jetbrains.projector.awt.image.PGraphics2D
+import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
 import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.util.unprotect
 import java.awt.RenderingHints

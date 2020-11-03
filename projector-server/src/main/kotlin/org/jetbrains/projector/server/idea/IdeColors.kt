@@ -20,6 +20,7 @@ package org.jetbrains.projector.server.idea
 
 import org.jetbrains.projector.common.protocol.data.PaintValue
 import org.jetbrains.projector.common.protocol.toClient.ServerWindowColorsEvent
+import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
 import org.jetbrains.projector.server.log.Logger
 import java.awt.Color
 import java.lang.reflect.InvocationHandler

@@ -19,7 +19,7 @@
 package org.jetbrains.projector.server.log.impl
 
 import org.jetbrains.projector.common.misc.Do
-import org.jetbrains.projector.server.idea.invokeWhenIdeaIsInitialized
+import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read

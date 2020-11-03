@@ -19,6 +19,7 @@
 package org.jetbrains.projector.server.idea
 
 import org.jetbrains.projector.common.protocol.data.UserKeymap
+import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
 import org.jetbrains.projector.server.log.Logger
 import javax.swing.SwingUtilities
 

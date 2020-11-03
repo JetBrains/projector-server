@@ -26,6 +26,7 @@ import org.jetbrains.projector.common.protocol.data.CommonRectangle
 import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.toClient.ServerCaretInfoChangedEvent
 import org.jetbrains.projector.common.protocol.toClient.data.idea.CaretInfo
+import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
 import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.util.FontCacher
 import org.jetbrains.projector.server.util.unprotect

@@ -47,10 +47,15 @@ import org.jetbrains.projector.common.protocol.toServer.*
 import org.jetbrains.projector.server.ReadyClientSettings.TouchState
 import org.jetbrains.projector.server.core.ProjectorHttpWsServer
 import org.jetbrains.projector.server.core.convert.toAwt.toAwtKeyEvent
+import org.jetbrains.projector.server.core.ij.md.IjInjectorAgentInitializer
+import org.jetbrains.projector.server.core.ij.md.PanelUpdater
 import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshakeEncoder
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshakeDecoder
-import org.jetbrains.projector.server.idea.*
+import org.jetbrains.projector.server.idea.CaretInfoUpdater
+import org.jetbrains.projector.server.idea.IdeColors
+import org.jetbrains.projector.server.idea.KeymapSetter
+import org.jetbrains.projector.server.idea.SettingsInitializer
 import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
@@ -113,7 +118,6 @@ class ProjectorServer private constructor(
       }
 
       caretInfoUpdater.start()
-      markdownPanelUpdater.setUpCallbacks()
     }
 
     override fun onWsMessage(connection: WebSocket, message: ByteBuffer) {
@@ -136,7 +140,7 @@ class ProjectorServer private constructor(
           PWindow.windows.forEach(PWindow::repaint)
           previousWindowEvents = emptySet()
           caretInfoUpdater.createCaretInfoEvent()
-          markdownPanelUpdater.updateAll()
+          PanelUpdater.updateAll()
         }
 
         is ReadyClientSettings -> {
@@ -191,20 +195,20 @@ class ProjectorServer private constructor(
     windowColorsEvent = ServerWindowColorsEvent(colors)
   }
 
-  private val markdownPanelUpdater = MarkdownPanelUpdater(
-    showCallback = { id, show ->
+  init {
+    PanelUpdater.showCallback = { id, show ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownShowEvent(id, show))
-    },
-    resizeCallback = { id, size ->
+    }
+    PanelUpdater.resizeCallback = { id, size ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownResizeEvent(id, size.toCommonIntSize()))
-    },
-    moveCallback = { id, point ->
+    }
+    PanelUpdater.moveCallback = { id, point ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownMoveEvent(id, point.shift(PGraphicsDevice.clientShift)))
-    },
-    disposeCallback = { id ->
+    }
+    PanelUpdater.disposeCallback = { id ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownDisposeEvent(id))
-    },
-    placeToWindowCallback = { id, rootComponent ->
+    }
+    PanelUpdater.placeToWindowCallback = { id, rootComponent ->
       rootComponent?.let {
         val peer = AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(it)
 
@@ -214,20 +218,20 @@ class ProjectorServer private constructor(
 
         markdownQueue.add(ServerMarkdownEvent.ServerMarkdownPlaceToWindowEvent(id, peer.pWindow.id))
       }
-    },
-    setHtmlCallback = { id, html ->
+    }
+    PanelUpdater.setHtmlCallback = { id, html ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownSetHtmlEvent(id, html))
-    },
-    setCssCallback = { id, css ->
+    }
+    PanelUpdater.setCssCallback = { id, css ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownSetCssEvent(id, css))
-    },
-    scrollCallback = { id, offset ->
+    }
+    PanelUpdater.scrollCallback = { id, offset ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownScrollEvent(id, offset))
-    },
-    browseUriCallback = { link ->
+    }
+    PanelUpdater.browseUriCallback = { link ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownBrowseUriEvent(link))
     }
-  )
+  }
 
   @OptIn(ExperimentalStdlibApi::class)
   private fun createDataToSend(): List<ServerEvent> {
@@ -427,7 +431,7 @@ class ProjectorServer private constructor(
         clientSettings.requestedData.add(pingReply)
       }
 
-      is ClientOpenLinkEvent -> markdownPanelUpdater.openInExternalBrowser(message.link)
+      is ClientOpenLinkEvent -> PanelUpdater.openInExternalBrowser(message.link)
 
       is ClientSetKeymapEvent -> if (isAgent) {
         logger.info { "Client keymap was ignored (agent mode)!" }
@@ -949,6 +953,7 @@ class ProjectorServer private constructor(
       else {
         setupSystemProperties()
         setupSingletons()
+        IjInjectorAgentInitializer.init()  // todo: support variant for agent too
       }
 
       ProjectorAwtInitializer.initDefaults()  // this should be done after setting classes because some headless operations can happen here
