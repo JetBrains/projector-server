@@ -37,12 +37,14 @@ Here we enumerate repos related to this project and describe their content.
 * [projector-server](https://github.com/JetBrains/projector-server):
     * `projector-awt` &mdash; AWT implementation.
     * `projector-server` &mdash; an application server for running and remote accessing a Swing app.
-* [projector-markdown-plugin](https://github.com/JetBrains/projector-markdown-plugin) &mdash; Markdown Preview for JetBrains IDEs which can be used with Projector.
 
 ### Examples and utils
 * [projector-demo](https://github.com/JetBrains/projector-demo) &mdash; a sample app showing how to run any Swing app with Projector.
 * [projector-docker](https://github.com/JetBrains/projector-docker) &mdash; scripts for building Docker images containing JetBrains IDEs, Projector Server, and a web server hosting Web Client inside.
 * [projector-installer](https://github.com/JetBrains/projector-installer) &mdash; a utility for installing, configuring, and running JetBrains IDEs with `projector-server` on Linux or in WSL, available at PyPI.
+
+### Obsolete
+* [projector-markdown-plugin](https://github.com/JetBrains/projector-markdown-plugin) &mdash; Markdown Preview for JetBrains IDEs which can be used with Projector. Now we managed to bundle it to projector-server, so you don't need to install it separately anymore.
 
 ## How to use
 You can find some hints in the corresponding repos.

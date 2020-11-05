@@ -85,7 +85,6 @@ Now, everything is an Open Source or Free Software:
 *   Dockerfiles (Apache License 2.0):[ https://github.com/JetBrains/projector-docker](https://github.com/JetBrains/projector-docker)
 *   Server (GNU GPL v2.0):[ https://github.com/JetBrains/projector-server.git](https://github.com/JetBrains/projector-server.git)
 *   Client (MIT License):[ https://github.com/JetBrains/projector-client.git](https://github.com/JetBrains/projector-client.git)
-*   Markdown Plugin (MIT License): [https://github.com/JetBrains/projector-markdown-plugin.git](https://github.com/JetBrains/projector-markdown-plugin.git)
 
 
 ## Known problems
