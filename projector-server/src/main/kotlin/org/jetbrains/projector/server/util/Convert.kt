@@ -28,7 +28,7 @@ import org.jetbrains.projector.common.protocol.data.*
 import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.common.protocol.toServer.ResizeDirection
-import org.jetbrains.projector.server.log.Logger
+import org.jetbrains.projector.util.logging.Logger
 import java.awt.*
 import java.awt.Cursor.*
 import java.awt.geom.PathIterator

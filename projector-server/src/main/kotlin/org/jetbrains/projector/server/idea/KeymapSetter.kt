@@ -20,12 +20,12 @@ package org.jetbrains.projector.server.idea
 
 import org.jetbrains.projector.common.protocol.data.UserKeymap
 import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
-import org.jetbrains.projector.server.log.Logger
+import org.jetbrains.projector.util.logging.Logger
 import javax.swing.SwingUtilities
 
 object KeymapSetter {
 
-  private val logger = Logger(KeymapSetter::class.simpleName!!)
+  private val logger = Logger<KeymapSetter>()
 
   private fun UserKeymap.toKeyMapManagerFieldName() = when (this) {
     UserKeymap.WINDOWS -> "X_WINDOW_KEYMAP"

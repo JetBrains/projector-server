@@ -25,9 +25,9 @@ import org.jetbrains.projector.awt.service.ImageCacher
 import org.jetbrains.projector.common.protocol.data.ImageData
 import org.jetbrains.projector.common.protocol.data.ImageId
 import org.jetbrains.projector.common.protocol.toClient.ServerImageDataReplyEvent
-import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.util.SizeAware
 import org.jetbrains.projector.server.util.unprotect
+import org.jetbrains.projector.util.logging.Logger
 import sun.awt.image.SunVolatileImage
 import sun.awt.image.ToolkitImage
 import sun.java2d.StateTrackable
@@ -61,7 +61,7 @@ object ProjectorImageCacher : ImageCacher {
 
   val newImages by SizeAware(
     ConcurrentLinkedQueue<ServerImageDataReplyEvent>(),
-    Logger(ProjectorImageCacher::class.simpleName!!)
+    Logger<ProjectorImageCacher>()
   )
 
   private data class LivingImage(val reference: SoftReference<Image>, val data: ImageData)

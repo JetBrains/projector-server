@@ -26,6 +26,7 @@ if (localProperties["useLocalProjectorClient"] == "true") {
     dependencySubstitution {
       substitute(module("com.github.JetBrains.projector-client:projector-common")).with(project(":projector-common"))
       substitute(module("com.github.JetBrains.projector-client:projector-server-core")).with(project(":projector-server-core"))
+      substitute(module("com.github.JetBrains.projector-client:projector-util-logging")).with(project(":projector-util-logging"))
     }
   }
 }

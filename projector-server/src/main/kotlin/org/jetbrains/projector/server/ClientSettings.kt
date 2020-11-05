@@ -25,8 +25,8 @@ import org.jetbrains.projector.common.protocol.toClient.ToClientMessageEncoder
 import org.jetbrains.projector.common.protocol.toClient.ToClientTransferableType
 import org.jetbrains.projector.common.protocol.toServer.ToServerMessageDecoder
 import org.jetbrains.projector.common.protocol.toServer.ToServerTransferableType
-import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.util.SizeAware
+import org.jetbrains.projector.util.logging.Logger
 import java.util.concurrent.ConcurrentLinkedQueue
 
 sealed class ClientSettings {
@@ -60,7 +60,7 @@ data class ReadyClientSettings(
 
   companion object {
 
-    private val logger = Logger(ReadyClientSettings::class.simpleName!!)
+    private val logger = Logger<ReadyClientSettings>()
   }
 
   sealed class TouchState {

@@ -19,7 +19,7 @@
 package org.jetbrains.projector.server.util
 
 import org.jetbrains.projector.server.ProjectorServer
-import org.jetbrains.projector.server.log.Logger
+import org.jetbrains.projector.util.logging.Logger
 import kotlin.properties.ObservableProperty
 import kotlin.reflect.KProperty
 

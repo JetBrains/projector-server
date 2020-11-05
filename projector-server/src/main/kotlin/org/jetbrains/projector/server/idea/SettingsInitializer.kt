@@ -20,8 +20,8 @@ package org.jetbrains.projector.server.idea
 
 import org.jetbrains.projector.awt.image.PGraphics2D
 import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
-import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.util.unprotect
+import org.jetbrains.projector.util.logging.Logger
 import java.awt.RenderingHints
 import javax.swing.UIManager
 
@@ -89,5 +89,5 @@ object SettingsInitializer {
     invokeWhenIdeaIsInitialized("initialize IDEA: fix AA and disable smooth scrolling (at start)", onInitialized = ::onIdeaInitialization)
   }
 
-  private val logger = Logger(SettingsInitializer::class.simpleName!!)
+  private val logger = Logger<SettingsInitializer>()
 }

@@ -22,7 +22,7 @@ package org.jetbrains.projector.awt.peer
 
 import org.jetbrains.projector.awt.PWindow
 import org.jetbrains.projector.awt.image.PGraphicsDevice
-import org.jetbrains.projector.awt.service.Logger
+import org.jetbrains.projector.util.logging.Logger
 import java.awt.Dialog
 import java.awt.Point
 import java.awt.Rectangle
@@ -146,6 +146,6 @@ open class PWindowPeer(target: Window) : PContainerPeer(target), WindowPeer {
 
     private const val HEADER_VISIBLE_HEIGHT_PX = 10
 
-    private val logger = Logger.factory(PWindowPeer::class.java)
+    private val logger = Logger<PWindowPeer>()
   }
 }

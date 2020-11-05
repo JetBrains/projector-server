@@ -25,7 +25,6 @@ import org.jetbrains.projector.awt.service.ImageCacher
 import org.jetbrains.projector.common.protocol.toClient.ServerDrawCommandsEvent
 import org.jetbrains.projector.server.util.toColor
 import org.jetbrains.projector.server.util.toStroke
-import org.jetbrains.projector.awt.service.Logger as AwtLogger
 import org.jetbrains.projector.common.misc.Defaults as CommonDefaults
 
 object ProjectorAwtInitializer {
@@ -45,8 +44,6 @@ object ProjectorAwtInitializer {
     FontProvider.instance = ProjectorFontProvider
 
     ImageCacher.instance = ProjectorImageCacher
-
-    AwtLogger.factory = { ProjectorLogger(it.simpleName) }
   }
 
   fun initDefaults() {

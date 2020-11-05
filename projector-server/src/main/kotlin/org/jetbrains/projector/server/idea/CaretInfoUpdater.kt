@@ -27,9 +27,9 @@ import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.toClient.ServerCaretInfoChangedEvent
 import org.jetbrains.projector.common.protocol.toClient.data.idea.CaretInfo
 import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
-import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.util.FontCacher
 import org.jetbrains.projector.server.util.unprotect
+import org.jetbrains.projector.util.logging.Logger
 import sun.awt.AWTAccessor
 import java.awt.Component
 import java.awt.Font
@@ -227,6 +227,6 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
 
   companion object {
 
-    private val logger = Logger(CaretInfoUpdater::class.simpleName!!)
+    private val logger = Logger<CaretInfoUpdater>()
   }
 }

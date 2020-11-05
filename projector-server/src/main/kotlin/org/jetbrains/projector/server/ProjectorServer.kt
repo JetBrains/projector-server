@@ -47,6 +47,7 @@ import org.jetbrains.projector.common.protocol.toServer.*
 import org.jetbrains.projector.server.ReadyClientSettings.TouchState
 import org.jetbrains.projector.server.core.ProjectorHttpWsServer
 import org.jetbrains.projector.server.core.convert.toAwt.toAwtKeyEvent
+import org.jetbrains.projector.server.core.ij.log.DelegatingJvmLogger
 import org.jetbrains.projector.server.core.ij.md.IjInjectorAgentInitializer
 import org.jetbrains.projector.server.core.ij.md.PanelUpdater
 import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
@@ -56,11 +57,12 @@ import org.jetbrains.projector.server.idea.CaretInfoUpdater
 import org.jetbrains.projector.server.idea.IdeColors
 import org.jetbrains.projector.server.idea.KeymapSetter
 import org.jetbrains.projector.server.idea.SettingsInitializer
-import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
 import org.jetbrains.projector.server.service.ProjectorImageCacher
 import org.jetbrains.projector.server.util.*
+import org.jetbrains.projector.util.logging.Logger
+import org.jetbrains.projector.util.logging.loggerFactory
 import sun.awt.AWTAccessor
 import sun.font.FontManagerFactory
 import java.awt.*
@@ -373,7 +375,6 @@ class ProjectorServer private constructor(
       is ClientKeyEvent -> message.toAwtKeyEvent(
         connectionMillis = clientSettings.connectionMillis,
         target = focusOwnerOrTarget(PWindow.windows.last().target),
-        errorLogger = { logger.error(lazyMessage = it) }
       )
         ?.let {
           SwingUtilities.invokeLater {
@@ -384,7 +385,6 @@ class ProjectorServer private constructor(
       is ClientKeyPressEvent -> message.toAwtKeyEvent(
         connectionMillis = clientSettings.connectionMillis,
         target = focusOwnerOrTarget(PWindow.windows.last().target),
-        errorLogger = { logger.error(lazyMessage = it) }
       )
         ?.let {
           SwingUtilities.invokeLater {
@@ -645,7 +645,7 @@ class ProjectorServer private constructor(
 
   companion object {
 
-    private val logger = Logger(ProjectorServer::class.simpleName!!)
+    private val logger = Logger<ProjectorServer>()
 
     private const val DEFAULT_SCROLL_AMOUNT = 1
 
@@ -943,6 +943,8 @@ class ProjectorServer private constructor(
 
     @JvmStatic
     fun startServer(isAgent: Boolean = false): ProjectorServer {
+      loggerFactory = { DelegatingJvmLogger(it) }
+
       ProjectorAwtInitializer.initProjectorAwt()
 
       if (isAgent) {

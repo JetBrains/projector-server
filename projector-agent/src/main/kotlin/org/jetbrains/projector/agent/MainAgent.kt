@@ -21,12 +21,12 @@ package org.jetbrains.projector.agent
 
 import javassist.ClassPool
 import javassist.LoaderClassPath
-import org.jetbrains.projector.server.log.Logger
+import org.jetbrains.projector.util.logging.Logger
 import java.lang.instrument.Instrumentation
 
 public object MainAgent {
 
-  private val logger = Logger(MainAgent::class.simpleName!!)
+  private val logger = Logger<MainAgent>()
 
   @JvmStatic
   public fun agentmain(args: String?, instrumentation: Instrumentation) {

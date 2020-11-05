@@ -22,7 +22,7 @@ import javassist.ByteArrayClassPath
 import javassist.ClassPool
 import javassist.CtClass
 import javassist.bytecode.AccessFlag
-import org.jetbrains.projector.server.log.Logger
+import org.jetbrains.projector.util.logging.Logger
 import java.lang.instrument.ClassFileTransformer
 import java.lang.instrument.IllegalClassFormatException
 import java.security.ProtectionDomain
@@ -222,7 +222,7 @@ internal class GraphicsTransformer : ClassFileTransformer {
   }
 
   companion object {
-    private val logger = Logger(GraphicsTransformer::class.simpleName!!)
+    private val logger = Logger<GraphicsTransformer>()
 
     private val DRAW_HANDLER_PACKAGE = GraphicsInterceptor::class.qualifiedName
     private val DRAW_HANDLER_CLASS_LOADING = "Class clazz = ClassLoader.getSystemClassLoader().loadClass(\"$DRAW_HANDLER_PACKAGE\");"

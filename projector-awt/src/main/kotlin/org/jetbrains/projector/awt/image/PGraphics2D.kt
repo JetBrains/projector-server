@@ -27,7 +27,7 @@ import org.jetbrains.projector.awt.font.PFontManager
 import org.jetbrains.projector.awt.service.Defaults
 import org.jetbrains.projector.awt.service.DrawEventQueue
 import org.jetbrains.projector.awt.service.ImageCacher
-import org.jetbrains.projector.awt.service.Logger
+import org.jetbrains.projector.util.logging.Logger
 import sun.font.FontDesignMetrics
 import sun.java2d.NullSurfaceData
 import sun.java2d.SunGraphics2D
@@ -755,7 +755,7 @@ class PGraphics2D private constructor(
 
   companion object {
 
-    private val logger = Logger.factory(PGraphics2D::class.java)
+    private val logger = Logger<PGraphics2D>()
 
     private fun extractTextAntiAliasingHint(hints: RenderingHints) = hints[RenderingHints.KEY_TEXT_ANTIALIASING]
                                                                      ?: UIManager.getDefaults()[RenderingHints.KEY_TEXT_ANTIALIASING]

@@ -24,8 +24,8 @@ import org.jetbrains.projector.awt.service.DrawEventQueue
 import org.jetbrains.projector.common.protocol.data.ImageId
 import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.toClient.*
-import org.jetbrains.projector.server.log.Logger
 import org.jetbrains.projector.server.util.*
+import org.jetbrains.projector.util.logging.Logger
 import java.awt.*
 import java.lang.ref.SoftReference
 import java.util.concurrent.ConcurrentLinkedQueue
