@@ -32,27 +32,31 @@ object PKeyboardFocusManagerPeer : KeyboardFocusManagerPeerImpl() {
 
   private var focusOwner: Component? = null
 
-  private val focusOwnerLock = ReentrantReadWriteLock(true)
+  private val lock = ReentrantReadWriteLock(true)
 
   private var focusedWindow: Window? = null
 
   override fun setCurrentFocusedWindow(window: Window) {
-    focusedWindow = window
+    lock.write {
+      focusedWindow = window
+    }
   }
 
   override fun getCurrentFocusedWindow(): Window? {
-    return focusedWindow
+    return lock.read {
+      focusedWindow
+    }
   }
 
   override fun setCurrentFocusOwner(component: Component?) {
-    focusOwnerLock.write {
+    lock.write {
       focusOwner = component
     }
   }
 
   override fun getCurrentFocusOwner(): Component? {
-    focusOwnerLock.read {
-      return focusOwner
+    return lock.read {
+      focusOwner
     }
   }
 
@@ -64,11 +68,6 @@ object PKeyboardFocusManagerPeer : KeyboardFocusManagerPeerImpl() {
     time: Long,
     cause: FocusEvent.Cause,
   ): Boolean {
-    focusOwnerLock.read {
-      return deliverFocus(
-        lightweightChild, target, temporary, focusedWindowChangeAllowed, time, cause,
-        focusOwner
-      )
-    }
+    return deliverFocus(lightweightChild, target, temporary, focusedWindowChangeAllowed, time, cause, currentFocusOwner)
   }
 }
