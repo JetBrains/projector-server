@@ -65,7 +65,7 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
 
   override fun setVisible(v: Boolean) {
     if (v) {
-      pWindow.target.repaint()  // todo: why XToolkit doesn't use this?
+      pWindow.target.repaint()  // todo: why XToolkit doesn't use this?  // maybe should do smth like dispatchEvent(ComponentEvent.COMPONENT_SHOWN)
     }
 
     pWindow.target.isVisible = v
