@@ -181,6 +181,8 @@ class ProjectorServer private constructor(
     }
   }
 
+  val wasStarted: Boolean by httpWsServer::wasStarted
+
   private lateinit var updateThread: Thread
 
   private val caretInfoQueue = ConcurrentLinkedQueue<ServerCaretInfoChangedEvent.CaretInfoChange>()

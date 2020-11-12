@@ -19,6 +19,7 @@
 package org.jetbrains.projector.server
 
 import java.lang.reflect.Method
+import kotlin.system.exitProcess
 
 object ProjectorLauncher {
 
@@ -31,11 +32,14 @@ object ProjectorLauncher {
     val canonicalMainClassName = requireNotNull(System.getProperty(MAIN_CLASS_PROPERTY_NAME)) {
       "System property `$MAIN_CLASS_PROPERTY_NAME` isn't assigned, so can't understand which class to launch"
     }
+
     val mainMethod = getMainMethodOf(canonicalMainClassName)
 
-    runProjectorServer()
-
-    mainMethod.invoke(null, args)
+    if (runProjectorServer()) {
+      mainMethod.invoke(null, args)
+    } else {
+      exitProcess(1)
+    }
   }
 
   private fun getMainMethodOf(canonicalClassName: String): Method {
@@ -43,7 +47,7 @@ object ProjectorLauncher {
     return mainClass.getMethod("main", Array<String>::class.java)
   }
 
-  private fun runProjectorServer() {
+  private fun runProjectorServer(): Boolean {
     System.setProperty(ProjectorServer.ENABLE_PROPERTY_NAME, true.toString())
 
     assert(ProjectorServer.isEnabled) { "Can't start the ${ProjectorServer::class.simpleName} because it's disabled..." }
@@ -56,5 +60,7 @@ object ProjectorLauncher {
         server.stop()
       }
     })
+
+    return server.wasStarted
   }
 }
