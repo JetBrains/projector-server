@@ -41,21 +41,21 @@ open class PWindowPeer(target: Window) : PContainerPeer(target), WindowPeer {
     pWindow.toBack()
   }
 
-  private fun isSimpleWindow() = this !is PFramePeer && this !is PDialogPeer
+  private fun transferFocusToOwnerWindow() {
+    var targetOwner: Window? = (pWindow.target as Window).owner
+    while (targetOwner != null && targetOwner.owner != null && !targetOwner.isFocusableWindow) {
+      targetOwner = targetOwner.owner
+    }
+
+    if (targetOwner != null) {
+      PKeyboardFocusManagerPeer.setCurrentFocusedWindow(targetOwner)
+      val we = WindowEvent(targetOwner, WindowEvent.WINDOW_GAINED_FOCUS)
+      targetOwner.dispatchEvent(we)
+    }
+  }
 
   override fun dispose() {
-    if (this.isSimpleWindow()) {
-      var targetOwner: Window? = (pWindow.target as Window).owner
-      while (targetOwner != null && targetOwner.owner != null && !targetOwner.isFocusableWindow) {
-        targetOwner = targetOwner.owner
-      }
-
-      if (targetOwner != null) {
-        PKeyboardFocusManagerPeer.setCurrentFocusedWindow(targetOwner)
-        val we = WindowEvent(targetOwner, WindowEvent.WINDOW_GAINED_FOCUS)
-        targetOwner.dispatchEvent(we)
-      }
-    }
+    transferFocusToOwnerWindow()
 
     super.dispose()
   }
