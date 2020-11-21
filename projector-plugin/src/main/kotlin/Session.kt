@@ -21,19 +21,29 @@ import org.jetbrains.projector.server.ProjectorServer
 class Session(
   val host: String,
   val port: String,
-  tokenRW: String,
-  tokenRO: String,
+  rwToken: String?,
+  roToken: String?,
 ) {
+  var rwToken: String?
+    get() = getToken(ProjectorServer.TOKEN_ENV_NAME)
+    set(value) = setToken(ProjectorServer.TOKEN_ENV_NAME, value)
+
+  var roToken: String?
+    get() = getToken(ProjectorServer.RO_TOKEN_ENV_NAME)
+    set(value) = setToken(ProjectorServer.RO_TOKEN_ENV_NAME, value)
 
   init {
     System.setProperty(ProjectorServer.PORT_PROPERTY_NAME, port)
-    System.setProperty(ProjectorServer.TOKEN_ENV_NAME, tokenRW)
-    System.setProperty(ProjectorServer.RO_TOKEN_ENV_NAME, tokenRO)
+    this.rwToken = rwToken
+    this.roToken = roToken
   }
 
-  fun copyInvitationLink(tokenPropertyName: String) {
-    val token = System.getProperty(tokenPropertyName) ?: ""
-    val url = Utils.getUrl(host, port, token)
-    Utils.copyToClipboard(url)
+  private fun getToken(tokenPropertyName: String): String? = System.getProperty(tokenPropertyName)
+  private fun setToken(tokenPropertyName: String, token: String?) {
+    if (token == null) {
+      System.clearProperty(tokenPropertyName)
+    } else {
+      System.setProperty(tokenPropertyName, token)
+    }
   }
 }

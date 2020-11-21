@@ -25,22 +25,23 @@ class EnableAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val project = PlatformDataKeys.PROJECT.getData(e.dataContext)
-    val dialog = ConnectionDialog(project)
-    dialog.pack()
-    dialog.show()
+    val sessionDialog = SessionDialog(project)
+    sessionDialog.pack()
+    sessionDialog.show()
 
-    if (dialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
-      val session = Session(dialog.host.selectedItem as String,
-                            dialog.port.text,
-                            dialog.tokenRW.text,
-                            dialog.tokenRO.text)
-      ProjectorService.instance.currentSession = session
-      ProjectorService.instance.enable()
+    if (sessionDialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
+      val session = Session(sessionDialog.host,
+                            sessionDialog.port,
+                            sessionDialog.rwToken,
+                            sessionDialog.roToken
+      )
+      ProjectorService.currentSession = session
+      ProjectorService.enable()
     }
   }
 
   override fun update(e: AnActionEvent) {
-    val state = ProjectorService.instance.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
+    val state = ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
     e.presentation.isEnabled = state
     e.presentation.isVisible = state
   }

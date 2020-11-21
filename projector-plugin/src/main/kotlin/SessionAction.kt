@@ -17,44 +17,32 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
-import org.jetbrains.projector.server.ProjectorServer
-import javax.swing.JOptionPane
+import com.intellij.openapi.ui.DialogWrapper
 
-class CopyUrlAction : DumbAwareAction() {
+class SessionAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    require(ProjectorService.instance.currentSession != null) {
+    require(ProjectorService.isSessionRunning) {
       "Projector session is not started"
     }
 
-    val rwOption = "Full Access"
-    val roOption = "View Only"
-    val cancelOption = "Cancel"
-    val invitationDialogOptions = arrayOf(rwOption, roOption, cancelOption)
+    val project = PlatformDataKeys.PROJECT.getData(e.dataContext)
+    val sessionDialog = SessionDialog(project)
+    sessionDialog.pack()
+    sessionDialog.show()
 
-    val selectedInvitationOption = JOptionPane.showOptionDialog(
-      null,
-      "Copy the link depending on the type of access you want to grant.",
-      "Copy Invitation Link",
-      JOptionPane.DEFAULT_OPTION,
-      JOptionPane.PLAIN_MESSAGE,
-      null,
-      invitationDialogOptions,
-      null,
-    )
-
-    val tokenPropertyName = when (invitationDialogOptions[selectedInvitationOption]) {
-      roOption -> ProjectorServer.RO_TOKEN_ENV_NAME
-      rwOption -> ProjectorServer.TOKEN_ENV_NAME
-      else -> return
+    if (sessionDialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
+      ProjectorService.currentSession.apply {
+        rwToken = sessionDialog.rwToken
+        roToken = sessionDialog.roToken
+      }
     }
-
-    ProjectorService.instance.currentSession!!.copyInvitationLink(tokenPropertyName)
   }
 
   override fun update(e: AnActionEvent) {
-    val state = ProjectorService.instance.enabled == EnabledState.HAS_VM_OPTIONS_AND_ENABLED
+    val state = ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_ENABLED
     e.presentation.isEnabled = state
     e.presentation.isVisible = state
   }

@@ -22,11 +22,11 @@ import com.intellij.openapi.project.DumbAwareAction
 class ActivateAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    ProjectorService.instance.activate()
+    ProjectorService.activate()
   }
 
   override fun update(e: AnActionEvent) {
-    val state = ProjectorService.instance.enabled == EnabledState.NO_VM_OPTIONS_AND_DISABLED
+    val state = ProjectorService.enabled == EnabledState.NO_VM_OPTIONS_AND_DISABLED
     e.presentation.isEnabled = state
     e.presentation.isVisible = state
   }
