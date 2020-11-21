@@ -63,24 +63,19 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   private val logger = Logger.getInstance(ProjectorService::class.java)
   private val plugin = PluginManager.getPlugin(PluginId.getId("org.jetbrains.projector-plugin"))!!
 
-  val host: String?
-    get() = config.host
-
-  val port: String?
-    get() = config.port
-
-  var currentSession: Session? = null
+  private var currentSession: Session? = null
     set(value) {
       field = value
       config.host = value?.host
       config.port = value?.port
     }
 
-  var enabled: EnabledState = when (areRequiredVmOptionsPresented()) {
+  private var enabled: EnabledState = when (areRequiredVmOptionsPresented()) {
     true -> EnabledState.HAS_VM_OPTIONS_AND_DISABLED
     false -> EnabledState.NO_VM_OPTIONS_AND_DISABLED
   }
-    private set
+    private set // TODO: fix. Not redundant - get() used only once at initialization time. Next invocations of get() uses field, which is
+                // modified when session started. Without setter menu will stuck in inital state "Start Remote Access...".
 
   fun activate() {
     if (confirmRestart(
@@ -106,13 +101,13 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     }
   }
 
-  fun disable() {
+  private fun disable() {
     if (confirmRestart("To disable Projector, restart is needed. Can I restart the IDE now?")) {
       restartIde()
     }
   }
 
-  fun enable() {
+  private fun enable() {
     attachDynamicAgent()
     enabled = EnabledState.HAS_VM_OPTIONS_AND_ENABLED
   }
@@ -170,7 +165,30 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   }
 
   companion object {
-    val instance: ProjectorService by lazy { ServiceManager.getService(ProjectorService::class.java)!! }
+    private val instance: ProjectorService by lazy { ServiceManager.getService(ProjectorService::class.java)!! }
+
+    fun enable() = instance.enable()
+    fun disable() = instance.disable()
+    fun activate() = instance.activate()
+
+    var enabled: EnabledState
+      get() = instance.enabled
+      set(value) {
+        instance.enabled = value
+      }
+
+    val host: String? get() = instance.config.host
+    val port: String? get() = instance.config.port
+
+    val isSessionRunning: Boolean get() = instance.currentSession != null
+    var currentSession: Session
+      get() {
+        require(isSessionRunning) { "Current sessino is not available - no active sessions" }
+        return instance.currentSession!!
+      }
+      set(value) {
+        instance.currentSession = value
+      }
   }
 
   override fun getState(): ProjectorConfig? {

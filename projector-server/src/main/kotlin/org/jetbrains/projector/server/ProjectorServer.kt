@@ -964,7 +964,7 @@ class ProjectorServer private constructor(
 
       SettingsInitializer.addTaskToInitializeIdea()
 
-      val port = System.getProperty(PORT_PROPERTY_NAME)?.toIntOrNull() ?: DEFAULT_PORT
+      val port = getEnvPort()
 
       logger.info { "${ProjectorServer::class.simpleName} is starting on port: $port" }
       if (ENABLE_BIG_COLLECTIONS_CHECKS) {
@@ -1043,5 +1043,7 @@ class ProjectorServer private constructor(
 
     const val ENABLE_AUTO_KEYMAP_SETTING = "ORG_JETBRAINS_PROJECTOR_SERVER_AUTO_KEYMAP"
     const val ENABLE_CONNECTION_CONFIRMATION = "ORG_JETBRAINS_PROJECTOR_SERVER_CONNECTION_CONFIRMATION"
+
+    fun getEnvPort() = System.getProperty(PORT_PROPERTY_NAME)?.toIntOrNull() ?: DEFAULT_PORT
   }
 }
