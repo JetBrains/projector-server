@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.projector.agent.AgentLauncher
 import java.io.File
+import java.nio.file.Path
 import java.util.function.Function
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
@@ -122,7 +123,16 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   }
 
   private fun getVMOptions(): Pair<String, File>? {
-    val writeFile = VMOptions.getWriteFile()
+    fun getVMOptionsWriteFile(): File? {
+      val writeFileMethod = VMOptions::class.java.getMethod("getWriteFile")
+      return when (writeFileMethod.returnType) {
+        File::class.java -> writeFileMethod.invoke(null) as File? // Pre 2020.3
+        Path::class.java -> (writeFileMethod.invoke(null) as Path?)?.toUri()?.let(::File) // 2020.3
+        else -> error("Unsupported IDEA version. Can't recognize signature of method VMOptions.getWriteFile.")
+      }
+    }
+
+    val writeFile = getVMOptionsWriteFile()
     if (writeFile == null) {
       logger.warn("VM options file not configured")
       return null
