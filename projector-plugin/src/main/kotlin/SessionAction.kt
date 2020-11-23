@@ -24,7 +24,7 @@ import com.intellij.openapi.ui.DialogWrapper
 class SessionAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    require(ProjectorService.isSessionRunning) {
+    check(ProjectorService.isSessionRunning) {
       "Projector session is not started"
     }
 
