@@ -34,8 +34,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val description = JLabel()
   private val myHostsList: HostsList = HostsList(ProjectorService.host)
   private val portEditor: PortEditor = PortEditor(ProjectorService.port)
-  private val rwTokenEditor: TokenEditor = TokenEditor("read-write")
-  private val roTokenEditor: TokenEditor = TokenEditor("read-only")
+  private val rwTokenEditor: TokenEditor = TokenEditor("Require password for read-write access:")
+  private val roTokenEditor: TokenEditor = TokenEditor("Require password for read-only access: ")
   private val rwInvitationLink: InivitationLink = InivitationLink()
   private val roInvitationLink: InivitationLink = InivitationLink()
   private val roInvitationTitle = JLabel("Read Only Link:")
@@ -76,18 +76,18 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   }
 
   override fun createCenterPanel(): JComponent? {
-    val addressPanel = JPanel()
-    LinearPanelBuilder(addressPanel)
-      .addNextComponent(myHostsList, width = 0.5, rightGap = 35)
-      .addNextComponent(portEditor, width = 0.5)
+    val hostPanel = JPanel()
+    LinearPanelBuilder(hostPanel)
+      .addNextComponent(myHostsList, weightx = 0.5, rightGap = 35)
+      .addNextComponent(portEditor, weightx = 0.5)
 
     val panel = JPanel()
     LinearPanelBuilder(panel)
-      .addNextComponent(description, gridCount = 2, bottomGap = 5)
-      .startNextLine().addNextComponent(addressPanel, 2)
+      .addNextComponent(description, gridWidth = 2, bottomGap = 5)
+      .startNextLine().addNextComponent(hostPanel, 2)
       .startNextLine().addNextComponent(rwTokenEditor, 2)
       .startNextLine().addNextComponent(roTokenEditor, 2)
-      .startNextLine().addNextComponent(JLabel("Invitation Links:"), gridCount = 2, topGap = 5, bottomGap = 5)
+      .startNextLine().addNextComponent(JLabel("Invitation Links:"), gridWidth = 2, topGap = 5, bottomGap = 5)
       .startNextLine().addNextComponent(JLabel("Full Access Link:")).addNextComponent(rwInvitationLink)
       .startNextLine().addNextComponent(roInvitationTitle).addNextComponent(roInvitationLink)
     return panel
@@ -135,8 +135,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     }
   }
 
-  private class TokenEditor(accessKind: String) : JPanel() {
-    private val requiredCheckBox: JCheckBox = JCheckBox("Require password for $accessKind access:").apply {
+  private class TokenEditor(title: String) : JPanel() {
+    private val requiredCheckBox: JCheckBox = JCheckBox(title).apply {
       addActionListener {
         tokenTextField.text = if (isSelected) generatePassword() else null
         tokenTextField.isEnabled = isSelected
@@ -192,7 +192,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     init {
       LinearPanelBuilder(this)
-        .addNextComponent(title, width = 0.1)
+        .addNextComponent(title, weightx = 0.1)
         .addNextComponent(hosts)
     }
 
@@ -220,7 +220,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     init {
       LinearPanelBuilder(this)
-        .addNextComponent(title, width = 0.1)
+        .addNextComponent(title, weightx = 0.1)
         .addNextComponent(port)
     }
 

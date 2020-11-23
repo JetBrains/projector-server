@@ -25,26 +25,26 @@ import java.awt.event.KeyEvent
 import java.awt.event.KeyListener
 import javax.swing.*
 
-class LinearPanelBuilder(private var panelWrapper: JPanel) {
+class LinearPanelBuilder(private var panel: JPanel) {
   private val constraints = GridBagConstraints()
 
   init {
-    panelWrapper.componentOrientation = ComponentOrientation.LEFT_TO_RIGHT
-    panelWrapper.layout = GridBagLayout()
+    panel.componentOrientation = ComponentOrientation.LEFT_TO_RIGHT
+    panel.layout = GridBagLayout()
     constraints.fill = GridBagConstraints.HORIZONTAL
     constraints.gridx = 0
     constraints.gridy = 0
   }
 
   fun addNextComponent(
-    c: Component, gridCount: Int = 1, width: Double = 1.0,
+    c: Component, gridWidth: Int = 1, weightx: Double = 1.0,
     leftGap: Int = 0, rightGap: Int = 0, topGap: Int = 0, bottomGap: Int = 0,
   ): LinearPanelBuilder {
-    constraints.gridwidth = gridCount
-    constraints.weightx = width
+    constraints.gridwidth = gridWidth
+    constraints.weightx = weightx
     constraints.insets = Insets(topGap, leftGap, bottomGap, rightGap)
-    panelWrapper.add(c, constraints)
-    constraints.gridx += gridCount
+    panel.add(c, constraints)
+    constraints.gridx += gridWidth
     return this
   }
 

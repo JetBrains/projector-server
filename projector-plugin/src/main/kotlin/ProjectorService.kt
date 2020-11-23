@@ -74,8 +74,6 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     true -> EnabledState.HAS_VM_OPTIONS_AND_DISABLED
     false -> EnabledState.NO_VM_OPTIONS_AND_DISABLED
   }
-    private set // TODO: fix. Not redundant - get() used only once at initialization time. Next invocations of get() uses field, which is
-                // modified when session started. Without setter menu will stuck in inital state "Start Remote Access...".
 
   fun activate() {
     if (confirmRestart(
@@ -183,7 +181,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     val isSessionRunning: Boolean get() = instance.currentSession != null
     var currentSession: Session
       get() {
-        require(isSessionRunning) { "Current sessino is not available - no active sessions" }
+        check(isSessionRunning) { "Current session is not available - no active sessions" }
         return instance.currentSession!!
       }
       set(value) {
