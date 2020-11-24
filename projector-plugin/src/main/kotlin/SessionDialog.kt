@@ -23,8 +23,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import org.jetbrains.projector.server.ProjectorServer
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
+import java.awt.event.*
 import java.net.Inet4Address
 import java.net.NetworkInterface
 import javax.swing.*
@@ -36,9 +35,36 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val portEditor: PortEditor = PortEditor(ProjectorService.port)
   private val rwTokenEditor: TokenEditor = TokenEditor("Require password for read-write access:")
   private val roTokenEditor: TokenEditor = TokenEditor("Require password for read-only access: ")
-  private val rwInvitationLink: InivitationLink = InivitationLink()
-  private val roInvitationLink: InivitationLink = InivitationLink()
+  private val rwInvitationLink: InvitationLink = InvitationLink()
+  private val roInvitationLink: InvitationLink = InvitationLink()
   private val roInvitationTitle = JLabel("Read Only Link:")
+
+  private val bothAccess = JRadioButton("RW & RO")
+  private val onlyRwAccess = JRadioButton("RW only")
+  private val accessGroup = ButtonGroup().apply {
+    fun changeRoVisibility(isVisible: Boolean) {
+      roTokenEditor.isVisible = isVisible
+      roInvitationTitle.isVisible = isVisible
+      roInvitationLink.isVisible = isVisible
+    }
+    bothAccess.addItemListener {
+      if (it.stateChange == ItemEvent.SELECTED) {
+        roTokenEditor.token = generatePassword()
+        changeRoVisibility(true)
+        updateInvitationLinks()
+      }
+    }
+    onlyRwAccess.addItemListener {
+      if (it.stateChange == ItemEvent.SELECTED) {
+        roTokenEditor.token = rwTokenEditor.token
+        changeRoVisibility(false)
+        updateInvitationLinks()
+      }
+    }
+    bothAccess.isSelected = true
+    add(bothAccess)
+    add(onlyRwAccess)
+  }
 
   val rwToken: String? get() = rwTokenEditor.token
   val roToken: String? get() = roTokenEditor.token
@@ -76,39 +102,31 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   }
 
   override fun createCenterPanel(): JComponent? {
-    val hostPanel = JPanel()
-    LinearPanelBuilder(hostPanel)
-      .addNextComponent(myHostsList, weightx = 0.5, rightGap = 35)
-      .addNextComponent(portEditor, weightx = 0.5)
-
     val panel = JPanel()
-    LinearPanelBuilder(panel)
-      .addNextComponent(description, gridWidth = 2, bottomGap = 5)
-      .startNextLine().addNextComponent(hostPanel, 2)
-      .startNextLine().addNextComponent(rwTokenEditor, 2)
-      .startNextLine().addNextComponent(roTokenEditor, 2)
-      .startNextLine().addNextComponent(JLabel("Invitation Links:"), gridWidth = 2, topGap = 5, bottomGap = 5)
-      .startNextLine().addNextComponent(JLabel("Full Access Link:")).addNextComponent(rwInvitationLink)
-      .startNextLine().addNextComponent(roInvitationTitle).addNextComponent(roInvitationLink)
+    LinearPanelBuilder(panel).addNextComponent(description, gridWidth = 4, bottomGap = 5)
+      .startNextLine().addNextComponent(myHostsList, gridWidth = 2, weightx = 0.5, rightGap = 15).addNextComponent(portEditor, gridWidth = 2, weightx = 0.5)
+      .startNextLine().addNextComponent(JLabel("Access Types:"), topGap = 5).addNextComponent(bothAccess, topGap = 5).addNextComponent(onlyRwAccess, topGap = 5)
+      .startNextLine().addNextComponent(rwTokenEditor.requiredCheckBox, gridWidth = 2).addNextComponent(rwTokenEditor.tokenTextField, gridWidth = 2)
+      .startNextLine().addNextComponent(roTokenEditor.requiredCheckBox, gridWidth = 2).addNextComponent(roTokenEditor.tokenTextField, gridWidth = 2)
+      .startNextLine().addNextComponent(JLabel("Invitation Links:"), gridWidth = 4, topGap = 5, bottomGap = 5)
+      .startNextLine().addNextComponent(JLabel("Full Access Link:")).addNextComponent(rwInvitationLink.link, gridWidth = 2).addNextComponent(rwInvitationLink.copyButton)
+      .startNextLine().addNextComponent(roInvitationTitle).addNextComponent(roInvitationLink.link, gridWidth = 2).addNextComponent(roInvitationLink.copyButton)
     return panel
   }
 
   private fun updateInvitationLinks() {
+    if (onlyRwAccess.isSelected) {
+      roTokenEditor.token = rwTokenEditor.token
+    } else if (rwTokenEditor.token == roTokenEditor.token) {
+      onlyRwAccess.isSelected = true
+    }
+
     rwInvitationLink.update(host, port, rwTokenEditor.token)
     roInvitationLink.update(host, port, roTokenEditor.token)
-
-    if (rwTokenEditor.token == roTokenEditor.token) {
-      // Hide RO invitation section when tokens are equal - user will always get RW access in this case.
-      roInvitationTitle.isVisible = false
-      roInvitationLink.isVisible = false
-    } else {
-      roInvitationTitle.isVisible = true
-      roInvitationLink.isVisible = true
-    }
   }
 
-  private class InivitationLink() : JPanel() {
-    private val copyButton = JButton(AllIcons.Actions.Copy).apply {
+  private class InvitationLink {
+    val copyButton = JButton(AllIcons.Actions.Copy).apply {
       addActionListener {
         Toolkit
           .getDefaultToolkit()
@@ -117,35 +135,34 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       }
     }
 
-    private val link: JTextField = JTextField(null).apply {
+    val link: JTextField = JTextField(null).apply {
       isEditable = false
       background = null
       border = null
       columns = 30
     }
 
-    init {
-      layout = BoxLayout(this, BoxLayout.LINE_AXIS)
-      add(link)
-      add(copyButton)
-    }
-
     fun update(host: String, port: String, token: String?) {
       link.text = "http://${host}:${port}" + if (token == null) "" else "/?token=${token}"
     }
+
+    var isVisible = true
+      set(value) {
+        link.isVisible = value
+        copyButton.isVisible = value
+        field = value
+      }
   }
 
-  private class TokenEditor(title: String) : JPanel() {
-    private val requiredCheckBox: JCheckBox = JCheckBox(title).apply {
+  private class TokenEditor(title: String) {
+    val requiredCheckBox: JCheckBox = JCheckBox(title).apply {
       addActionListener {
         tokenTextField.text = if (isSelected) generatePassword() else null
         tokenTextField.isEnabled = isSelected
         onChange?.invoke()
       }
     }
-    private val tokenTextField: JTextField = JTextField().apply {
-      columns = 15
-
+    val tokenTextField: JTextField = JTextField().apply {
       addKeyListener(object : KeyAdapter() {
         override fun keyReleased(e: KeyEvent) {
           onChange?.invoke()
@@ -153,20 +170,22 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       })
     }
 
-    init {
-      LinearPanelBuilder(this)
-        .addNextComponent(requiredCheckBox)
-        .addNextComponent(tokenTextField)
-    }
-
     var onChange: (() -> Unit)? = null
 
     var token
       get() = if (requiredCheckBox.isSelected) tokenTextField.text else null
       set(value) {
-        tokenTextField.text = value
         requiredCheckBox.isSelected = value != null
-    }
+        tokenTextField.isEnabled = requiredCheckBox.isSelected
+        tokenTextField.text = value
+      }
+
+    var isVisible = true
+      set(value) {
+        tokenTextField.isVisible = value
+        requiredCheckBox.isVisible = value
+        field = value
+      }
   }
 
   private class HostsList(selectedHost: String?) : JPanel() {
@@ -179,8 +198,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         .filterNot { it.isLoopback }
         .filterNot {
           it.hardwareAddress != null
-          &&
-          it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor)
+            &&
+            it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor)
         }
         .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
         .mapNotNull { (it.address as? Inet4Address)?.hostName }
