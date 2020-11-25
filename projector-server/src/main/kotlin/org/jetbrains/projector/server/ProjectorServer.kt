@@ -63,6 +63,7 @@ import org.jetbrains.projector.server.service.ProjectorImageCacher
 import org.jetbrains.projector.server.util.*
 import org.jetbrains.projector.util.logging.Logger
 import org.jetbrains.projector.util.logging.loggerFactory
+import org.xbill.DNS.Address
 import sun.awt.AWTAccessor
 import sun.font.FontManagerFactory
 import java.awt.*
@@ -74,6 +75,8 @@ import java.awt.event.MouseEvent
 import java.awt.event.MouseWheelEvent
 import java.awt.peer.ComponentPeer
 import java.io.FileInputStream
+import java.net.InetAddress
+import java.net.UnknownHostException
 import java.nio.ByteBuffer
 import java.security.KeyStore
 import java.util.*
@@ -522,12 +525,12 @@ class ProjectorServer private constructor(
       return
     }
 
-    val ipString = conn.remoteSocketAddress?.address?.hostAddress
+    val remoteAddress = conn.remoteSocketAddress?.address
+    check(remoteAddress != null) { "Remote address is null!" } // drop nullability
 
     if (
-      isAgent &&
-      getProperty(ENABLE_CONNECTION_CONFIRMATION)?.toBoolean() != false &&
-      ipString !in setOf("127.0.0.1", "0:0:0:0:0:0:0:1")
+      isAgent && !remoteAddress.isLoopbackAddress &&
+      getProperty(ENABLE_CONNECTION_CONFIRMATION)?.toBoolean() != false
     ) {
       logger.info { "Asking for connection confirmation because of agent mode..." }
 
@@ -541,7 +544,7 @@ class ProjectorServer private constructor(
 
         selectedOption = JOptionPane.showOptionDialog(
           null,
-          "Somebody ($ipString) wants to connect with $accessType access. Allow the connection?",
+          "Somebody (${getHostName(remoteAddress)}) wants to connect with $accessType access. Allow the connection?",
           "New connection",
           JOptionPane.YES_NO_OPTION,
           JOptionPane.QUESTION_MESSAGE,
@@ -1045,5 +1048,16 @@ class ProjectorServer private constructor(
     const val ENABLE_CONNECTION_CONFIRMATION = "ORG_JETBRAINS_PROJECTOR_SERVER_CONNECTION_CONFIRMATION"
 
     fun getEnvPort() = System.getProperty(PORT_PROPERTY_NAME)?.toIntOrNull() ?: DEFAULT_PORT
+
+    fun getHostName(address: InetAddress): String? {
+      return try {
+        // The trailing '.' makes the name into a "Fully Qualified Domain Name", i.e. an absolute domain name.
+        // dnsjava adds the trailing dot, but for our purpose we don't need it
+        Address.getHostName(address).trimEnd('.')
+      }
+      catch (e: UnknownHostException) {
+        address.hostAddress
+      }
+    }
   }
 }

@@ -23,8 +23,9 @@ import com.intellij.openapi.ui.DialogWrapper
 import org.jetbrains.projector.server.ProjectorServer
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
-import java.awt.event.*
-import java.net.Inet4Address
+import java.awt.event.ItemEvent
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 import java.net.NetworkInterface
 import javax.swing.*
 import kotlin.random.Random
@@ -139,7 +140,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       isEditable = false
       background = null
       border = null
-      columns = 30
+      columns = 35
     }
 
     fun update(host: String, port: String, token: String?) {
@@ -195,14 +196,10 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       NetworkInterface.getNetworkInterfaces()
         .asSequence()
         .filterNotNull()
-        .filterNot { it.isLoopback }
-        .filterNot {
-          it.hardwareAddress != null
-            &&
-            it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor)
-        }
+        .filterNot { it.isLoopback } // drop localhost
+        .filterNot { it.hardwareAddress != null && it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor) } // drop docker
         .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
-        .mapNotNull { (it.address as? Inet4Address)?.hostName }
+        .mapNotNull { ProjectorServer.getHostName(it.address) }
         .forEach(::addItem)
 
       selectedHost?.takeIf(String::isNotEmpty)?.let { selectedItem = it }
