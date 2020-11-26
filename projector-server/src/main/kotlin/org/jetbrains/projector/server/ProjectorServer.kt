@@ -526,10 +526,9 @@ class ProjectorServer private constructor(
     }
 
     val remoteAddress = conn.remoteSocketAddress?.address
-    check(remoteAddress != null) { "Remote address is null!" } // drop nullability
 
     if (
-      isAgent && !remoteAddress.isLoopbackAddress &&
+      isAgent && remoteAddress?.isLoopbackAddress != true &&
       getProperty(ENABLE_CONNECTION_CONFIRMATION)?.toBoolean() != false
     ) {
       logger.info { "Asking for connection confirmation because of agent mode..." }
@@ -542,9 +541,14 @@ class ProjectorServer private constructor(
           false -> "read-only"
         }
 
+        val remoteHostName = when(remoteAddress) {
+          null -> "can't determine the host's name or IP"
+          else -> getHostName(remoteAddress)
+        }
+
         selectedOption = JOptionPane.showOptionDialog(
           null,
-          "Somebody (${getHostName(remoteAddress)}) wants to connect with $accessType access. Allow the connection?",
+          "Somebody ($remoteHostName) wants to connect with $accessType access. Allow the connection?",
           "New connection",
           JOptionPane.YES_NO_OPTION,
           JOptionPane.QUESTION_MESSAGE,

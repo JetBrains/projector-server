@@ -47,7 +47,7 @@ dependencies {
   implementation("com.github.JetBrains.projector-client:projector-server-core:$projectorClientVersion")
   implementation("com.github.JetBrains.projector-client:projector-util-logging:$projectorClientVersion")
   api project(":projector-awt")
-  implementation("dnsjava:dnsjava:2.1.9")
+  implementation("dnsjava:dnsjava:$dnsjavaVersion")
 
   testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$mockitoKotlinVersion"
 
