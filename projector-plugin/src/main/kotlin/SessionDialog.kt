@@ -200,6 +200,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         .filterNot { it.hardwareAddress != null && it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor) } // drop docker
         .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
         .mapNotNull { ProjectorServer.getHostName(it.address) }
+        .distinct()
         .forEach(::addItem)
 
       selectedHost?.takeIf(String::isNotEmpty)?.let { selectedItem = it }
