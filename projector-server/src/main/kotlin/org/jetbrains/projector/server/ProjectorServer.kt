@@ -898,11 +898,13 @@ class ProjectorServer private constructor(
     }
 
     private fun calculateMainWindowShift() {
-      getMainWindows().firstOrNull()?.target?.let { window ->
-        synchronized(window.treeLock) {
-          var x = 0.0
-          var y = 0.0
+      var x = 0.0
+      var y = 0.0
 
+      // restricted to the windows, which are shown maximized without window decorations (see resize() below)
+      // We're always applying the shift to reset it when no IDEA window is shown
+      getMainWindows().firstOrNull { it.windowType == WindowType.IDEA_WINDOW }?.target?.let { window ->
+        synchronized(window.treeLock) {
           if (window is Frame) {
             window.insets?.let {
               x += it.left
@@ -914,10 +916,10 @@ class ProjectorServer private constructor(
             x += it.x
             y += it.y
           }
-
-          PGraphicsDevice.clientShift.setLocation(x, y)
         }
       }
+
+      PGraphicsDevice.clientShift.setLocation(x, y)
     }
 
     private fun resize(width: Int, height: Int) {
@@ -926,7 +928,8 @@ class ProjectorServer private constructor(
         ge.setSize(width, height)
       }
 
-      getMainWindows().map(PWindow::target).let { mainWindows ->
+      // only maximize IDEA main windows, not windows like "Open Project"
+      getMainWindows().filter { it.windowType == WindowType.IDEA_WINDOW }.map(PWindow::target).let { mainWindows ->
         SwingUtilities.invokeLater {
           mainWindows.forEach {
             val point = AwtPoint(PGraphicsDevice.clientShift)
