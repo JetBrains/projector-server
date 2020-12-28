@@ -166,7 +166,7 @@ class ProjectorServer private constructor(
 
     override fun onWsOpen(connection: WebSocket) {
       connection.setAttachment(ConnectedClientSettings(connectionMillis = System.currentTimeMillis()))
-      logger.info { "${connection.remoteSocketAddress.address.hostAddress} connected." }
+      logger.info { "${connection.remoteSocketAddress?.address?.hostAddress} connected." }
     }
 
     override fun onError(connection: WebSocket?, e: Exception) {
