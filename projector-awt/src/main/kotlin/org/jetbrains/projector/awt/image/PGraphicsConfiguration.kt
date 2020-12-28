@@ -50,7 +50,7 @@ object PGraphicsConfiguration : GraphicsConfiguration() {
   }
 
   override fun getBounds(): Rectangle {
-    return PGraphicsDevice.clientScreenBounds
+    return Rectangle(PGraphicsDevice.clientScreenBounds)
   }
 
   override fun createCompatibleVolatileImage(width: Int, height: Int, caps: ImageCapabilities?, transparency: Int): VolatileImage {
