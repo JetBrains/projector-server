@@ -19,7 +19,6 @@
 package org.jetbrains.projector.awt
 
 import java.awt.font.TextAttribute
-import java.awt.im.InputMethodHighlight
 
 object PInputMethod {
 
@@ -27,7 +26,7 @@ object PInputMethod {
     TextAttribute.INPUT_METHOD_UNDERLINE to TextAttribute.UNDERLINE_LOW_DOTTED
   )
 
-  fun mapInputMethodHighlight(highlight: InputMethodHighlight): Map<TextAttribute, Int> {
+  fun mapInputMethodHighlight(): Map<TextAttribute, Int> {
     return highlightStyle
   }
 }

@@ -163,10 +163,12 @@ internal object CommandsHandler {
     return paintShape(paintType = PaintType.DRAW, shape = args[0] as Shape, g = graphicsState)
   }
 
+  @Suppress("UNUSED_PARAMETER")  // todo: use parameter
   private fun drawRenderedImage(args: Array<Any?>, graphicsState: GraphicsState): List<ServerWindowEvent> {
     return convertToServerWindowEvent(paintEvent = ServerDrawRenderedImageEvent, g = graphicsState)
   }
 
+  @Suppress("UNUSED_PARAMETER")  // todo: use parameter
   private fun drawRenderableImage(args: Array<Any?>, graphicsState: GraphicsState): List<ServerWindowEvent> {
     return convertToServerWindowEvent(paintEvent = ServerDrawRenderableImageEvent, g = graphicsState)
   }

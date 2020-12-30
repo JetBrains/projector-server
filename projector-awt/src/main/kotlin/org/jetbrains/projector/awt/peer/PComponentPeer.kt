@@ -118,6 +118,7 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
   }
 
   override fun getFontMetrics(font: Font): FontMetrics {
+    @Suppress("DEPRECATION")  // todo
     return toolkit.getFontMetrics(font)
   }
 

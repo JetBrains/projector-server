@@ -274,8 +274,8 @@ class PToolkit : Toolkit(), KeyboardFocusManagerPeerProvider, ComponentFactory {
     return false
   }
 
-  override fun mapInputMethodHighlight(highlight: InputMethodHighlight): Map<TextAttribute, *>? {
-    return PInputMethod.mapInputMethodHighlight(highlight)
+  override fun mapInputMethodHighlight(highlight: InputMethodHighlight): Map<TextAttribute, *> {
+    return PInputMethod.mapInputMethodHighlight()
   }
 
   override fun getKeyboardFocusManagerPeer(): KeyboardFocusManagerPeer {
@@ -340,7 +340,8 @@ class PToolkit : Toolkit(), KeyboardFocusManagerPeerProvider, ComponentFactory {
       unregisterPeerMethod.invoke(AWTAutoShutdown.getInstance(), target, peer)
     }
 
-    private val imgCache = SoftCache()  // todo
+    @Suppress("DEPRECATION")  // todo
+    private val imgCache = SoftCache()
 
     val systemEventQueueImplPP: EventQueue
       get() = AppContext.getAppContext().get(AppContext.EVENT_QUEUE_KEY) as EventQueue

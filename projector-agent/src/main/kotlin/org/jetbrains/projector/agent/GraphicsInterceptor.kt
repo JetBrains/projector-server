@@ -54,7 +54,8 @@ internal object GraphicsInterceptor {
   @Suppress("unused")
   private val server = ProjectorServer.startServer(true)
 
-  @Suppress("unused")
+  @Suppress("unused", "PLATFORM_CLASS_MAPPED_TO_KOTLIN",
+            "UNUSED_PARAMETER")  // Integer is needed because this function is used via reflection
   @JvmStatic
   fun beginPaintToOffscreen(comp: JComponent, x: Integer, y: Integer, w: Integer, h: Integer) {
     paintToOffscreenInProgress = true

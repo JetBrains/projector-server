@@ -16,7 +16,7 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE", "DEPRECATION")
 
 package org.jetbrains.projector.awt.peer
 
