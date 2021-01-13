@@ -4,7 +4,7 @@
 
 Server-side library for running Swing applications remotely.
 
-For more info, please check out [Projector.md](https://github.com/JetBrains/projector-server/blob/master/docs/Projector.md).
+[Documentation](https://jetbrains.github.io/projector-client/mkdocs/latest/) | [Issue tracker](https://youtrack.jetbrains.com/issues/PRJ)
 
 ## Building
 The following command creates a zip file with the whole runtime classpath:
