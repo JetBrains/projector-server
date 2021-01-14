@@ -24,6 +24,7 @@ compileKotlin {
 
 dependencies {
   implementation("com.github.JetBrains.projector-client:projector-common:$projectorClientVersion")
+  implementation("com.github.JetBrains.projector-client:projector-server-core:$projectorClientVersion")
   implementation("com.github.JetBrains.projector-client:projector-util-logging:$projectorClientVersion")
   api(project(":projector-awt"))
   api(project(":projector-server"))

@@ -19,7 +19,7 @@
 package org.jetbrains.projector.server.util
 
 import com.nhaarman.mockitokotlin2.*
-import org.jetbrains.projector.server.ProjectorServer
+import org.jetbrains.projector.server.core.util.SizeAware
 import org.jetbrains.projector.util.logging.Logger
 import kotlin.test.Test
 
@@ -34,10 +34,7 @@ class SizeAwareTest {
     val checkedSize = 100
     val targetSize = 200
 
-    ProjectorServer.ENABLE_BIG_COLLECTIONS_CHECKS = true
-    ProjectorServer.BIG_COLLECTIONS_CHECKS_START_SIZE = checkedSize
-
-    val template = TemplateClass(logger)
+    val template = TemplateClass(logger, checkedSize)
 
     repeat(targetSize) {
       template.list.add(it)
@@ -46,8 +43,8 @@ class SizeAwareTest {
     verify(logger, times(targetSize - checkedSize)).error(anyOrNull(), any())
   }
 
-  class TemplateClass(logger: Logger) {
+  class TemplateClass(logger: Logger, bigCollectionSize: Int) {
 
-    val list by SizeAware(mutableListOf<Int>(), logger)
+    val list by SizeAware(mutableListOf<Int>(), bigCollectionSize, logger)
   }
 }

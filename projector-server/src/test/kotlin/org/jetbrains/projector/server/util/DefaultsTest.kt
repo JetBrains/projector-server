@@ -19,6 +19,7 @@
 package org.jetbrains.projector.server.util
 
 import org.jetbrains.projector.common.misc.Defaults
+import org.jetbrains.projector.server.core.convert.toClient.toBasicStrokeData
 import java.awt.BasicStroke
 import kotlin.test.Test
 import kotlin.test.assertEquals

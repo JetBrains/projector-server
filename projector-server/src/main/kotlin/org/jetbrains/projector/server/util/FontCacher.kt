@@ -22,6 +22,8 @@ package org.jetbrains.projector.server.util
 
 import org.jetbrains.projector.common.protocol.data.FontDataHolder
 import org.jetbrains.projector.common.protocol.data.TtfFontData
+import org.jetbrains.projector.server.core.util.ObjectIdCacher
+import org.jetbrains.projector.server.core.util.unprotect
 import org.jetbrains.projector.server.service.ProjectorFontProvider
 import sun.font.CompositeFont
 import sun.font.FileFont

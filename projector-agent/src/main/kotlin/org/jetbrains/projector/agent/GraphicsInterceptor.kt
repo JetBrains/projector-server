@@ -25,8 +25,8 @@ import org.jetbrains.projector.awt.peer.PMouseInfoPeer
 import org.jetbrains.projector.common.protocol.toClient.ServerDrawCommandsEvent
 import org.jetbrains.projector.common.protocol.toClient.ServerWindowEvent
 import org.jetbrains.projector.server.ProjectorServer
+import org.jetbrains.projector.server.core.util.unprotect
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
-import org.jetbrains.projector.server.util.unprotect
 import org.jetbrains.projector.util.logging.Logger
 import sun.awt.NullComponentPeer
 import sun.java2d.SunGraphics2D

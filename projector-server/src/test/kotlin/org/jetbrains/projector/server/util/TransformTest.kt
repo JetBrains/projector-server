@@ -21,6 +21,8 @@ package org.jetbrains.projector.server.util
 import org.jetbrains.projector.common.protocol.data.CommonRectangle
 import org.jetbrains.projector.common.protocol.data.PaintType
 import org.jetbrains.projector.common.protocol.toClient.*
+import org.jetbrains.projector.server.core.convert.toClient.convertToSimpleList
+import org.jetbrains.projector.server.core.convert.toClient.extractData
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

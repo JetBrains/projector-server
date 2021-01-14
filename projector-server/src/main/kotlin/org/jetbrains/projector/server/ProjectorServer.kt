@@ -28,6 +28,7 @@ import org.jetbrains.projector.awt.PClipboard
 import org.jetbrains.projector.awt.PToolkit
 import org.jetbrains.projector.awt.PWindow
 import org.jetbrains.projector.awt.font.PFontManager
+import org.jetbrains.projector.awt.image.PGraphics2D
 import org.jetbrains.projector.awt.image.PGraphicsDevice
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
 import org.jetbrains.projector.awt.image.PVolatileImage
@@ -44,19 +45,22 @@ import org.jetbrains.projector.common.protocol.handshake.ToClientHandshakeSucces
 import org.jetbrains.projector.common.protocol.handshake.commonVersionList
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.common.protocol.toServer.*
-import org.jetbrains.projector.server.ReadyClientSettings.TouchState
-import org.jetbrains.projector.server.core.ProjectorHttpWsServer
-import org.jetbrains.projector.server.core.convert.toAwt.toAwtKeyEvent
+import org.jetbrains.projector.server.core.*
+import org.jetbrains.projector.server.core.ReadyClientSettings.TouchState
+import org.jetbrains.projector.server.core.convert.toAwt.*
+import org.jetbrains.projector.server.core.convert.toClient.*
+import org.jetbrains.projector.server.core.ij.IdeColors
+import org.jetbrains.projector.server.core.ij.KeymapSetter
+import org.jetbrains.projector.server.core.ij.SettingsInitializer
 import org.jetbrains.projector.server.core.ij.log.DelegatingJvmLogger
 import org.jetbrains.projector.server.core.ij.md.IjInjectorAgentInitializer
 import org.jetbrains.projector.server.core.ij.md.PanelUpdater
 import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshakeEncoder
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshakeDecoder
+import org.jetbrains.projector.server.core.util.LaterInvokator
+import org.jetbrains.projector.server.core.util.unprotect
 import org.jetbrains.projector.server.idea.CaretInfoUpdater
-import org.jetbrains.projector.server.idea.IdeColors
-import org.jetbrains.projector.server.idea.KeymapSetter
-import org.jetbrains.projector.server.idea.SettingsInitializer
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
 import org.jetbrains.projector.server.service.ProjectorImageCacher
@@ -136,7 +140,11 @@ class ProjectorServer private constructor(
         is SetUpClientSettings -> {
           // this means that the client has loaded fonts and is ready to draw
 
-          connection.setAttachment(ReadyClientSettings(clientSettings.connectionMillis, clientSettings.setUpClientData))
+          connection.setAttachment(ReadyClientSettings(
+            clientSettings.connectionMillis,
+            clientSettings.setUpClientData,
+            if (ProjectorServer.ENABLE_BIG_COLLECTIONS_CHECKS) ProjectorServer.BIG_COLLECTIONS_CHECKS_START_SIZE else null,
+          ))
 
           PVolatileImage.images.forEach(PVolatileImage::invalidate)
           PWindow.windows.forEach {
@@ -969,7 +977,7 @@ class ProjectorServer private constructor(
 
       ProjectorAwtInitializer.initDefaults()  // this should be done after setting classes because some headless operations can happen here
 
-      SettingsInitializer.addTaskToInitializeIdea()
+      SettingsInitializer.addTaskToInitializeIdea(PGraphics2D.defaultAa)
 
       val port = getEnvPort()
 

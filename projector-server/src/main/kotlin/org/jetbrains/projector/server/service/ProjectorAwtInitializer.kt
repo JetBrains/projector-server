@@ -23,8 +23,8 @@ import org.jetbrains.projector.awt.service.DrawEventQueue
 import org.jetbrains.projector.awt.service.FontProvider
 import org.jetbrains.projector.awt.service.ImageCacher
 import org.jetbrains.projector.common.protocol.toClient.ServerDrawCommandsEvent
-import org.jetbrains.projector.server.util.toColor
-import org.jetbrains.projector.server.util.toStroke
+import org.jetbrains.projector.server.core.convert.toClient.toColor
+import org.jetbrains.projector.server.core.convert.toClient.toStroke
 import org.jetbrains.projector.common.misc.Defaults as CommonDefaults
 
 object ProjectorAwtInitializer {

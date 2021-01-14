@@ -52,7 +52,7 @@ object ProjectorLauncher {
 
     assert(ProjectorServer.isEnabled) { "Can't start the ${ProjectorServer::class.simpleName} because it's disabled..." }
 
-    val server = ProjectorServer.startServer()
+    val server = ProjectorServer.startServer(isAgent = false)
 
     Runtime.getRuntime().addShutdownHook(object : Thread() {
 

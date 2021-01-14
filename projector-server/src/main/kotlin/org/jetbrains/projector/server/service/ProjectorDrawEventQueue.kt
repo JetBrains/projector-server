@@ -24,6 +24,9 @@ import org.jetbrains.projector.awt.service.DrawEventQueue
 import org.jetbrains.projector.common.protocol.data.ImageId
 import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.toClient.*
+import org.jetbrains.projector.server.ProjectorServer
+import org.jetbrains.projector.server.core.convert.toClient.*
+import org.jetbrains.projector.server.core.util.*
 import org.jetbrains.projector.server.util.*
 import org.jetbrains.projector.util.logging.Logger
 import java.awt.*
@@ -34,7 +37,8 @@ class ProjectorDrawEventQueue private constructor(val target: ServerDrawCommands
 
   val commands by SizeAware(
     ConcurrentLinkedQueue<List<ServerWindowEvent>>(),
-    Logger("${ProjectorDrawEventQueue::class.simpleName!!} - $target")
+    if (ProjectorServer.ENABLE_BIG_COLLECTIONS_CHECKS) ProjectorServer.BIG_COLLECTIONS_CHECKS_START_SIZE else null,
+    Logger("${ProjectorDrawEventQueue::class.simpleName!!} - $target"),
   )
 
   override fun buildCommand(): DrawEventQueue.CommandBuilder = CommandBuilder()

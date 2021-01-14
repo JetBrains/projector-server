@@ -26,7 +26,11 @@ import org.jetbrains.projector.common.misc.Do
 import org.jetbrains.projector.common.protocol.data.*
 import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.toClient.*
-import org.jetbrains.projector.server.util.*
+import org.jetbrains.projector.server.core.convert.toClient.toBasicStrokeData
+import org.jetbrains.projector.server.core.convert.toClient.toCommonComposite
+import org.jetbrains.projector.server.core.convert.toClient.toCommonPath
+import org.jetbrains.projector.server.core.convert.toClient.toPoint
+import org.jetbrains.projector.server.util.FontCacher
 import sun.font.FontDesignMetrics
 import java.awt.*
 import java.awt.font.FontRenderContext
