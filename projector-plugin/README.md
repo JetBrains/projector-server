@@ -11,7 +11,7 @@ Projector doesn't support that.
 This will give you a zip file with IntelliJ plugin:
 
 ```shell script
-./gradlew :projector-plugin:buildPlugin
+./gradlew :projector-plugin:buildPlugin  # Java 11 is required
 ```
 
 This command creates a zip file in the `projector-plugin/build/distributions` dir.
