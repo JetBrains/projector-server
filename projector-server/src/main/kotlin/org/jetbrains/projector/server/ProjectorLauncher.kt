@@ -37,7 +37,8 @@ object ProjectorLauncher {
 
     if (runProjectorServer()) {
       mainMethod.invoke(null, args)
-    } else {
+    }
+    else {
       exitProcess(1)
     }
   }
@@ -47,12 +48,24 @@ object ProjectorLauncher {
     return mainClass.getMethod("main", Array<String>::class.java)
   }
 
+  private fun setupSingletons() {
+    setupGraphicsEnvironment()
+    setupToolkit()
+    setupFontManager()
+    setupRepaintManager()
+  }
+
+  private fun initalizeHeadless() {
+    setupSystemProperties()
+    setupSingletons()
+  }
+
   private fun runProjectorServer(): Boolean {
     System.setProperty(ProjectorServer.ENABLE_PROPERTY_NAME, true.toString())
 
     assert(ProjectorServer.isEnabled) { "Can't start the ${ProjectorServer::class.simpleName} because it's disabled..." }
 
-    val server = ProjectorServer.startServer(isAgent = false)
+    val server = ProjectorServer.startServer(isAgent = false) { initalizeHeadless() }
 
     Runtime.getRuntime().addShutdownHook(object : Thread() {
 

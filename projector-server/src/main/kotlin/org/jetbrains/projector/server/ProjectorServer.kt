@@ -21,11 +21,8 @@
 package org.jetbrains.projector.server
 
 import org.java_websocket.WebSocket
-import org.java_websocket.WebSocketServerFactory
 import org.java_websocket.exceptions.WebsocketNotConnectedException
-import org.java_websocket.server.DefaultSSLWebSocketServerFactory
 import org.jetbrains.projector.awt.PClipboard
-import org.jetbrains.projector.awt.PToolkit
 import org.jetbrains.projector.awt.PWindow
 import org.jetbrains.projector.awt.font.PFontManager
 import org.jetbrains.projector.awt.image.PGraphics2D
@@ -35,10 +32,8 @@ import org.jetbrains.projector.awt.image.PVolatileImage
 import org.jetbrains.projector.awt.peer.PComponentPeer
 import org.jetbrains.projector.awt.peer.PMouseInfoPeer
 import org.jetbrains.projector.common.misc.Do
-import org.jetbrains.projector.common.protocol.data.CommonRectangle
 import org.jetbrains.projector.common.protocol.data.ImageData
 import org.jetbrains.projector.common.protocol.data.ImageId
-import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.handshake.COMMON_VERSION
 import org.jetbrains.projector.common.protocol.handshake.ToClientHandshakeFailureEvent
 import org.jetbrains.projector.common.protocol.handshake.ToClientHandshakeSuccessEvent
@@ -46,7 +41,6 @@ import org.jetbrains.projector.common.protocol.handshake.commonVersionList
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.common.protocol.toServer.*
 import org.jetbrains.projector.server.core.*
-import org.jetbrains.projector.server.core.ReadyClientSettings.TouchState
 import org.jetbrains.projector.server.core.convert.toAwt.*
 import org.jetbrains.projector.server.core.convert.toClient.*
 import org.jetbrains.projector.server.core.ij.IdeColors
@@ -58,8 +52,7 @@ import org.jetbrains.projector.server.core.ij.md.PanelUpdater
 import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshakeEncoder
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshakeDecoder
-import org.jetbrains.projector.server.core.util.LaterInvokator
-import org.jetbrains.projector.server.core.util.unprotect
+import org.jetbrains.projector.server.core.util.*
 import org.jetbrains.projector.server.idea.CaretInfoUpdater
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
@@ -67,31 +60,18 @@ import org.jetbrains.projector.server.service.ProjectorImageCacher
 import org.jetbrains.projector.server.util.*
 import org.jetbrains.projector.util.logging.Logger
 import org.jetbrains.projector.util.logging.loggerFactory
-import org.xbill.DNS.Address
 import sun.awt.AWTAccessor
-import sun.font.FontManagerFactory
 import java.awt.*
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
-import java.awt.event.InputEvent
-import java.awt.event.MouseEvent
-import java.awt.event.MouseWheelEvent
 import java.awt.peer.ComponentPeer
-import java.io.FileInputStream
-import java.net.InetAddress
-import java.net.UnknownHostException
 import java.nio.ByteBuffer
-import java.security.KeyStore
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
-import javax.net.ssl.KeyManagerFactory
-import javax.net.ssl.SSLContext
-import javax.net.ssl.TrustManagerFactory
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
-import kotlin.math.absoluteValue
 import java.awt.Point as AwtPoint
 
 class ProjectorServer private constructor(
@@ -342,31 +322,7 @@ class ProjectorServer private constructor(
 
         window ?: return@invokeLater
 
-        fun isEnoughDeltaForScrolling(previousTouchState: TouchState.Scrolling, newX: Int, newY: Int): Boolean {
-          // reduce number of scroll events to make deltas bigger.
-          // this helps when to generate proper MouseWheelEvents with correct transformation of pixels to scroll units
-
-          return (newX - previousTouchState.lastX).absoluteValue > PIXEL_DELTA_ENOUGH_FOR_SCROLLING ||
-                 (newY - previousTouchState.lastY).absoluteValue > PIXEL_DELTA_ENOUGH_FOR_SCROLLING
-        }
-
-        val newTouchState = when (shiftedMessage.mouseEventType) {
-          ClientMouseEvent.MouseEventType.UP -> TouchState.Released
-          ClientMouseEvent.MouseEventType.DOWN -> TouchState.OnlyPressed(message.timeStamp, shiftedMessage.x, shiftedMessage.y)
-          ClientMouseEvent.MouseEventType.TOUCH_DRAG -> when (val touchState = clientSettings.touchState) {
-            is TouchState.Scrolling -> when (isEnoughDeltaForScrolling(touchState, shiftedMessage.x, shiftedMessage.y)) {
-              true -> TouchState.Scrolling(touchState.initialX, touchState.initialY, shiftedMessage.x, shiftedMessage.y)
-              false -> return@invokeLater
-            }
-            is TouchState.Dragging -> TouchState.Dragging
-            is TouchState.OnlyPressed -> when (touchState.connectionMillis + 500 < shiftedMessage.timeStamp) {
-              true -> TouchState.Dragging
-              false -> TouchState.Scrolling(touchState.lastX, touchState.lastY, shiftedMessage.x, shiftedMessage.y)
-            }
-            is TouchState.Released -> TouchState.Released  // drag events shouldn't come when touch is not pressing so let's skip it
-          }
-          else -> clientSettings.touchState
-        }
+        val newTouchState = calculateNewTouchState(shiftedMessage, message, clientSettings.touchState) ?: return@invokeLater
         val mouseEvent = createMouseEvent(window, shiftedMessage, clientSettings.touchState, newTouchState, clientSettings.connectionMillis)
         clientSettings.touchState = newTouchState
         laterInvokator(mouseEvent)
@@ -664,217 +620,9 @@ class ProjectorServer private constructor(
 
     private val logger = Logger<ProjectorServer>()
 
-    private const val DEFAULT_SCROLL_AMOUNT = 1
-
-    // todo: 100 is just a random but reasonable number;
-    //       need to calculate this number from the context,
-    //       maybe use the client's scaling ratio
-    private const val PIXEL_PER_UNIT = 100
-
-    // todo: 3 is a wild guess (scaling factor of mobile devices), need to get this number from the context
-    private const val TOUCH_PIXEL_PER_UNIT = 3 * PIXEL_PER_UNIT
-    private const val PIXEL_DELTA_ENOUGH_FOR_SCROLLING = 10
-
     @JvmStatic
     val isEnabled: Boolean
       get() = System.getProperty(ENABLE_PROPERTY_NAME)?.toBoolean() ?: false
-
-    private fun getProperty(propName: String): String? {
-      return System.getProperty(propName) ?: System.getenv(propName)
-    }
-
-    private fun focusOwnerOrTarget(target: Component): Component {
-      val manager = KeyboardFocusManager.getCurrentKeyboardFocusManager()
-      return manager.focusOwner ?: target
-    }
-
-    private val mouseModifierMask = mapOf(
-      MouseModifier.ALT_KEY to InputEvent.ALT_DOWN_MASK,
-      MouseModifier.CTRL_KEY to InputEvent.CTRL_DOWN_MASK,
-      MouseModifier.SHIFT_KEY to InputEvent.SHIFT_DOWN_MASK,
-      MouseModifier.META_KEY to InputEvent.META_DOWN_MASK
-    )
-
-    private fun Set<MouseModifier>.toMouseInt(): Int {
-      return map(mouseModifierMask::getValue).fold(0, Int::or)
-    }
-
-    private fun createMouseEvent(
-      source: Component,
-      event: ClientMouseEvent,
-      previousTouchState: TouchState,
-      newTouchState: TouchState,
-      connectionMillis: Long,
-    ): MouseEvent {
-      val locationOnScreen = source.locationOnScreen
-
-      val id = when (event.mouseEventType) {
-        ClientMouseEvent.MouseEventType.MOVE -> MouseEvent.MOUSE_MOVED
-        ClientMouseEvent.MouseEventType.DOWN -> MouseEvent.MOUSE_PRESSED
-        ClientMouseEvent.MouseEventType.UP -> MouseEvent.MOUSE_RELEASED
-        ClientMouseEvent.MouseEventType.CLICK -> MouseEvent.MOUSE_CLICKED
-        ClientMouseEvent.MouseEventType.OUT -> MouseEvent.MOUSE_EXITED
-        ClientMouseEvent.MouseEventType.DRAG -> MouseEvent.MOUSE_DRAGGED
-        ClientMouseEvent.MouseEventType.TOUCH_DRAG -> {
-          if (previousTouchState is TouchState.WithCoordinates && newTouchState is TouchState.Scrolling) {
-            val deltaX = newTouchState.lastX - previousTouchState.lastX
-            val deltaY = newTouchState.lastY - previousTouchState.lastY
-
-            fun isHorizontal(): Boolean {
-              return deltaX.absoluteValue > deltaY.absoluteValue
-            }
-
-            val (wheelDelta, modifiers) = if (isHorizontal()) {
-              deltaX to (event.modifiers.toMouseInt() or InputEvent.SHIFT_DOWN_MASK)
-            }
-            else {
-              deltaY to event.modifiers.toMouseInt()
-            }
-
-            val negatedWheelDelta = -wheelDelta  // touch scrolling is usually treated in reverse direction
-
-            val normalizedWheelDelta = negatedWheelDelta.toDouble() / TOUCH_PIXEL_PER_UNIT
-            val notNullNormalizedWheelDelta = roundToInfinity(normalizedWheelDelta).toInt()
-
-            return MouseWheelEvent(
-              source,
-              MouseEvent.MOUSE_WHEEL, connectionMillis + event.timeStamp, modifiers,
-              newTouchState.initialX - locationOnScreen.x, newTouchState.initialY - locationOnScreen.y,
-              newTouchState.initialX - locationOnScreen.x, newTouchState.initialY - locationOnScreen.y, 0, false,
-              MouseWheelEvent.WHEEL_UNIT_SCROLL, DEFAULT_SCROLL_AMOUNT, notNullNormalizedWheelDelta, normalizedWheelDelta
-            )
-          }
-
-          MouseEvent.MOUSE_DRAGGED
-        }
-      }
-
-      val awtEventButton = when (event.mouseEventType) {
-        ClientMouseEvent.MouseEventType.MOVE,
-        ClientMouseEvent.MouseEventType.OUT,
-        -> MouseEvent.NOBUTTON
-
-        else -> event.button + 1
-      }
-
-      val modifiers = event.modifiers.toMouseInt()
-      val buttonModifier = if (awtEventButton == MouseEvent.NOBUTTON || event.mouseEventType == ClientMouseEvent.MouseEventType.UP) {
-        0
-      }
-      else {
-        InputEvent.getMaskForButton(awtEventButton)
-      }
-
-      val canTriggerPopup = awtEventButton == MouseEvent.BUTTON3
-
-      return MouseEvent(
-        source,
-        id,
-        connectionMillis + event.timeStamp,
-        modifiers or buttonModifier,
-        event.x - locationOnScreen.x, event.y - locationOnScreen.y,
-        event.clickCount, canTriggerPopup, awtEventButton
-      )
-    }
-
-    private fun createMouseWheelEvent(source: Component, event: ClientWheelEvent, connectionMillis: Long): MouseWheelEvent {
-      fun isHorizontal(event: ClientWheelEvent): Boolean {
-        return event.deltaX.absoluteValue > event.deltaY.absoluteValue
-      }
-
-      val (wheelDelta, modifiers) = if (isHorizontal(event)) {
-        event.deltaX to (event.modifiers.toMouseInt() or InputEvent.SHIFT_DOWN_MASK)
-      }
-      else {
-        event.deltaY to event.modifiers.toMouseInt()
-      }
-
-      val (mode, normalizedWheelDelta) = when (event.mode) {
-        ClientWheelEvent.ScrollingMode.PIXEL -> MouseWheelEvent.WHEEL_UNIT_SCROLL to wheelDelta / PIXEL_PER_UNIT
-        ClientWheelEvent.ScrollingMode.LINE -> MouseWheelEvent.WHEEL_UNIT_SCROLL to wheelDelta
-        ClientWheelEvent.ScrollingMode.PAGE -> MouseWheelEvent.WHEEL_BLOCK_SCROLL to wheelDelta
-      }
-      val notNullNormalizedWheelDelta = roundToInfinity(normalizedWheelDelta).toInt()
-
-      val locationOnScreen = source.locationOnScreen
-
-      return MouseWheelEvent(
-        source, MouseEvent.MOUSE_WHEEL, connectionMillis + event.timeStamp, modifiers,
-        event.x - locationOnScreen.x, event.y - locationOnScreen.y,
-        event.x - locationOnScreen.x, event.y - locationOnScreen.y, 0, false,
-        mode, DEFAULT_SCROLL_AMOUNT, notNullNormalizedWheelDelta, normalizedWheelDelta
-      )
-    }
-
-    private fun setupGraphicsEnvironment() {
-      val classes = GraphicsEnvironment::class.java.declaredClasses
-      val localGE = classes.single()
-      check(localGE.name == "java.awt.GraphicsEnvironment\$LocalGE")
-
-      localGE.getDeclaredField("INSTANCE").apply {
-        unprotect()
-
-        set(null, PGraphicsEnvironment())
-      }
-    }
-
-    private fun setupToolkit() {
-      Toolkit::class.java.getDeclaredField("toolkit").apply {
-        unprotect()
-
-        set(null, PToolkit())
-      }
-    }
-
-    private fun setupFontManager() {
-      FontManagerFactory::class.java.getDeclaredField("instance").apply {
-        unprotect()
-
-        set(null, PFontManager)
-      }
-    }
-
-    private fun setupRepaintManager() {
-      // todo: when we do smth w/ RepaintManager, IDEA crashes.
-      //       Maybe it's because AppContext is used.
-      //       Disable repaint manager setup for now
-      //val repaintManagerKey = RepaintManager::class.java
-      //val appContext = AppContext.getAppContext()
-      //appContext.put(repaintManagerKey, HeadlessRepaintManager())
-
-      //RepaintManager.currentManager(null).isDoubleBufferingEnabled = false
-    }
-
-    private fun setupSystemProperties() {
-      // Setting these properties as run arguments isn't enough because they can be overwritten by JVM
-      System.setProperty(ENABLE_PROPERTY_NAME, true.toString())
-      System.setProperty("java.awt.graphicsenv", PGraphicsEnvironment::class.java.canonicalName)
-      System.setProperty("awt.toolkit", PToolkit::class.java.canonicalName)
-      System.setProperty("sun.font.fontmanager", PFontManager::class.java.canonicalName)
-      System.setProperty("java.awt.headless", false.toString())
-      System.setProperty("swing.bufferPerWindow", false.toString())
-      System.setProperty("awt.nativeDoubleBuffering", true.toString())  // enable "native" double buffering to disable db in Swing
-      System.setProperty("swing.volatileImageBufferEnabled", false.toString())
-    }
-
-    private fun setupSingletons() {
-      setupGraphicsEnvironment()
-      setupToolkit()
-      setupFontManager()
-      setupRepaintManager()
-    }
-
-    private fun setupAgentSystemProperties() {
-      // Setting these properties as run arguments isn't enough because they can be overwritten by JVM
-      System.setProperty(ENABLE_PROPERTY_NAME, true.toString())
-      System.setProperty("swing.bufferPerWindow", false.toString())
-      System.setProperty("swing.volatileImageBufferEnabled", false.toString())
-    }
-
-    private fun setupAgentSingletons() {
-      setupFontManager()
-      setupRepaintManager()
-    }
 
     private fun getMainWindows(): List<PWindow> {
       val ideWindows = PWindow.windows.filter { it.windowType == WindowType.IDEA_WINDOW }
@@ -884,25 +632,6 @@ class ProjectorServer private constructor(
       }
 
       return PWindow.windows.firstOrNull()?.let(::listOf).orEmpty()
-    }
-
-    private fun Component.shiftBounds(shift: AwtPoint): CommonRectangle {
-      return bounds
-        .run {
-          CommonRectangle(
-            (x - shift.x).toDouble(),
-            (y - shift.y).toDouble(),
-            width.toDouble(),
-            height.toDouble()
-          )
-        }
-    }
-
-    private fun AwtPoint.shift(shift: AwtPoint): Point {
-      return Point(
-        (x - shift.x).toDouble(),
-        (y - shift.y).toDouble()
-      )
     }
 
     private fun calculateMainWindowShift() {
@@ -959,19 +688,14 @@ class ProjectorServer private constructor(
     }
 
     @JvmStatic
-    fun startServer(isAgent: Boolean = false): ProjectorServer {
+    fun startServer(isAgent: Boolean, initializer: Runnable): ProjectorServer {
       loggerFactory = { DelegatingJvmLogger(it) }
 
       ProjectorAwtInitializer.initProjectorAwt()
 
-      if (isAgent) {
-        // todo: make it work with dynamic agent
-        //setupAgentSystemProperties()
-        //setupAgentSingletons()
-      }
-      else {
-        setupSystemProperties()
-        setupSingletons()
+      initializer.run()
+
+      if (!isAgent) {
         IjInjectorAgentInitializer.init()  // todo: support variant for agent too
       }
 
@@ -987,54 +711,12 @@ class ProjectorServer private constructor(
       }
 
       return ProjectorServer(port, LaterInvokator.defaultLaterInvokator, isAgent).also {
-        Do exhaustive when (val hint = setSsl(it.httpWsServer::setWebSocketFactory)) {
-          null -> logger.info { "WebSocket SSL is disabled" }
-
-          else -> logger.info { "WebSocket SSL is enabled: $hint" }
+        val message = when (val hint = setSsl(it.httpWsServer::setWebSocketFactory)) {
+          null -> "WebSocket SSL is disabled"
+          else -> "WebSocket SSL is enabled: $hint"
         }
+        logger.info { message }
         it.start()
-      }
-    }
-
-    private fun setSsl(setWebSocketFactory: (WebSocketServerFactory) -> Unit): String? {
-      val sslPropertiesFilePath = getProperty(SSL_ENV_NAME) ?: return null
-
-      try {
-        val properties = Properties().apply {
-          load(FileInputStream(sslPropertiesFilePath))
-        }
-
-        fun Properties.getOrThrow(key: String) = requireNotNull(this.getProperty(key)) { "Can't find $key in properties file" }
-
-        val storetype = properties.getOrThrow(SSL_STORE_TYPE)
-        val filePath = properties.getOrThrow(SSL_FILE_PATH)
-        val storePassword = properties.getOrThrow(SSL_STORE_PASSWORD)
-        val keyPassword = properties.getOrThrow(SSL_KEY_PASSWORD)
-
-        val keyStore = KeyStore.getInstance(storetype).apply {
-          load(FileInputStream(filePath), storePassword.toCharArray())
-        }
-
-        val keyManagerFactory = KeyManagerFactory.getInstance("SunX509").apply {
-          init(keyStore, keyPassword.toCharArray())
-        }
-
-        val trustManagerFactory = TrustManagerFactory.getInstance("SunX509").apply {
-          init(keyStore)
-        }
-
-        val sslContext = SSLContext.getInstance("TLS").apply {
-          init(keyManagerFactory.keyManagers, trustManagerFactory.trustManagers, null)
-        }
-
-        setWebSocketFactory(DefaultSSLWebSocketServerFactory(sslContext))
-
-        return sslPropertiesFilePath
-      }
-      catch (t: Throwable) {
-        logger.info(t) { "Can't enable SSL" }
-
-        return null
       }
     }
 
@@ -1043,12 +725,6 @@ class ProjectorServer private constructor(
     const val DEFAULT_PORT = 8887
     const val TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HANDSHAKE_TOKEN"
     const val RO_TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RO_HANDSHAKE_TOKEN"
-
-    const val SSL_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_SSL_PROPERTIES_PATH"
-    const val SSL_STORE_TYPE = "STORE_TYPE"
-    const val SSL_FILE_PATH = "FILE_PATH"
-    const val SSL_STORE_PASSWORD = "STORE_PASSWORD"
-    const val SSL_KEY_PASSWORD = "KEY_PASSWORD"
 
     var ENABLE_BIG_COLLECTIONS_CHECKS = System.getProperty("org.jetbrains.projector.server.debug.collections.checks") == "true"
     private const val DEFAULT_BIG_COLLECTIONS_CHECKS_SIZE = 10_000
@@ -1060,16 +736,5 @@ class ProjectorServer private constructor(
     const val ENABLE_CONNECTION_CONFIRMATION = "ORG_JETBRAINS_PROJECTOR_SERVER_CONNECTION_CONFIRMATION"
 
     fun getEnvPort() = System.getProperty(PORT_PROPERTY_NAME)?.toIntOrNull() ?: DEFAULT_PORT
-
-    fun getHostName(address: InetAddress): String? {
-      return try {
-        // The trailing '.' makes the name into a "Fully Qualified Domain Name", i.e. an absolute domain name.
-        // dnsjava adds the trailing dot, but for our purpose we don't need it
-        Address.getHostName(address).trimEnd('.')
-      }
-      catch (e: UnknownHostException) {
-        address.hostAddress
-      }
-    }
   }
 }
