@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import org.jetbrains.projector.server.ProjectorServer
+import org.jetbrains.projector.server.core.util.getHostName
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ItemEvent
@@ -199,7 +200,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         .filterNot { it.isLoopback } // drop localhost
         .filterNot { it.hardwareAddress != null && it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor) } // drop docker
         .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
-        .mapNotNull { ProjectorServer.getHostName(it.address) }
+        .mapNotNull { getHostName(it.address) }
         .distinct()
         .forEach(::addItem)
 
