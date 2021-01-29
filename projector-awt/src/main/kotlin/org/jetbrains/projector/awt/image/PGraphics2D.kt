@@ -204,7 +204,7 @@ class PGraphics2D private constructor(
 
   override fun drawGlyphVector(g: GlyphVector, x: Float, y: Float) {
     val shape = g.getOutline(x, y)
-    draw(shape)
+    fill(shape)
   }
 
   private fun paintShape(paintType: AwtPaintType, shape: Shape) {
