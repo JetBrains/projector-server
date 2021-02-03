@@ -21,8 +21,14 @@
   <name>Projector</name>
   <vendor email="support@jetbrains.org" url="https://www.jetbrains.org">JetBrains</vendor>
 
+  <idea-version since-build="193"/>
+
   <description><![CDATA[
-    Projector
+    Share the IDE window using the Projector server.
+
+    Please note that it's an experimental technology.
+
+    If you want simultaneous collaborative editing, please try Code With Me solution. Projector doesn't support that.
     ]]></description>
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
