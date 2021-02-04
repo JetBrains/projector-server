@@ -16,12 +16,13 @@
  * with this program; if not, write to the Free Software Foundation, Inc.,
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
-import org.jetbrains.intellij.tasks.PatchPluginXmlTask
 
 plugins {
   kotlin("jvm")
   id("org.jetbrains.intellij")
 }
+
+version = "1.0.2"
 
 val projectorClientVersion: String by project
 
@@ -37,13 +38,4 @@ intellij {
 
 (tasks["runIde"] as JavaExec).apply {
   jvmArgs = jvmArgs.orEmpty() + listOf("-Djdk.attach.allowAttachSelf=true", "-Dswing.bufferPerWindow=false")
-}
-
-tasks.withType<PatchPluginXmlTask> {
-  changeNotes(
-    """
-    Add change notes here.<br>
-    <em>most HTML tags may be used</em>
-    """
-  )
 }

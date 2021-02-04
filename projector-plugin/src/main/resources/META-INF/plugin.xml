@@ -24,12 +24,18 @@
   <idea-version since-build="193"/>
 
   <description><![CDATA[
-    Share the IDE window using the Projector server.
+    <p>Share the IDE window using the <a href="https://github.com/JetBrains/projector-server">Projector server</a>.</p>
+    <br/>
+    <p>How to use: after the plugin installation, please manually restart the IDE. New menu item <strong>Projector</strong> will appear next to the <strong>Help</strong> in the title bar.</p>
+    <br/>
+    <p>Please note that it's an experimental technology.</p>
+    <br/>
+    <p>If you want simultaneous collaborative editing, please try <a href="https://www.jetbrains.com/help/idea/code-with-me.html">Code With Me</a> solution. Projector doesn't support that.</p>
+  ]]></description>
 
-    Please note that it's an experimental technology.
-
-    If you want simultaneous collaborative editing, please try Code With Me solution. Projector doesn't support that.
-    ]]></description>
+  <change-notes><![CDATA[
+    Changelog is available in <a href="https://github.com/JetBrains/projector-server/blob/master/projector-plugin/CHANGELOG.md">CHANGELOG.md</a>.
+  ]]></change-notes>
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
        on how to target different products -->
