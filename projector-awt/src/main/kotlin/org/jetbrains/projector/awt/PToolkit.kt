@@ -284,6 +284,10 @@ class PToolkit : Toolkit(), KeyboardFocusManagerPeerProvider, ComponentFactory {
 
   override fun getMouseInfoPeer(): MouseInfoPeer = PMouseInfoPeer
 
+  override fun areExtraMouseButtonsEnabled(): Boolean {
+    return true
+  }
+
   private fun getImageFromHash(filename: String): Image? {
     synchronized(imgCache) {
       var img: Image? = imgCache[filename] as Image?
