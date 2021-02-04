@@ -361,6 +361,13 @@ class ProjectorServer private constructor(
           }
         }
 
+      is ClientRawKeyEvent -> SwingUtilities.invokeLater {
+          laterInvokator(message.toAwtKeyEvent(
+            connectionMillis = clientSettings.connectionMillis,
+            target = focusOwnerOrTarget(PWindow.windows.last().target),
+          ))
+        }
+
       is ClientRequestImageDataEvent -> {
         val imageData = ProjectorImageCacher.getImage(message.imageId) ?: ImageData.Empty
 
