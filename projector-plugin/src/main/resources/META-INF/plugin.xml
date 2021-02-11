@@ -28,8 +28,6 @@
     <br/>
     <p>How to use: after the plugin installation, please manually restart the IDE. New menu item <strong>Projector</strong> will appear next to the <strong>Help</strong> in the title bar.</p>
     <br/>
-    <p>Please note that it's an experimental technology.</p>
-    <br/>
     <p>If you want simultaneous collaborative editing, please try <a href="https://www.jetbrains.com/help/idea/code-with-me.html">Code With Me</a> solution. Projector doesn't support that.</p>
   ]]></description>
 
