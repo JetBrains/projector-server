@@ -66,6 +66,7 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.awt.peer.ComponentPeer
+import java.net.InetAddress
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -75,15 +76,16 @@ import kotlin.concurrent.thread
 import java.awt.Point as AwtPoint
 
 class ProjectorServer private constructor(
+  host: InetAddress,
   port: Int,
   private val laterInvokator: LaterInvokator,
   private val isAgent: Boolean,
 ) {
 
-  private val httpWsServer = object : ProjectorHttpWsServer(port) {
+  private val httpWsServer = object : ProjectorHttpWsServer(host, port) {
 
     override fun onStart() {
-      logger.info { "Server started on port $port" }
+      logger.info { "Server started on host $host and port $port" }
 
       updateThread = thread(isDaemon = true) {
         // TODO: remove this thread: encapsulate the logic in an extracted class and maybe even don't use threads but coroutines' channels
@@ -710,14 +712,15 @@ class ProjectorServer private constructor(
 
       SettingsInitializer.addTaskToInitializeIdea(PGraphics2D.defaultAa)
 
+      val host = getEnvHost()
       val port = getEnvPort()
 
-      logger.info { "${ProjectorServer::class.simpleName} is starting on port: $port" }
+      logger.info { "${ProjectorServer::class.simpleName} is starting on host $host and port $port" }
       if (ENABLE_BIG_COLLECTIONS_CHECKS) {
         logger.info { "Currently collections will log size if it exceeds $BIG_COLLECTIONS_CHECKS_START_SIZE" }
       }
 
-      return ProjectorServer(port, LaterInvokator.defaultLaterInvokator, isAgent).also {
+      return ProjectorServer(host, port, LaterInvokator.defaultLaterInvokator, isAgent).also {
         val message = when (val hint = setSsl(it.httpWsServer::setWebSocketFactory)) {
           null -> "WebSocket SSL is disabled"
           else -> "WebSocket SSL is enabled: $hint"
@@ -728,6 +731,7 @@ class ProjectorServer private constructor(
     }
 
     const val ENABLE_PROPERTY_NAME = "org.jetbrains.projector.server.enable"
+    const val HOST_PROPERTY_NAME = "org.jetbrains.projector.server.host"
     const val PORT_PROPERTY_NAME = "org.jetbrains.projector.server.port"
     const val DEFAULT_PORT = 8887
     const val TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HANDSHAKE_TOKEN"
@@ -741,6 +745,11 @@ class ProjectorServer private constructor(
 
     const val ENABLE_AUTO_KEYMAP_SETTING = "ORG_JETBRAINS_PROJECTOR_SERVER_AUTO_KEYMAP"
     const val ENABLE_CONNECTION_CONFIRMATION = "ORG_JETBRAINS_PROJECTOR_SERVER_CONNECTION_CONFIRMATION"
+
+    fun getEnvHost(): InetAddress {
+      val host = System.getProperty(HOST_PROPERTY_NAME)
+      return if (host != null) InetAddress.getByName(host) else getWildcardHostAddress()
+    }
 
     fun getEnvPort() = System.getProperty(PORT_PROPERTY_NAME)?.toIntOrNull() ?: DEFAULT_PORT
   }
