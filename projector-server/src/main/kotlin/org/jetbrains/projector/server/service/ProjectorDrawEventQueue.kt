@@ -30,6 +30,7 @@ import org.jetbrains.projector.server.core.util.*
 import org.jetbrains.projector.server.util.*
 import org.jetbrains.projector.util.logging.Logger
 import java.awt.*
+import java.awt.font.TextAttribute
 import java.lang.ref.SoftReference
 import java.util.concurrent.ConcurrentLinkedQueue
 
@@ -73,7 +74,10 @@ class ProjectorDrawEventQueue private constructor(val target: ServerDrawCommands
     }
 
     override fun setFont(font: Font): DrawEventQueue.CommandBuilder {
-      events.add(ServerSetFontEvent(fontId = FontCacher.getId(font), fontSize = font.size))
+      events.add(ServerSetFontEvent(
+        fontId = FontCacher.getId(font),
+        fontSize = font.size,
+        ligaturesOn = (font.attributes.getOrDefault(TextAttribute.LIGATURES, 0) as Int) > 0))
       return this
     }
 

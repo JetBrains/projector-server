@@ -34,6 +34,7 @@ import org.jetbrains.projector.server.util.FontCacher
 import sun.font.FontDesignMetrics
 import java.awt.*
 import java.awt.font.FontRenderContext
+import java.awt.font.TextAttribute
 import java.awt.geom.AffineTransform
 import java.awt.geom.Rectangle2D
 import java.awt.image.BufferedImage
@@ -136,7 +137,13 @@ internal object CommandsHandler {
     is ServerDrawStringEvent -> listOf(
       createSetClipEvent(g.clip),
       ServerSetTransformEvent(tx = g.transform.toList()),
-      g.font.let { ServerSetFontEvent(fontId = FontCacher.getId(it), fontSize = it.size) },
+      g.font.let {
+        ServerSetFontEvent(
+          fontId = FontCacher.getId(it),
+          fontSize = it.size,
+          ligaturesOn = (it.attributes.getOrDefault(TextAttribute.LIGATURES, 0) as Int) > 0,
+        )
+      },
       ServerSetPaintEvent(createPaintValue(g.paint)),
       ServerSetCompositeEvent(g.composite.toCommonComposite()),
       paintEvent
