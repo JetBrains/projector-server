@@ -2,6 +2,16 @@
 
 Notable changes to this project are documented in this file.
 
+# 1.0.3
+
+## Fixed
+
+- Failing start of remote access.
+
+# Updated
+
+- Projector Server v0.51.15.
+
 # 1.0.2
 
 ## Added
