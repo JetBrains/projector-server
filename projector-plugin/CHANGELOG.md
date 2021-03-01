@@ -2,6 +2,16 @@
 
 Notable changes to this project are documented in this file.
 
+# 1.0.4
+
+## Changed.
+
+- Icons.
+
+# Updated
+
+- Projector Server v1.0.0.
+
 # 1.0.3
 
 ## Fixed

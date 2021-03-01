@@ -1,3 +1,10 @@
+# 1.0.0
+
+## Changed
+
+- PRJ-255 Change default port to 80 or 443 depending on window.location.protocol.
+- Icons.
+
 # 0.51.15
 
 ## Fixed
