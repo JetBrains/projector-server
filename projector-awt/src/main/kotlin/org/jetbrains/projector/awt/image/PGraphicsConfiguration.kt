@@ -29,10 +29,10 @@ import java.awt.image.ColorModel
 import java.awt.image.VolatileImage
 
 
-object PGraphicsConfiguration : GraphicsConfiguration() {
+class PGraphicsConfiguration(private val device: PGraphicsDevice) : GraphicsConfiguration() {
 
   override fun getDevice(): GraphicsDevice {
-    return PGraphicsDevice
+    return device
   }
 
   override fun getColorModel(): ColorModel? {
@@ -44,7 +44,7 @@ object PGraphicsConfiguration : GraphicsConfiguration() {
   }
 
   override fun getDefaultTransform(): AffineTransform {
-    return AffineTransform()
+    return AffineTransform.getScaleInstance(device.scaleFactor, device.scaleFactor)
   }
 
   override fun getNormalizingTransform(): AffineTransform {
@@ -55,7 +55,7 @@ object PGraphicsConfiguration : GraphicsConfiguration() {
   }
 
   override fun getBounds(): Rectangle {
-    return Rectangle(PGraphicsDevice.clientScreenBounds)
+    return Rectangle(device.clientScreenBounds)
   }
 
   override fun createCompatibleVolatileImage(width: Int, height: Int, caps: ImageCapabilities?, transparency: Int): VolatileImage {
