@@ -63,6 +63,7 @@ class PGraphics2D private constructor(
   private var foregroundColor: Color,
   private var stroke: Stroke,
   private var font: Font,
+  private var device: GraphicsDevice,
 ) : Graphics2D() {
 
   private var backingFontRenderContext = FontRenderContext(
@@ -129,7 +130,8 @@ class PGraphics2D private constructor(
     backgroundColor = null,
     paint = null,
     foregroundColor = null,
-    font = null
+    font = null,
+    device = GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice
   )
 
   constructor(component: Component, target: PWindow.Descriptor) : this(
@@ -138,7 +140,8 @@ class PGraphics2D private constructor(
     backgroundColor = component.background,  // from Graphics2D "Default Rendering Attributes" java doc
     paint = component.foreground,  // from Graphics2D "Default Rendering Attributes" java doc
     foregroundColor = component.foreground,  // from Graphics2D "Default Rendering Attributes" java doc
-    font = component.font
+    font = component.font,
+    device = component.graphicsConfiguration.device
   )
 
   private constructor(
@@ -148,6 +151,7 @@ class PGraphics2D private constructor(
     paint: Paint?,
     foregroundColor: Color?,
     font: Font?,
+    device: GraphicsDevice
   ) : this(
     drawEventQueue = drawEventQueue,
     backingComposite = AlphaComposite.SrcOver,  // from Graphics2D "Default Rendering Attributes" java doc
@@ -158,7 +162,8 @@ class PGraphics2D private constructor(
     paint = paint ?: Defaults.FOREGROUND_COLOR_ARGB,
     foregroundColor = foregroundColor ?: Defaults.FOREGROUND_COLOR_ARGB,
     stroke = Defaults.STROKE,
-    font = font ?: PFontManager.allInstalledFonts.first()
+    font = font ?: PFontManager.allInstalledFonts.first(),
+    device = device
   )
 
   override fun create(): Graphics {
@@ -172,7 +177,8 @@ class PGraphics2D private constructor(
       paint = paint,
       foregroundColor = foregroundColor,
       stroke = stroke,
-      font = font
+      font = font,
+      device = device
     )
   }
 
@@ -232,7 +238,7 @@ class PGraphics2D private constructor(
   }
 
   override fun getDeviceConfiguration(): GraphicsConfiguration {
-    return PGraphicsDevice.defaultConfiguration
+    return device.defaultConfiguration
   }
 
   override fun setComposite(comp: Composite) {

@@ -26,7 +26,7 @@
 package org.jetbrains.projector.awt.peer
 
 import org.jetbrains.projector.awt.PWindow
-import org.jetbrains.projector.awt.image.PGraphicsDevice
+import org.jetbrains.projector.awt.image.PGraphicsEnvironment
 import org.jetbrains.projector.util.logging.Logger
 import java.awt.Dialog
 import java.awt.Point
@@ -88,12 +88,12 @@ open class PWindowPeer(target: Window) : PContainerPeer(target), WindowPeer {
   override fun setBounds(x: Int, y: Int, width: Int, height: Int, op: Int) {
     super.setBounds(x, y, width, height, op)
 
-    if (pWindow.undecorated || PWindow.windows.first() == pWindow) {  // don't change undecorated and root windows
+    if (pWindow.undecorated || PWindow.windows.first() == pWindow || PGraphicsEnvironment.clientDoesWindowManagement) {  // don't change undecorated and root windows
       return
     }
 
     val newBounds = Rectangle(x, y, width, height)
-    val screenBounds = PGraphicsDevice.clientScreenBounds
+    val screenBounds = PGraphicsEnvironment.defaultDevice.clientScreenBounds
 
     if (!isWindowHeaderVisibleEnough(
         HEADER_VISIBLE_HEIGHT_PX,
