@@ -23,10 +23,12 @@
  */
 package org.jetbrains.projector.awt
 
+import org.jetbrains.projector.awt.data.AwtComponentAccessor
 import org.jetbrains.projector.awt.data.Direction
 import org.jetbrains.projector.awt.image.PGraphics2D
 import org.jetbrains.projector.awt.service.ImageCacher
 import java.awt.*
+import java.awt.event.ComponentEvent
 import java.lang.ref.WeakReference
 import java.util.*
 
@@ -90,7 +92,8 @@ class PWindow(val target: Component) {
   fun move(deltaX: Int, deltaY: Int) {
     toFront()
     target.requestFocusInWindow()
-    target.setLocation(target.x + deltaX, target.y + deltaY)
+    AwtComponentAccessor.setLocation(target, target.x + deltaX, target.y + deltaY)
+    (target as? Window)?.dispatchEvent(ComponentEvent(target, ComponentEvent.COMPONENT_MOVED))
     repaint()
   }
 
@@ -98,17 +101,23 @@ class PWindow(val target: Component) {
     toFront()
     target.requestFocusInWindow()
 
+    fun setRawBounds(x: Int, y: Int, width: Int, height: Int) {
+      AwtComponentAccessor.setBounds(target, x, y, width, height)
+      (target as? Window)?.dispatchEvent(ComponentEvent(target, ComponentEvent.COMPONENT_MOVED))
+      (target as? Window)?.dispatchEvent(ComponentEvent(target, ComponentEvent.COMPONENT_RESIZED))
+    }
+
     if (direction == Direction.E || direction == Direction.S || direction == Direction.SE) {
-      target.setSize(target.size.width + deltaX, target.size.height + deltaY)
+      setRawBounds(target.x, target.y, target.size.width + deltaX, target.size.height + deltaY)
     }
     else if (direction == Direction.SW) {
-      target.setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
+      setRawBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
     }
     else if (direction == Direction.NE) {
-      target.setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
+      setRawBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
     }
     else {
-      target.setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
+      setRawBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
     }
 
     // We need to trigger layout recalculation manually.
