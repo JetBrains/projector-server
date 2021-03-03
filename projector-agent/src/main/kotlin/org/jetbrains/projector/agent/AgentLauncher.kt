@@ -19,10 +19,15 @@
 package org.jetbrains.projector.agent
 
 import com.sun.tools.attach.VirtualMachine
+import org.jetbrains.projector.agent.GraphicsTransformer.Companion.DRAW_HANDLER_PACKAGE
 import java.lang.management.ManagementFactory
 import java.lang.reflect.Method
 
 public object AgentLauncher {
+
+  private var getClientListMethod: Method? = null
+  private var disconnectAllMethod: Method? = null
+  private var disconnectByIpMethod: Method? = null
 
   private fun checkProperty(name: String, expected: String) {
     val actual = System.getProperty(name)
@@ -60,6 +65,36 @@ public object AgentLauncher {
     }
 
     println("dynamically attaching agent... - done")
+  }
+
+  private fun getHandlerClass(): Class<*> {
+    return ClassLoader.getSystemClassLoader().loadClass("$DRAW_HANDLER_PACKAGE")
+  }
+
+  @JvmStatic
+  public fun getClientList(): Array<Array<String?>> {
+    if (getClientListMethod == null) {
+      getClientListMethod = getHandlerClass().getMethod("getClientList")
+    }
+    val result = getClientListMethod?.invoke(null) ?: emptyArray<Array<String?>>()
+    @Suppress("UNCHECKED_CAST")
+    return result as Array<Array<String?>>
+  }
+
+  @JvmStatic
+  public fun disconnectAll() {
+    if (disconnectAllMethod == null) {
+      disconnectAllMethod = getHandlerClass().getMethod("disconnectAll")
+    }
+    disconnectAllMethod?.invoke(null)
+  }
+
+  @JvmStatic
+  public fun disconnectByIp(ip: String) {
+    if (disconnectByIpMethod == null) {
+      disconnectByIpMethod = getHandlerClass().getMethod("disconnectByIp", String::class.java)
+    }
+    disconnectByIpMethod?.invoke(null, ip)
   }
 
   @JvmStatic
