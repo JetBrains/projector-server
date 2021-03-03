@@ -125,7 +125,7 @@ class ProjectorServer private constructor(
           connection.setAttachment(ReadyClientSettings(
             clientSettings.connectionMillis,
             clientSettings.setUpClientData,
-            if (ProjectorServer.ENABLE_BIG_COLLECTIONS_CHECKS) ProjectorServer.BIG_COLLECTIONS_CHECKS_START_SIZE else null,
+            if (ENABLE_BIG_COLLECTIONS_CHECKS) BIG_COLLECTIONS_CHECKS_START_SIZE else null,
           ))
 
           PVolatileImage.images.forEach(PVolatileImage::invalidate)
@@ -382,7 +382,7 @@ class ProjectorServer private constructor(
       is ClientClipboardEvent -> {
         val transferable = object : Transferable {
 
-          override fun getTransferData(flavor: DataFlavor?): Any? {
+          override fun getTransferData(flavor: DataFlavor?): Any {
             if (!isDataFlavorSupported(flavor)) {
               throw UnsupportedFlavorException(flavor)
             }
@@ -514,7 +514,7 @@ class ProjectorServer private constructor(
           false -> "read-only"
         }
 
-        val remoteHostName = when(remoteAddress) {
+        val remoteHostName = when (remoteAddress) {
           null -> "can't determine the host's name or IP"
           else -> getHostName(remoteAddress)
         }
@@ -623,6 +623,34 @@ class ProjectorServer private constructor(
     }
 
     caretInfoUpdater.stop()
+  }
+
+  fun getClientList(): Array<Array<String?>> {
+    val s = arrayListOf<Array<String?>>()
+    httpWsServer.forEachOpenedConnection {
+      val remoteAddress = it.remoteSocketAddress?.address
+      if (remoteAddress != null) {
+        s.add(arrayOf(
+          remoteAddress.hostAddress,
+          getHostName(remoteAddress)
+        ))
+      }
+    }
+    return s.distinctBy { it[0] }.toTypedArray()
+  }
+
+  fun disconnectAll() {
+    httpWsServer.forEachOpenedConnection {
+      it.close()
+    }
+  }
+
+  fun disconnectByIp(ip: String) {
+    httpWsServer.forEachOpenedConnection {
+      if (it.remoteSocketAddress?.address?.hostAddress == ip) {
+        it.close()
+      }
+    }
   }
 
   companion object {
