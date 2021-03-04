@@ -17,8 +17,9 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 import com.intellij.diagnostic.VMOptions
-import com.intellij.ide.plugins.PluginManager
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerConfigurable
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.components.PersistentStateComponent
@@ -61,7 +62,7 @@ class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
 class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   private var config: ProjectorConfig = ProjectorConfig()
   private val logger = Logger.getInstance(ProjectorService::class.java)
-  private val plugin = PluginManager.getPlugin(PluginId.getId("org.jetbrains.projector-plugin"))!!
+  private val plugin = PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.projector-plugin"))!!
 
   private var currentSession: Session? = null
     set(value) {
@@ -157,8 +158,18 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     (ApplicationManager.getApplication() as ApplicationEx).restart(true)
   }
 
+  private fun getPluginPath(descriptor: IdeaPluginDescriptor): File {
+    val method = try {
+      IdeaPluginDescriptor::class.java.getMethod("getPluginPath")
+    } catch (e: NoSuchMethodException) {
+      IdeaPluginDescriptor::class.java.getMethod("getPath")
+    }
+
+    return method.invoke(descriptor) as File
+  }
+
   private fun attachDynamicAgent() {
-    val agentJar = "${plugin.path}/lib/projector-agent-1.0-SNAPSHOT.jar"  // todo: need to support version change
+    val agentJar = "${getPluginPath(plugin)}/lib/projector-agent-1.0-SNAPSHOT.jar"  // todo: need to support version change
     AgentLauncher.attachAgent(agentJar)
   }
 
