@@ -2,9 +2,20 @@
 
 Notable changes to this project are documented in this file.
 
+# 1.1.0
+
+## Fixed
+
+- IntelliJ's compatibility deprecation warnings.
+
+# Added
+
+- PRJ-153 Show connected users.
+- Allow disconnecting users.
+
 # 1.0.4
 
-## Changed.
+## Changed
 
 - Icons.
 
