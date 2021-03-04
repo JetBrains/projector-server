@@ -158,14 +158,14 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     (ApplicationManager.getApplication() as ApplicationEx).restart(true)
   }
 
-  private fun getPluginPath(descriptor: IdeaPluginDescriptor): File {
+  private fun getPluginPath(descriptor: IdeaPluginDescriptor): String {
     val method = try {
       IdeaPluginDescriptor::class.java.getMethod("getPluginPath")
     } catch (e: NoSuchMethodException) {
       IdeaPluginDescriptor::class.java.getMethod("getPath")
     }
 
-    return method.invoke(descriptor) as File
+    return method.invoke(descriptor).toString()
   }
 
   private fun attachDynamicAgent() {
