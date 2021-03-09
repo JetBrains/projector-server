@@ -89,40 +89,43 @@ class PWindow(val target: Component) {
 
   val graphics = PGraphics2D(target, Descriptor(id))
 
-  fun move(deltaX: Int, deltaY: Int) {
+  fun setBounds(x: Int, y: Int, width: Int, height: Int) {
+    val hasMoved = target.x != x || target.y != y
+    val hasResized = target.width != width || target.height != height
+
+    if(!hasMoved && !hasResized) return
+
     toFront()
     target.requestFocusInWindow()
-    AwtComponentAccessor.setLocation(target, target.x + deltaX, target.y + deltaY)
-    (target as? Window)?.dispatchEvent(ComponentEvent(target, ComponentEvent.COMPONENT_MOVED))
+
+    AwtComponentAccessor.setBounds(target, x, y, width, height)
+    if (hasMoved)
+      (target as? Window)?.dispatchEvent(ComponentEvent(target, ComponentEvent.COMPONENT_MOVED))
+    if (hasResized)
+      (target as? Window)?.dispatchEvent(ComponentEvent(target, ComponentEvent.COMPONENT_RESIZED))
+
+    // We need to trigger layout recalculation manually.
+    if (hasResized) target.revalidate()
     repaint()
   }
 
+  fun move(deltaX: Int, deltaY: Int) {
+    setBounds(target.x + deltaX, target.y + deltaY, target.width, target.height)
+  }
+
   fun resize(deltaX: Int, deltaY: Int, direction: Direction) {
-    toFront()
-    target.requestFocusInWindow()
-
-    fun setRawBounds(x: Int, y: Int, width: Int, height: Int) {
-      AwtComponentAccessor.setBounds(target, x, y, width, height)
-      (target as? Window)?.dispatchEvent(ComponentEvent(target, ComponentEvent.COMPONENT_MOVED))
-      (target as? Window)?.dispatchEvent(ComponentEvent(target, ComponentEvent.COMPONENT_RESIZED))
-    }
-
     if (direction == Direction.E || direction == Direction.S || direction == Direction.SE) {
-      setRawBounds(target.x, target.y, target.size.width + deltaX, target.size.height + deltaY)
+      setBounds(target.x, target.y, target.size.width + deltaX, target.size.height + deltaY)
     }
     else if (direction == Direction.SW) {
-      setRawBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
+      setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
     }
     else if (direction == Direction.NE) {
-      setRawBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
+      setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
     }
     else {
-      setRawBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
+      setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
     }
-
-    // We need to trigger layout recalculation manually.
-    target.revalidate()
-    repaint()
   }
 
   fun close() {
