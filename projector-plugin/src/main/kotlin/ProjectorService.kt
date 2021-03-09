@@ -190,7 +190,11 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
         instance.enabled = value
       }
 
-    val host: String? get() = instance.config.host
+    var host: String?
+      get() = instance.config.host
+      set(value) {
+        instance.config.host = value
+      }
     val port: String? get() = instance.config.port
 
     val isSessionRunning: Boolean get() = instance.currentSession != null
