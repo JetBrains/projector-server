@@ -40,6 +40,7 @@ class Session(
 
   init {
     System.setProperty(ProjectorServer.PORT_PROPERTY_NAME, port)
+    System.setProperty(ProjectorServer.HOST_PROPERTY_NAME, host)
     this.rwToken = rwToken
     this.roToken = roToken
   }
