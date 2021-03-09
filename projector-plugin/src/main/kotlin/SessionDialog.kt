@@ -79,9 +79,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       description.text = "<html>The current session has already started.<br>Do you want to change passwords?"
       myOKAction.putValue(Action.NAME, "Save")
 
-      myHostsList.isEnabled = false
       portEditor.isEnabled = false
-
       rwTokenEditor.token = ProjectorService.currentSession.rwToken
       roTokenEditor.token = ProjectorService.currentSession.roToken
     } else {

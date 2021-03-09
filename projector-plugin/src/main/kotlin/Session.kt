@@ -19,11 +19,17 @@
 import org.jetbrains.projector.server.ProjectorServer
 
 class Session(
-  val host: String,
+  host: String,
   val port: String,
   rwToken: String?,
   roToken: String?,
 ) {
+  var host: String = host
+    set(value) {
+      field = value
+      ProjectorService.host = value
+    }
+
   var rwToken: String?
     get() = getToken(ProjectorServer.TOKEN_ENV_NAME)
     set(value) = setToken(ProjectorServer.TOKEN_ENV_NAME, value)
