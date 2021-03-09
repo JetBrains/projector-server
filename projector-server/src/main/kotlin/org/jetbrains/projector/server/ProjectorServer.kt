@@ -438,6 +438,12 @@ class ProjectorServer private constructor(
         }
       }
 
+      is ClientWindowSetBoundsEvent -> {
+        SwingUtilities.invokeLater {
+          PWindow.getWindow(message.windowId)?.apply { with(message.bounds) { this@apply.setBounds(x, y, width, height) } }
+        }
+      }
+
       is ClientWindowCloseEvent -> SwingUtilities.invokeLater { PWindow.getWindow(message.windowId)?.close() }
     }
   }
