@@ -33,7 +33,9 @@ import kotlin.random.Random
 
 class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val description = JLabel()
-  private val myHostsList: HostsList = HostsList(ProjectorService.host)
+  private val myHostsList: HostsList = HostsList("Host:", ProjectorService.host)
+
+  private val urlHostsList: HostsList = HostsList("URL address:", null)
   private val portEditor: PortEditor = PortEditor(ProjectorService.port)
   private val rwTokenEditor: TokenEditor = TokenEditor("Require password for read-write access:")
   private val roTokenEditor: TokenEditor = TokenEditor("Require password for read-only access: ")
@@ -72,6 +74,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   val roToken: String? get() = roTokenEditor.token
   val listenAddress: String get() = myHostsList.selected?.address ?: ""
   val listenPort: String get() = portEditor.value
+  val urlAddress: String get() = urlHostsList.selected?.address ?: ""
 
   init {
     if (ProjectorService.isSessionRunning) {
@@ -93,7 +96,9 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       roTokenEditor.token = generatePassword()
     }
 
-    myHostsList.onChange = ::updateInvitationLinks
+    //myHostsList.onChange = ::updateInvitationLinks
+    myHostsList.onChange = ::updateURLList
+    urlHostsList.onChange = ::updateInvitationLinks
     portEditor.onChange = ::updateInvitationLinks
     rwTokenEditor.onChange = ::updateInvitationLinks
     roTokenEditor.onChange = ::updateInvitationLinks
@@ -114,6 +119,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .addNextComponent(rwTokenEditor.tokenTextField, gridWidth = 2)
       .startNextLine().addNextComponent(roTokenEditor.requiredCheckBox, gridWidth = 2)
       .addNextComponent(roTokenEditor.tokenTextField, gridWidth = 2)
+      .startNextLine().addNextComponent(urlHostsList, gridWidth = 2, weightx = 0.5, rightGap = 15)
       .startNextLine().addNextComponent(JLabel("Invitation Links:"), gridWidth = 4, topGap = 5, bottomGap = 5)
       .startNextLine().addNextComponent(JLabel("Full Access Link:")).addNextComponent(rwInvitationLink.link, gridWidth = 2)
       .addNextComponent(rwInvitationLink.copyButton)
@@ -131,8 +137,31 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       onlyRwAccess.isSelected = true
     }
 
-    rwInvitationLink.update(listenAddress, listenPort, rwTokenEditor.token)
-    roInvitationLink.update(listenAddress, listenPort, roTokenEditor.token)
+    //rwInvitationLink.update(listenAddress, listenPort, rwTokenEditor.token)
+    //roInvitationLink.update(listenAddress, listenPort, roTokenEditor.token)
+    rwInvitationLink.update(urlAddress, listenPort, rwTokenEditor.token)
+    roInvitationLink.update(urlAddress, listenPort, roTokenEditor.token)
+  }
+
+  private fun updateURLList() {
+    val host = myHostsList.selected
+
+    when {
+      host == ALL_HOSTS -> {
+        val oldValue = urlHostsList.selected
+        urlHostsList.setItems(getHostList())
+        urlHostsList.setSelectedItem(oldValue)
+      }
+      host != null -> {
+        urlHostsList.setItems(listOf(host))
+        urlHostsList.setSelectedItem(host)
+      }
+      else -> {
+        urlHostsList.clear()
+      }
+    }
+
+    urlHostsList.onChange?.invoke()
   }
 
   private class InvitationLink {
@@ -202,31 +231,28 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     override fun toString() = if (name.isEmpty()) address else "$address ( $name )"
   }
 
-  private class HostsList(selectedHost: String?) : JPanel() {
-    private val title = JLabel("Host:")
+  private class HostsList(label: String, selectedHost: String?) : JPanel() {
+    private val title = JLabel(label)
     private val hosts: JComboBox<Host> = ComboBox<Host>().apply {
-      val dockerVendor = byteArrayOf(0x02.toByte(), 0x42.toByte())
-
-      val hosts = listOf(ALL_HOSTS) +
-                  NetworkInterface.getNetworkInterfaces()
-                    .asSequence()
-                    .filterNotNull()
-                    .filterNot { it.isLoopback } // drop localhost
-                    .filterNot {
-                      it.hardwareAddress != null && it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor)
-                    } // drop docker
-                    .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
-                    .map { toHost(it.address) }
-                    .distinct()
-
+      val hosts = listOf(ALL_HOSTS) + getHostList()
       hosts.forEach(::addItem)
-
       selectedHost?.let { selectedHost ->
         selectedItem = hosts.find { it.address == selectedHost }
       }
 
       addActionListener { onChange?.invoke() }
     }
+
+    fun clear() = hosts.removeAllItems()
+
+    fun addItems(values: List<Host>) = values.forEach { hosts.addItem(it) }
+
+    fun setItems(values: List<Host>) {
+      clear()
+      addItems(values)
+    }
+
+    fun setSelectedItem(host: Host?) = hosts.selectedItem
 
     init {
       LinearPanelBuilder(this)
@@ -273,6 +299,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
   companion object {
     private val ALL_HOSTS = Host("0.0.0.0", "all hosts")
+    private val dockerVendor = byteArrayOf(0x02.toByte(), 0x42.toByte())
 
     private fun generatePassword(): String {
       val charPool: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
@@ -283,5 +310,16 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     }
 
     private fun toHost(ip: java.net.InetAddress) = Host(ip.toString().substring(1), getHostName(ip) ?: "")
+
+    private fun getHostList() = NetworkInterface.getNetworkInterfaces()
+      .asSequence()
+      .filterNotNull()
+      .filterNot { it.isLoopback } // drop localhost
+      .filterNot {
+        it.hardwareAddress != null && it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor)
+      } // drop docker
+      .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
+      .map { toHost(it.address) }
+      .toList()
   }
 }
