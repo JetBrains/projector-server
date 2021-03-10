@@ -46,8 +46,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val accessGroup = ButtonGroup().apply {
     fun changeRoVisibility(isVisible: Boolean) {
       roTokenEditor.isVisible = isVisible
-      roInvitationTitle.isVisible = isVisible
       roInvitationLink.isVisible = isVisible
+      roInvitationTitle.isVisible = isVisible
     }
     bothAccess.addItemListener {
       if (it.stateChange == ItemEvent.SELECTED) {
@@ -70,8 +70,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
   val rwToken: String? get() = rwTokenEditor.token
   val roToken: String? get() = roTokenEditor.token
-  val host: String get() = myHostsList.selected
-  val port: String get() = portEditor.value
+  val listenAddress: String get() = myHostsList.selected?.address ?: ""
+  val listenPort: String get() = portEditor.value
 
   init {
     if (ProjectorService.isSessionRunning) {
@@ -80,11 +80,13 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       myOKAction.putValue(Action.NAME, "Save")
 
       portEditor.isEnabled = false
+      myHostsList.isEnabled = false
       rwTokenEditor.token = ProjectorService.currentSession.rwToken
       roTokenEditor.token = ProjectorService.currentSession.roToken
-    } else {
+    }
+    else {
       title = "Start Remote Access to IDE"
-      description.text = "<html>Config remote access to IDE.<br>Please check your connection parameters:"
+      description.text = "<html>Config remote access to IDE.<br>Listen on:"
       myOKAction.putValue(Action.NAME, "Start")
 
       rwTokenEditor.token = generatePassword()
@@ -124,12 +126,13 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private fun updateInvitationLinks() {
     if (onlyRwAccess.isSelected) {
       roTokenEditor.token = rwTokenEditor.token
-    } else if (rwTokenEditor.token == roTokenEditor.token) {
+    }
+    else if (rwTokenEditor.token == roTokenEditor.token) {
       onlyRwAccess.isSelected = true
     }
 
-    rwInvitationLink.update(host, port, rwTokenEditor.token)
-    roInvitationLink.update(host, port, roTokenEditor.token)
+    rwInvitationLink.update(listenAddress, listenPort, rwTokenEditor.token)
+    roInvitationLink.update(listenAddress, listenPort, roTokenEditor.token)
   }
 
   private class InvitationLink {
@@ -195,21 +198,33 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       }
   }
 
+  private class Host(val address: String, val name: String) {
+    override fun toString() = if (name.isEmpty()) address else "$address ( $name )"
+  }
+
   private class HostsList(selectedHost: String?) : JPanel() {
     private val title = JLabel("Host:")
-    private val hosts: JComboBox<String> = ComboBox<String>().apply {
+    private val hosts: JComboBox<Host> = ComboBox<Host>().apply {
       val dockerVendor = byteArrayOf(0x02.toByte(), 0x42.toByte())
-      NetworkInterface.getNetworkInterfaces()
-        .asSequence()
-        .filterNotNull()
-        .filterNot { it.isLoopback } // drop localhost
-        .filterNot { it.hardwareAddress != null && it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor) } // drop docker
-        .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
-        .mapNotNull { getHostName(it.address) }
-        .distinct()
-        .forEach(::addItem)
 
-      selectedHost?.takeIf(String::isNotEmpty)?.let { selectedItem = it }
+      val hosts = listOf(ALL_HOSTS) +
+                  NetworkInterface.getNetworkInterfaces()
+                    .asSequence()
+                    .filterNotNull()
+                    .filterNot { it.isLoopback } // drop localhost
+                    .filterNot {
+                      it.hardwareAddress != null && it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor)
+                    } // drop docker
+                    .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
+                    .map { toHost(it.address) }
+                    .distinct()
+
+      hosts.forEach(::addItem)
+
+      selectedHost?.let { selectedHost ->
+        selectedItem = hosts.find { it.address == selectedHost }
+      }
+
       addActionListener { onChange?.invoke() }
     }
 
@@ -221,7 +236,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     var onChange: (() -> Unit)? = null
 
-    val selected get() = hosts.selectedItem as? String ?: ""
+    val selected get() = hosts.selectedItem as? Host
 
     override fun setEnabled(enabled: Boolean) {
       super.setEnabled(enabled)
@@ -257,6 +272,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   }
 
   companion object {
+    private val ALL_HOSTS = Host("0.0.0.0", "all hosts")
+
     private fun generatePassword(): String {
       val charPool: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
       return (1..11)
@@ -264,5 +281,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         .map(charPool::get)
         .joinToString("")
     }
+
+    private fun toHost(ip: java.net.InetAddress) = Host(ip.toString().substring(1), getHostName(ip) ?: "")
   }
 }
