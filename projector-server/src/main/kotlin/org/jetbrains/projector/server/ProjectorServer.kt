@@ -721,6 +721,7 @@ class ProjectorServer private constructor(
                 widthWithInsets += i.left + i.right
                 heightWithInsets += i.top + i.bottom
               }
+              it.extendedState = Frame.NORMAL  // if the window is maximized, disable it to allow resizing
             }
 
             it.setBounds(point.x, point.y, widthWithInsets, heightWithInsets)
