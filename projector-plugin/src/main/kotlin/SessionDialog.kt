@@ -27,6 +27,7 @@ import java.awt.datatransfer.StringSelection
 import java.awt.event.ItemEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.net.Inet6Address
 import java.net.NetworkInterface
 import javax.swing.*
 import kotlin.random.Random
@@ -74,7 +75,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   val roToken: String? get() = roTokenEditor.token
   val listenAddress: String get() = myHostsList.selected?.address ?: ""
   val listenPort: String get() = portEditor.value
-  val urlAddress: String get() = urlHostsList.selected?.address ?: ""
+  private val urlAddress: String get() = urlHostsList.selected?.address ?: ""
 
   init {
     if (ProjectorService.isSessionRunning) {
@@ -137,8 +138,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       onlyRwAccess.isSelected = true
     }
 
-    //rwInvitationLink.update(listenAddress, listenPort, rwTokenEditor.token)
-    //roInvitationLink.update(listenAddress, listenPort, roTokenEditor.token)
     rwInvitationLink.update(urlAddress, listenPort, rwTokenEditor.token)
     roInvitationLink.update(urlAddress, listenPort, roTokenEditor.token)
   }
@@ -252,7 +251,9 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       addItems(values)
     }
 
-    fun setSelectedItem(host: Host?) = hosts.selectedItem
+    fun setSelectedItem(host: Host?) {
+      hosts.selectedItem = host
+    }
 
     init {
       LinearPanelBuilder(this)
@@ -309,7 +310,15 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         .joinToString("")
     }
 
-    private fun toHost(ip: java.net.InetAddress) : Host = Host(ip.toString().substring(1), getHostName(ip) ?: "")
+    private fun toHost(ip: java.net.InetAddress): Host {
+      var ipString = ip.toString().substring(1)
+
+      if (ip is Inet6Address) {
+        ipString = "[${ipString.substring(0, ipString.indexOf('%'))}]"
+      }
+
+      return Host(ipString, getHostName(ip) ?: "")
+    }
 
     private fun getHostList() = NetworkInterface.getNetworkInterfaces()
       .asSequence()
@@ -319,6 +328,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         it.hardwareAddress != null && it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor)
       } // drop docker
       .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
+      .filterNot { it.address is Inet6Address } // drop IP v 6
       .map { toHost(it.address) }
       .toList()
   }
