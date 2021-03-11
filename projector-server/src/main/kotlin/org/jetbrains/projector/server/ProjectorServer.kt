@@ -73,6 +73,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
+import kotlin.math.roundToLong
 import java.awt.Point as AwtPoint
 
 class ProjectorServer private constructor(
@@ -124,6 +125,7 @@ class ProjectorServer private constructor(
 
           connection.setAttachment(ReadyClientSettings(
             clientSettings.connectionMillis,
+            clientSettings.address,
             clientSettings.setUpClientData,
             if (ENABLE_BIG_COLLECTIONS_CHECKS) BIG_COLLECTIONS_CHECKS_START_SIZE else null,
           ))
@@ -151,12 +153,15 @@ class ProjectorServer private constructor(
 
     override fun onWsClose(connection: WebSocket) {
       // todo: we need more informative message, add parameters to this method inside the superclass
-      logger.info { "${connection.remoteSocketAddress?.address?.hostAddress} disconnected." }
+      val clientSettings = connection.getAttachment<ClientSettings>()!!
+      val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
+      logger.info { "${clientSettings.address} disconnected, was connected for ${connectionTime.roundToLong()} s." }
     }
 
     override fun onWsOpen(connection: WebSocket) {
-      connection.setAttachment(ConnectedClientSettings(connectionMillis = System.currentTimeMillis()))
-      logger.info { "${connection.remoteSocketAddress?.address?.hostAddress} connected." }
+      val address = connection.remoteSocketAddress?.address?.hostAddress
+      connection.setAttachment(ConnectedClientSettings(connectionMillis = System.currentTimeMillis(), address = address))
+      logger.info { "$address connected." }
     }
 
     override fun onError(connection: WebSocket?, e: Exception) {
@@ -555,6 +560,7 @@ class ProjectorServer private constructor(
     conn.setAttachment(
       SetUpClientSettings(
         connectionMillis = connectedClientSettings.connectionMillis,
+        address = connectedClientSettings.address,
         setUpClientData = SetUpClientData(
           hasWriteAccess = hasWriteAccess,
           toClientMessageEncoder = toClientEncoder,
