@@ -44,10 +44,10 @@ import org.jetbrains.projector.server.core.*
 import org.jetbrains.projector.server.core.convert.toAwt.*
 import org.jetbrains.projector.server.core.convert.toClient.*
 import org.jetbrains.projector.server.core.ij.IdeColors
+import org.jetbrains.projector.server.core.ij.IjInjectorAgentInitializer
 import org.jetbrains.projector.server.core.ij.KeymapSetter
 import org.jetbrains.projector.server.core.ij.SettingsInitializer
 import org.jetbrains.projector.server.core.ij.log.DelegatingJvmLogger
-import org.jetbrains.projector.server.core.ij.md.IjInjectorAgentInitializer
 import org.jetbrains.projector.server.core.ij.md.PanelUpdater
 import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshakeEncoder
@@ -347,7 +347,7 @@ class ProjectorServer private constructor(
         connectionMillis = clientSettings.connectionMillis,
         target = focusOwnerOrTarget(PWindow.windows.last().target),
       )
-        ?.let {
+        .let {
           SwingUtilities.invokeLater {
             laterInvokator(it)
           }
@@ -357,7 +357,7 @@ class ProjectorServer private constructor(
         connectionMillis = clientSettings.connectionMillis,
         target = focusOwnerOrTarget(PWindow.windows.last().target),
       )
-        ?.let {
+        .let {
           SwingUtilities.invokeLater {
             laterInvokator(it)
           }
@@ -732,9 +732,7 @@ class ProjectorServer private constructor(
 
       initializer.run()
 
-      if (!isAgent) {
-        IjInjectorAgentInitializer.init()  // todo: support variant for agent too
-      }
+      IjInjectorAgentInitializer.init(isAgent)
 
       ProjectorAwtInitializer.initDefaults()  // this should be done after setting classes because some headless operations can happen here
 
