@@ -96,13 +96,13 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       roTokenEditor.token = generatePassword()
     }
 
-    //myHostsList.onChange = ::updateInvitationLinks
     myHostsList.onChange = ::updateURLList
     urlHostsList.onChange = ::updateInvitationLinks
     portEditor.onChange = ::updateInvitationLinks
     rwTokenEditor.onChange = ::updateInvitationLinks
     roTokenEditor.onChange = ::updateInvitationLinks
 
+    updateURLList()
     updateInvitationLinks()
     setResizable(false)
     init()
@@ -309,7 +309,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         .joinToString("")
     }
 
-    private fun toHost(ip: java.net.InetAddress) = Host(ip.toString().substring(1), getHostName(ip) ?: "")
+    private fun toHost(ip: java.net.InetAddress) : Host = Host(ip.toString().substring(1), getHostName(ip) ?: "")
 
     private fun getHostList() = NetworkInterface.getNetworkInterfaces()
       .asSequence()
