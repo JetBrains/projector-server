@@ -63,7 +63,7 @@ class PGraphics2D private constructor(
   private var foregroundColor: Color,
   private var stroke: Stroke,
   private var font: Font,
-  private var device: GraphicsDevice,
+  var device: GraphicsDevice,
 ) : Graphics2D() {
 
   private var backingFontRenderContext = FontRenderContext(

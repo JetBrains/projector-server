@@ -49,6 +49,7 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
     get() = Toolkit.getDefaultToolkit()
 
   val pWindow = PWindow(target)
+  private var myGraphicsConfiguration: GraphicsConfiguration? = null
 
   override fun dispose() {
     PToolkit.targetDisposedPeer(pWindow.target, this)
@@ -192,7 +193,7 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
   }
 
   override fun getGraphicsConfiguration(): GraphicsConfiguration {
-    return pWindow.target.graphicsConfiguration
+    return myGraphicsConfiguration ?: pWindow.target.graphicsConfiguration
   }
 
   override fun handlesWheelScrolling(): Boolean {
@@ -222,6 +223,7 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
   override fun setZOrder(above: ComponentPeer?) {}
 
   override fun updateGraphicsData(gc: GraphicsConfiguration): Boolean {
+    myGraphicsConfiguration = gc
     return false
   }
 }
