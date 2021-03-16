@@ -26,11 +26,14 @@ package org.jetbrains.projector.awt
 import org.jetbrains.projector.awt.data.AwtComponentAccessor
 import org.jetbrains.projector.awt.data.Direction
 import org.jetbrains.projector.awt.image.PGraphics2D
+import org.jetbrains.projector.awt.image.PGraphicsEnvironment
 import org.jetbrains.projector.awt.service.ImageCacher
 import java.awt.*
 import java.awt.event.ComponentEvent
 import java.lang.ref.WeakReference
 import java.util.*
+import kotlin.math.abs
+import kotlin.math.min
 
 class PWindow(val target: Component) {
 
@@ -104,9 +107,23 @@ class PWindow(val target: Component) {
     if (hasResized)
       (target as? Window)?.dispatchEvent(ComponentEvent(target, ComponentEvent.COMPONENT_RESIZED))
 
+    updateGraphics()
+
     // We need to trigger layout recalculation manually.
     if (hasResized) target.revalidate()
     repaint()
+  }
+
+  private fun updateGraphics() {
+    val windowMidpoint = with(target.bounds) { Point(x + width / 2, y + height / 2) }
+    val newDevice = PGraphicsEnvironment.devices.minByOrNull {
+      val deviceBounds = it.bounds
+      if(deviceBounds.contains(windowMidpoint)) 0 else {
+        min(min(abs(deviceBounds.x - windowMidpoint.x), abs(deviceBounds.x + deviceBounds.width - windowMidpoint.x)),
+            min(abs(deviceBounds.y - windowMidpoint.y), abs(deviceBounds.y + deviceBounds.height - windowMidpoint.y)))
+      }
+    } ?: return
+    graphics.device = newDevice
   }
 
   fun move(deltaX: Int, deltaY: Int) {
