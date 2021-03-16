@@ -2,6 +2,16 @@
 
 Notable changes to this project are documented in this file.
 
+# 1.2.0
+
+## Added
+
+- Allow specifying the listening address.
+
+# Updated
+
+- Projector Server v1.1.0.
+
 # 1.1.0
 
 ## Fixed

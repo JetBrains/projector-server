@@ -1,3 +1,19 @@
+# 1.1.0
+
+## Added
+
+- PRJ-272 Allow specifying PIXEL_PER_UNIT.
+- PRJ-287 PRJ-234 Disable ligatures automatically.
+
+## Changed
+
+- PRJ-275 Implement taking keymap from keyboard API.
+- PRJ-317 Improve disconnection message.
+
+## Fixed
+
+- Manual JSON decoder.
+
 # 1.0.0
 
 ## Changed
