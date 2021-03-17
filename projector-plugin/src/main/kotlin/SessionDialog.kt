@@ -334,7 +334,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     private fun getHostList() = NetworkInterface.getNetworkInterfaces()
       .asSequence()
       .filterNotNull()
-      .filterNot { it.isLoopback } // drop localhost
       .filterNot {
         it.hardwareAddress != null && it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor)
       } // drop docker
