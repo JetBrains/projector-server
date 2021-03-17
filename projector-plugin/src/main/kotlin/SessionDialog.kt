@@ -147,7 +147,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     when {
       host == ALL_HOSTS -> {
-        urlHostsList.setTooltip("")
+        urlHostsList.setTooltip(null)
         urlHostsList.isEnabled = true
         val oldValue = urlHostsList.selected
         urlHostsList.setItems(getHostList())
@@ -161,7 +161,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         urlHostsList.isEnabled = false
       }
       else -> {
-        urlHostsList.setTooltip("")
+        urlHostsList.setTooltip(null)
         urlHostsList.isEnabled = true
         urlHostsList.clear()
       }
@@ -277,7 +277,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       hosts.isEnabled = enabled
     }
 
-    fun setTooltip(text: String) {
+    fun setTooltip(text: String?) {
       hosts.toolTipText = text
     }
   }
