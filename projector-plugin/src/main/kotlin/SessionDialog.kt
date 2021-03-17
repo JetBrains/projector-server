@@ -148,11 +148,11 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     when {
       host == ALL_HOSTS -> {
         urlHostsList.setTooltip(null)
-        urlHostsList.isEnabled = true
         val oldValue = urlHostsList.selected
-        urlHostsList.setItems(getHostList())
+        val hostList = getHostList()
+        urlHostsList.setItems(hostList)
         urlHostsList.setSelectedItem(oldValue)
-
+        urlHostsList.isEnabled = hostList.size > 1
       }
       host != null -> {
         urlHostsList.setItems(listOf(host))
