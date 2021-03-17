@@ -234,7 +234,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   }
 
   private class Host(val address: String, val name: String) {
-    override fun toString() = if (name.isEmpty()) address else "$address ( $name )"
+    override fun toString() = if (name.isEmpty() || name == address) address else "$address ( $name )"
   }
 
   private class HostsList(label: String, selectedHost: String?) : JPanel() {
