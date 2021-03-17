@@ -299,7 +299,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   }
 
   companion object {
-    private val ALL_HOSTS = Host("0.0.0.0", "all hosts")
+    private val ALL_HOSTS = Host("0.0.0.0", "all addresses")
     private val dockerVendor = byteArrayOf(0x02.toByte(), 0x42.toByte())
 
     private fun generatePassword(): String {
