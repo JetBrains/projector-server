@@ -147,15 +147,22 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     when {
       host == ALL_HOSTS -> {
+        urlHostsList.setTooltip("")
+        urlHostsList.isEnabled = true
         val oldValue = urlHostsList.selected
         urlHostsList.setItems(getHostList())
         urlHostsList.setSelectedItem(oldValue)
+
       }
       host != null -> {
         urlHostsList.setItems(listOf(host))
         urlHostsList.setSelectedItem(host)
+        urlHostsList.setTooltip("nothing to select from")
+        urlHostsList.isEnabled = false
       }
       else -> {
+        urlHostsList.setTooltip("")
+        urlHostsList.isEnabled = true
         urlHostsList.clear()
       }
     }
@@ -268,6 +275,10 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     override fun setEnabled(enabled: Boolean) {
       super.setEnabled(enabled)
       hosts.isEnabled = enabled
+    }
+
+    fun setTooltip(text: String) {
+      hosts.toolTipText = text
     }
   }
 
