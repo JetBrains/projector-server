@@ -36,12 +36,12 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val description = JLabel()
   private val myHostsList: HostsList = HostsList("Host:", ProjectorService.host)
 
-  private val urlHostsList: HostsList = HostsList("URL: ", null)
-  private val portEditor: PortEditor = PortEditor(ProjectorService.port)
-  private val rwTokenEditor: TokenEditor = TokenEditor("Require password for read-write access:")
-  private val roTokenEditor: TokenEditor = TokenEditor("Require password for read-only access: ")
-  private val rwInvitationLink: InvitationLink = InvitationLink()
-  private val roInvitationLink: InvitationLink = InvitationLink()
+  private val urlHostsList = HostsList("URL: ", null)
+  private val portEditor = PortEditor(ProjectorService.port)
+  private val rwTokenEditor = TokenEditor("Require password for read-write access:")
+  private val roTokenEditor = TokenEditor("Require password for read-only access: ")
+  private val rwInvitationLink = InvitationLink()
+  private val roInvitationLink = InvitationLink()
   private val roInvitationTitle = JLabel("Read Only Link:")
 
   private val bothAccess = JRadioButton("RW & RO")
@@ -50,7 +50,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     fun changeRoVisibility(isVisible: Boolean) {
       roTokenEditor.isVisible = isVisible
       roInvitationLink.isVisible = isVisible
-      roInvitationTitle.isVisible = isVisible
     }
     bothAccess.addItemListener {
       if (it.stateChange == ItemEvent.SELECTED) {
@@ -194,7 +193,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     var isVisible = true
       set(value) {
         link.isVisible = value
-        copyButton.isVisible = value
+        copyButton.isEnabled = value
         field = value
       }
   }
@@ -228,7 +227,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     var isVisible = true
       set(value) {
         tokenTextField.isVisible = value
-        requiredCheckBox.isVisible = value
+        requiredCheckBox.isEnabled = value
         field = value
       }
   }
