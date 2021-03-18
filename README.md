@@ -106,4 +106,4 @@ To set the port which will be used by Projector Server for WebSocket, use the `-
 [CONTRIBUTING.md](https://github.com/JetBrains/projector-server/blob/master/docs/CONTRIBUTING.md).
 
 ## License
-[GPLv2](LICENSE.txt).
+[GPLv2+CPE](LICENSE.txt).
