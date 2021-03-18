@@ -92,6 +92,10 @@ class PWindow(val target: Component) {
 
   val graphics = PGraphics2D(target, Descriptor(id))
 
+  init {
+    updateGraphics()
+  }
+
   fun setBounds(x: Int, y: Int, width: Int, height: Int) {
     val hasMoved = target.x != x || target.y != y
     val hasResized = target.width != width || target.height != height
@@ -102,12 +106,13 @@ class PWindow(val target: Component) {
     target.requestFocusInWindow()
 
     AwtComponentAccessor.setBounds(target, x, y, width, height)
+
+    updateGraphics()
+
     if (hasMoved)
       (target as? Window)?.dispatchEvent(ComponentEvent(target, ComponentEvent.COMPONENT_MOVED))
     if (hasResized)
       (target as? Window)?.dispatchEvent(ComponentEvent(target, ComponentEvent.COMPONENT_RESIZED))
-
-    updateGraphics()
 
     // We need to trigger layout recalculation manually.
     if (hasResized) target.revalidate()
