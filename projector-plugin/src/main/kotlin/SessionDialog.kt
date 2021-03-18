@@ -36,7 +36,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val description = JLabel()
   private val myHostsList: HostsList = HostsList("Host:", ProjectorService.host)
 
-  private val urlHostsList: HostsList = HostsList("URL address:", null)
+  private val urlHostsList: HostsList = HostsList("URL: ", null)
   private val portEditor: PortEditor = PortEditor(ProjectorService.port)
   private val rwTokenEditor: TokenEditor = TokenEditor("Require password for read-write access:")
   private val roTokenEditor: TokenEditor = TokenEditor("Require password for read-only access: ")
@@ -123,9 +123,9 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .startNextLine().addNextComponent(urlHostsList, gridWidth = 2, weightx = 0.5, rightGap = 15)
       .startNextLine().addNextComponent(JLabel("Invitation Links:"), gridWidth = 4, topGap = 5, bottomGap = 5)
       .startNextLine().addNextComponent(JLabel("Full Access Link:")).addNextComponent(rwInvitationLink.link, gridWidth = 2)
-      .addNextComponent(rwInvitationLink.copyButton)
+      .addNextComponent(rwInvitationLink.copyButton, gridWidth = 2)
       .startNextLine().addNextComponent(roInvitationTitle).addNextComponent(roInvitationLink.link, gridWidth = 2)
-      .addNextComponent(roInvitationLink.copyButton)
+      .addNextComponent(roInvitationLink.copyButton, gridWidth = 2)
       .startNextLine().addNextComponent(ConnectionPanel(), gridWidth = 4)
     return panel
   }
