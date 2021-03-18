@@ -17,12 +17,7 @@
  * 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  */
 
-import com.intellij.icons.AllIcons
-import com.intellij.openapi.ui.ComboBox
 import java.awt.*
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
-import java.awt.event.KeyListener
 import javax.swing.*
 
 class LinearPanelBuilder(private var panel: JPanel) {
