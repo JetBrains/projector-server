@@ -1,3 +1,9 @@
+# 1.1.1
+
+## Fixed
+
+- PRJ-345 Broken shortcuts
+
 # 1.1.0
 
 ## Added

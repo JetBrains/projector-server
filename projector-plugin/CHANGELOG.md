@@ -2,6 +2,20 @@
 
 Notable changes to this project are documented in this file.
 
+# 1.2.1
+
+## Added
+
+- Loopback address selection.
+
+## Changed
+
+- Minor UI improvements.
+
+# Updated
+
+- Projector Server v1.1.1.
+
 # 1.2.0
 
 ## Added
