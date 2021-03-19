@@ -44,7 +44,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val urlHostsList = HostsList("URL: ", null)
   private val portEditor = PortEditor(ProjectorService.port)
   private val rwTokenEditor = TokenEditor("Require password for read-write access:")
-  private val roTokenEditor = TokenEditor("Require password for read-only access: ")
+  private val roTokenEditor = TokenEditor("Require password for  read-only access:")
   private val rwInvitationLink = InvitationLink()
   private val roInvitationLink = InvitationLink()
   private val roInvitationTitle = JLabel("Read Only Link:")
@@ -238,7 +238,15 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   }
 
   private class Host(val address: String, val name: String) {
-    override fun toString() = if (name.isEmpty() || name == address) address else "$address ( $name )"
+    override fun toString(): String {
+      val displayName = when {
+        address == "127.0.0.1" -> "localhost"
+        name == address -> ""
+        else -> name
+      }
+
+      return if (displayName.isEmpty()) address else "$address ( $displayName )"
+    }
   }
 
   private class HostsList(label: String, selectedHost: String?) : JPanel() {
