@@ -267,6 +267,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     }
 
     init {
+      hosts.prototypeDisplayValue = Host("255.255.255.255", "very.very.long.host.name.com")
       LinearPanelBuilder(this)
         .addNextComponent(title, weightx = 0.1)
         .addNextComponent(hosts)
