@@ -55,6 +55,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     fun changeRoVisibility(isVisible: Boolean) {
       roTokenEditor.isVisible = isVisible
       roInvitationLink.isVisible = isVisible
+      roInvitationTitle.isVisible = isVisible
     }
     bothAccess.addItemListener {
       if (it.stateChange == ItemEvent.SELECTED) {
@@ -113,7 +114,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     init()
   }
 
-  override fun createCenterPanel(): JComponent {
+  override fun createNorthPanel(): JComponent {
     val panel = JPanel()
     LinearPanelBuilder(panel).addNextComponent(description, gridWidth = 4, bottomGap = 5)
       .startNextLine().addNextComponent(myHostsList, gridWidth = 2, weightx = 0.5, rightGap = 15)
@@ -133,6 +134,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .startNextLine().addNextComponent(ConnectionPanel(), gridWidth = 4)
     return panel
   }
+
+  override fun createCenterPanel(): JComponent? = null
 
   private fun updateInvitationLinks() {
     if (onlyRwAccess.isSelected) {
@@ -198,7 +201,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     var isVisible = true
       set(value) {
         link.isVisible = value
-        copyButton.isEnabled = value
+        copyButton.isVisible = value
         field = value
       }
   }
@@ -232,7 +235,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     var isVisible = true
       set(value) {
         tokenTextField.isVisible = value
-        requiredCheckBox.isEnabled = value
+        requiredCheckBox.isVisible = value
         field = value
       }
   }
