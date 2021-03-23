@@ -93,7 +93,9 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       portEditor.isEnabled = false
       myHostsList.isEnabled = false
       rwTokenEditor.token = ProjectorService.currentSession.rwToken
+      rwTokenEditor.isEnabled = false
       roTokenEditor.token = ProjectorService.currentSession.roToken
+      roTokenEditor.isEnabled = false
       requireConnectConfirmation.isSelected = ProjectorService.currentSession.confirmConnection
       requireConnectConfirmation.isEnabled = false
     }
@@ -104,7 +106,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
       rwTokenEditor.token = generatePassword()
       roTokenEditor.token = generatePassword()
-      requireConnectConfirmation.isEnabled = true
     }
 
     myHostsList.onChange = ::updateURLList
@@ -242,6 +243,13 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       set(value) {
         tokenTextField.isVisible = value
         requiredCheckBox.isVisible = value
+        field = value
+      }
+
+    var isEnabled = true
+      set(value) {
+        tokenTextField.isEnabled = value
+        requiredCheckBox.isEnabled = value
         field = value
       }
   }
