@@ -45,7 +45,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val portEditor = PortEditor(ProjectorService.port)
   private val rwTokenEditor = TokenEditor("Require password for read-write access:")
   private val roTokenEditor = TokenEditor("Require password for  read-only access:")
-  private val requireConnectConfirmation: JCheckBox = JCheckBox("Require connection confirmation", false)
+  private val requireConnectConfirmation: JCheckBox = JCheckBox("Require connection confirmation", true)
   private val rwInvitationLink = InvitationLink()
   private val roInvitationLink = InvitationLink()
   private val roInvitationTitle = JLabel("Read Only Link:")
