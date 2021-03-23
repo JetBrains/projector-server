@@ -93,9 +93,9 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       portEditor.isEnabled = false
       myHostsList.isEnabled = false
       rwTokenEditor.token = ProjectorService.currentSession.rwToken
-      rwTokenEditor.isEnabled = false
+      //rwTokenEditor.isEnabled = false
       roTokenEditor.token = ProjectorService.currentSession.roToken
-      roTokenEditor.isEnabled = false
+      //roTokenEditor.isEnabled = false
       requireConnectConfirmation.isSelected = ProjectorService.currentSession.confirmConnection
       requireConnectConfirmation.isEnabled = false
     }
