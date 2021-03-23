@@ -45,6 +45,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val portEditor = PortEditor(ProjectorService.port)
   private val rwTokenEditor = TokenEditor("Require password for read-write access:")
   private val roTokenEditor = TokenEditor("Require password for  read-only access:")
+  private val requireConnectConfirmation: JCheckBox = JCheckBox("Require connection confirmation", false)
   private val rwInvitationLink = InvitationLink()
   private val roInvitationLink = InvitationLink()
   private val roInvitationTitle = JLabel("Read Only Link:")
@@ -80,6 +81,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   val roToken: String? get() = roTokenEditor.token
   val listenAddress: String get() = myHostsList.selected?.address ?: ""
   val listenPort: String get() = portEditor.value
+  val confirmConnection: Boolean get() = requireConnectConfirmation.isSelected
   private val urlAddress: String get() = urlHostsList.selected?.address ?: ""
 
   init {
@@ -92,6 +94,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       myHostsList.isEnabled = false
       rwTokenEditor.token = ProjectorService.currentSession.rwToken
       roTokenEditor.token = ProjectorService.currentSession.roToken
+      requireConnectConfirmation.isSelected = ProjectorService.currentSession.confirmConnection
+      requireConnectConfirmation.isEnabled = false
     }
     else {
       title = "Start Remote Access to IDE"
@@ -100,6 +104,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
       rwTokenEditor.token = generatePassword()
       roTokenEditor.token = generatePassword()
+      requireConnectConfirmation.isEnabled = true
     }
 
     myHostsList.onChange = ::updateURLList
@@ -125,6 +130,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .addNextComponent(rwTokenEditor.tokenTextField, gridWidth = 2)
       .startNextLine().addNextComponent(roTokenEditor.requiredCheckBox, gridWidth = 2)
       .addNextComponent(roTokenEditor.tokenTextField, gridWidth = 2)
+      .startNextLine().addNextComponent(requireConnectConfirmation)
       .startNextLine().addNextComponent(urlHostsList, gridWidth = 2, weightx = 0.5, rightGap = 15)
       .startNextLine().addNextComponent(JLabel("Invitation Links:"), gridWidth = 4, topGap = 5, bottomGap = 5)
       .startNextLine().addNextComponent(JLabel("Full Access Link:")).addNextComponent(rwInvitationLink.link, gridWidth = 2)

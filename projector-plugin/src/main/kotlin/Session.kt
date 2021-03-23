@@ -28,6 +28,7 @@ class Session(
   val port: String,
   rwToken: String?,
   roToken: String?,
+  confirmConnection: Boolean,
 ) {
   var host: String = host
     set(value) {
@@ -43,18 +44,26 @@ class Session(
     get() = getToken(ProjectorServer.RO_TOKEN_ENV_NAME)
     set(value) = setToken(ProjectorServer.RO_TOKEN_ENV_NAME, value)
 
+  var confirmConnection: Boolean
+    get() = System.getProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION) == "true"
+    set(value) {
+      System.setProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION, if (value) "true" else "false")
+    }
+
   init {
     System.setProperty(ProjectorServer.PORT_PROPERTY_NAME, port)
     System.setProperty(ProjectorServer.HOST_PROPERTY_NAME, host)
     this.rwToken = rwToken
     this.roToken = roToken
+    this.confirmConnection = confirmConnection
   }
 
   private fun getToken(tokenPropertyName: String): String? = System.getProperty(tokenPropertyName)
   private fun setToken(tokenPropertyName: String, token: String?) {
     if (token == null) {
       System.clearProperty(tokenPropertyName)
-    } else {
+    }
+    else {
       System.setProperty(tokenPropertyName, token)
     }
   }

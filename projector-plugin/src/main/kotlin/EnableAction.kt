@@ -38,7 +38,8 @@ class EnableAction : DumbAwareAction() {
       ProjectorService.currentSession = Session(sessionDialog.listenAddress,
                                                 sessionDialog.listenPort,
                                                 sessionDialog.rwToken,
-                                                sessionDialog.roToken)
+                                                sessionDialog.roToken,
+                                                sessionDialog.confirmConnection)
       ProjectorService.enable()
     }
   }
