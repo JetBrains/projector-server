@@ -45,8 +45,13 @@ class EnableAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val state = ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
-    e.presentation.isEnabled = state
-    e.presentation.isVisible = state
+      val state = !isProjectorDetected() && ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
+      e.presentation.isEnabledAndVisible = state
+  }
+
+  private fun isProjectorDetected() = ProcessHandle.current().info().commandLine().get().contains(PROJECTOR_MARK)
+
+  companion object {
+    private const val PROJECTOR_MARK = "-Dorg.jetbrains.projector.server.classToLaunch"
   }
 }
