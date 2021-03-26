@@ -42,6 +42,8 @@ class EnableAction : DumbAwareAction() {
                                                 sessionDialog.confirmConnection)
       ProjectorService.enable()
     }
+
+    sessionDialog.cancelResolverRequests()
   }
 
   override fun update(e: AnActionEvent) {
