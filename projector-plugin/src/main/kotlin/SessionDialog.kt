@@ -32,15 +32,17 @@ import java.awt.event.ItemEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.net.Inet6Address
+import java.net.InetAddress
 import java.net.NetworkInterface
 import javax.swing.*
 import kotlin.random.Random
 
 class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val description = JLabel()
+  private val resolver: AsyncHostResolver = AsyncHostResolver()
   private val myHostsList: HostsList = HostsList("Host:", ProjectorService.host)
   private val urlHostsList = HostsList("URL: ", null)
-  private val resolver: AsyncHostResolver = AsyncHostResolver().apply { subscribe(myHostsList); subscribe(urlHostsList) }
+  private val connectionPanel = ConnectionPanel ( resolver )
   private val portEditor = PortEditor(ProjectorService.port)
   private val rwTokenEditor = TokenEditor("Require password for read-write access:")
   private val roTokenEditor = TokenEditor("Require password for  read-only access:")
@@ -115,7 +117,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     updateURLList()
     updateInvitationLinks()
     setResizable(false)
-    getHostList { ip -> resolver.resolve(ip) }
+    getHostList { ip -> resolver.resolve(myHostsList,ip) }
     init()
   }
 
@@ -137,7 +139,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .addNextComponent(rwInvitationLink.copyButton, gridWidth = 2)
       .startNextLine().addNextComponent(roInvitationTitle).addNextComponent(roInvitationLink.link, gridWidth = 2)
       .addNextComponent(roInvitationLink.copyButton, gridWidth = 2)
-      .startNextLine().addNextComponent(ConnectionPanel(), gridWidth = 4)
+      .startNextLine().addNextComponent(connectionPanel, gridWidth = 4)
     return panel
   }
 
@@ -156,8 +158,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   }
 
   fun cancelResolverRequests() {
-    resolver.cancelAllPendingRequests()
-    resolver.unsubscribeAll()
+    resolver.cancelPendingRequests()
   }
 
   private fun updateURLList() {
@@ -167,7 +168,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       host == ALL_HOSTS -> {
         urlHostsList.setTooltip(null)
         val oldValue = urlHostsList.selected
-        val hostList = getHostList { ip -> resolver.resolve(ip) }
+        val hostList = getHostList { ip -> resolver.resolve(urlHostsList,ip) }
         urlHostsList.setItems(hostList)
         urlHostsList.setSelectedItem(oldValue)
         urlHostsList.isEnabled = hostList.size > 1
@@ -356,7 +357,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         .joinToString("")
     }
 
-    private fun getHostList(toHost: (ip: java.net.InetAddress) -> Host) = NetworkInterface.getNetworkInterfaces()
+    private fun getHostList(toHost: (ip: InetAddress) -> Host) = NetworkInterface.getNetworkInterfaces()
       .asSequence()
       .filterNotNull()
       .filterNot {

@@ -24,11 +24,12 @@
 
 import com.intellij.ui.table.JBTable
 import java.awt.Dimension
+import java.net.InetAddress
 import javax.swing.*
 import javax.swing.table.DefaultTableModel
 
 
-class ConnectionPanel : JPanel() {
+class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(), ResolvedHostSubscriber {
   private val title = JLabel("Current connections")
   private val disconnectButton = JButton("Disconnect").apply {
     addActionListener {
@@ -70,16 +71,37 @@ class ConnectionPanel : JPanel() {
     }
   }
 
+  private fun resolveClients() {
+    val model = clientTable.model
+
+    for (i in 0 until model.rowCount) {
+      val addr = model.getValueAt(i, 0).toString()
+      val host = resolver.resolve(this, InetAddress.getByName(addr))
+      model.setValueAt(host.name, i, 1)
+    }
+  }
+
   private fun update() {
     clientTable.model = DefaultTableModel(ProjectorService.getClientList(), columnNames)
     if (clientTable.model.rowCount > 0) {
       clientTable.setRowSelectionInterval(0, 0)
       disconnectButton.isEnabled = true
       disconnectAllButton.isEnabled = true
+      resolveClients()
     }
     else {
       disconnectButton.isEnabled = false
       disconnectAllButton.isEnabled = false
+    }
+  }
+
+  override fun resolved(h: Host) {
+    for (i in 0 until clientTable.model.rowCount) {
+      val addr = clientTable.model.getValueAt(i, 0)
+
+      if (addr == h.address) {
+        clientTable.model.setValueAt(h.name, i, 1)
+      }
     }
   }
 }

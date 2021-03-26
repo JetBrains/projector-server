@@ -641,7 +641,7 @@ class ProjectorServer private constructor(
       if (remoteAddress != null) {
         s.add(arrayOf(
           remoteAddress.hostAddress,
-          getHostName(remoteAddress)
+          "resolving ..."
         ))
       }
     }
