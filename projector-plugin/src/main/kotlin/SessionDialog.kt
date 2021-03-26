@@ -42,7 +42,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val resolver: AsyncHostResolver = AsyncHostResolver()
   private val myHostsList: HostsList = HostsList("Host:", ProjectorService.host)
   private val urlHostsList = HostsList("URL: ", null)
-  private val connectionPanel = ConnectionPanel ( resolver )
+  private val connectionPanel = ConnectionPanel(resolver)
   private val portEditor = PortEditor(ProjectorService.port)
   private val rwTokenEditor = TokenEditor("Require password for read-write access:")
   private val roTokenEditor = TokenEditor("Require password for  read-only access:")
@@ -117,7 +117,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     updateURLList()
     updateInvitationLinks()
     setResizable(false)
-    getHostList { ip -> resolver.resolve(myHostsList,ip) }
     init()
   }
 
@@ -168,16 +167,18 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       host == ALL_HOSTS -> {
         urlHostsList.setTooltip(null)
         val oldValue = urlHostsList.selected
-        val hostList = getHostList { ip -> resolver.resolve(urlHostsList,ip) }
+        val hostList = getHostList { ip -> resolver.resolve(urlHostsList, ip) }
         urlHostsList.setItems(hostList)
-        urlHostsList.setSelectedItem(oldValue)
+        urlHostsList.selected = oldValue
         urlHostsList.isEnabled = hostList.size > 1
       }
       host != null -> {
         urlHostsList.setItems(listOf(host))
-        urlHostsList.setSelectedItem(host)
+        urlHostsList.selected = host
         urlHostsList.setTooltip("nothing to select from")
         urlHostsList.isEnabled = false
+        resolver.resolve(myHostsList, host.address)
+        resolver.resolve(urlHostsList, host.address)
       }
       else -> {
         urlHostsList.setTooltip(null)
@@ -262,7 +263,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private inner class HostsList(label: String, selectedHost: String?) : JPanel(), ResolvedHostSubscriber {
     private val title = JLabel(label)
     private val hosts: JComboBox<Host> = ComboBox<Host>().apply {
-      val hosts = listOf(ALL_HOSTS) + getHostList { ip -> Host(ip) }
+      val hosts = listOf(ALL_HOSTS) + getHostList { ip -> resolver.resolve(this@HostsList, ip) }
+
       hosts.forEach(::addItem)
       selectedHost?.let { selectedHost ->
         selectedItem = hosts.find { it.address == selectedHost }
@@ -280,10 +282,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       addItems(values)
     }
 
-    fun setSelectedItem(host: Host?) {
-      hosts.selectedItem = host
-    }
-
     init {
       hosts.prototypeDisplayValue = Host("255.255.255.255", "very.very.long.host.name.com")
       LinearPanelBuilder(this)
@@ -293,7 +291,17 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     var onChange: (() -> Unit)? = null
 
-    val selected get() = hosts.selectedItem as? Host
+    var selected
+      get() = hosts.selectedItem as? Host
+      set(value) {
+        hosts.selectedItem = value
+      }
+
+    var selectedIndex
+      get() = hosts.selectedIndex
+      set(value) {
+        hosts.selectedIndex = value
+      }
 
     override fun setEnabled(enabled: Boolean) {
       super.setEnabled(enabled)

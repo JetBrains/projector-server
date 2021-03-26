@@ -24,7 +24,6 @@
 
 import com.intellij.ui.table.JBTable
 import java.awt.Dimension
-import java.net.InetAddress
 import javax.swing.*
 import javax.swing.table.DefaultTableModel
 
@@ -76,7 +75,7 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(), Resol
 
     for (i in 0 until model.rowCount) {
       val addr = model.getValueAt(i, 0).toString()
-      val host = resolver.resolve(this, InetAddress.getByName(addr))
+      val host = resolver.resolve(this, addr)
       model.setValueAt(host.name, i, 1)
     }
   }

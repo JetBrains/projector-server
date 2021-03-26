@@ -29,7 +29,6 @@ import kotlin.concurrent.thread
 import org.jetbrains.projector.server.core.util.getHostName
 import java.net.InetAddress
 import javax.swing.SwingUtilities
-import kotlin.collections.HashSet
 
 class Host(val address: String, name: String) {
 
@@ -59,6 +58,11 @@ class AsyncHostResolver {
   private val queue: MutableList<Request> = Collections.synchronizedList(ArrayList<Request>())
 
   fun cancelPendingRequests() = queue.clear()
+
+  fun resolve (client: ResolvedHostSubscriber, address: String): Host {
+    val ip = InetAddress.getByName(address)
+    return resolve(client, ip)
+  }
 
   fun resolve(client: ResolvedHostSubscriber, ip: InetAddress): Host {
     val name = getName(ip)
