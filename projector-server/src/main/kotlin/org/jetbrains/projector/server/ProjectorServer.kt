@@ -526,7 +526,7 @@ class ProjectorServer private constructor(
 
         val remoteHostName = when (remoteAddress) {
           null -> "can't determine the host's name or IP"
-          else -> getHostName(remoteAddress)
+          else -> remoteAddress.hostAddress
         }
 
         selectedOption = JOptionPane.showOptionDialog(
