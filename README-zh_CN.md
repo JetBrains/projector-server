@@ -16,7 +16,7 @@
 
 你可以在这里: `projector-server/build/distibution/projector-server-VERSION.zip` 找到文件。
 
-默认情况下，GitHub上的 'projector-client:projector-common' 的正确版本将被用作一个依赖项。如果你想使用本地 `projector-client`，请指定一个特殊的本地属性。 您可以在[local.properties.example](local.properties.example)文件中找到示例。
+默认情况下，GitHub上的 'projector-client:projector-common' 的正确版本将被用作一个依赖项。如果你想使用本地 `projector-client`，请指定一个特殊的本地属性。 您可以在 [local.properties.example](local.properties.example) 文件中找到示例。
 
 ## 如何使用这个运行我的应用程序?
 
@@ -43,9 +43,9 @@ YOUR_USUAL_MAIN_ARGUMENTS
 如您所见，您应该将 `libs` 文件夹添加到类路径中。同样，你应该将main类更改为 `ProjectorLauncher` ，但将原始的main类作为一个特殊的系统属性传递。
 
 
-在我们的演示应用中有一个叫做[projector-demo](https://github.com/JetBrains/projector-demo)的例子。
+在我们的演示应用中有一个叫做 [projector-demo](https://github.com/JetBrains/projector-demo) 的例子。
 
-同时，我们也用 IntelliJ IDEA 测试了这个变体。只要从[下载页面](https://www.jetbrains.com/idea/download/index.html)下载它，只改变 `idea.sh` 脚本。在默认脚本的末尾，如下所示:
+同时，我们也用 IntelliJ IDEA 测试了这个变体。只要从 [下载页面](https://www.jetbrains.com/idea/download/index.html) 下载它，只改变 `idea.sh` 脚本。在默认脚本的末尾，如下所示:
 
 
 ```shell script
@@ -91,30 +91,36 @@ YOUR_USUAL_MAIN_ARGUMENTS
 给你的应用程序添加一个 `projector-server` 项目的依赖项。在 `main` 的**开头**中，决定你是否想要无头运行应用程序。如果是，调用`System.setProperty("org.jetbrains.projector.server.enable", "true")` 并调用 `HeadlessServer` 的 `startServer` 方法。
 
 
-When you go this way, ensure that no AWT nor Swing operations are performed before the initialization of the server. Such operations can cause some lazy operations of AWT happen and our server doesn't support that.
+当您采用这种方式时，请确保在服务器初始化之前没有执行任何AWT或Swing操作。这样的操作可能会导致AWT的一些惰性操作发生，而我们的服务器不支持这种操作。
 
-This way is demonstrated in [projector-demo](https://github.com/JetBrains/projector-demo) too.
+这种方法也在 [projector-demo](https://github.com/JetBrains/projector-demo) 中得到了演示。
 
-### Run with Gradle tasks
-There are two gradle tasks for running server. They are handy when developing. To enable them, you should set some properties in `local.properties` file in the project root. Use [local.properties.example](local.properties.example) as a reference.
+### 使用Gradle任务运行
 
-1. `runServer` &mdash; launch your app with Projector Server. Required properties:
-    * `projectorLauncher.targetClassPath` &mdash; classpath of your application;
-    * `projectorLauncher.classToLaunch` &mdash; FQN of your application main class.
+有两个 gradle 任务用于运行server。在开发时使用它们会很方便。要启用它们，你应该在项目根目录下的属性文件 `local.properties` 中设置一些属性。你可以参考 [local.properties.example](local.properties.example) 。
 
-2. `runIdeaServer` &mdash; launch IntelliJ IDEA with Projector Server. Required property:
-    * `projectorLauncher.ideaPath` &mdash; path to IDEA's root directory.
+1. `runServer` &mdash; 用 Projector Server 启动你的应用程序。必需的属性:
+    * `projectorLauncher.targetClassPath` &mdash; 应用程序的类路径;
+    * `projectorLauncher.classToLaunch` &mdash; 应用程序主类的[FQN](https://en.wikipedia.org/wiki/Fully_qualified_name).
 
-## Connection from browser
-When the server is launched, you can open `localhost:8887` in the browser to access the app.
+2. `runIdeaServer` &mdash; 使用 Projector Server 启动IntelliJ IDEA 。 必需的属性:
+    * `projectorLauncher.ideaPath` &mdash; IDEA 的根目录路径.
 
-## Notes
-Currently, `projector-server` supports only Linux and JetBrains Runtime 11 as JRE.
+## 通过浏览器进行连接
 
-To set the port which will be used by Projector Server for WebSocket, use the `-Dorg.jetbrains.projector.server.port=8001` System Property.
+当服务器启动后，可以在浏览器中打开 `localhost:8887` 访问应用。
 
-## Contributing
+## 注意
+
+目前，`projector-server` 只支持 Linux 和 JetBrains 运行时 11 版本的 JRE。
+
+要为 Projector Server 设置将要使用的端口，可以使用 `-Dorg.jetbrains.projector.server.port=8001` 的系统属性。
+
+
+## 贡献
+
 [CONTRIBUTING.md](https://github.com/JetBrains/projector-server/blob/master/docs/CONTRIBUTING.md).
 
-## License
+## 版权说明
+
 [GPLv2+CPE](LICENSE.txt).
