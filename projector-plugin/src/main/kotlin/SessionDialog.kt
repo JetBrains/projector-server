@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import org.jetbrains.projector.server.ProjectorServer
-import org.jetbrains.projector.server.core.util.getHostName
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ItemEvent
@@ -40,8 +39,8 @@ import kotlin.random.Random
 class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val description = JLabel()
   private val myHostsList: HostsList = HostsList("Host:", ProjectorService.host)
-
   private val urlHostsList = HostsList("URL: ", null)
+  private val resolver: AsyncHostResolver = AsyncHostResolver().apply { subscribe(myHostsList); subscribe(urlHostsList) }
   private val portEditor = PortEditor(ProjectorService.port)
   private val rwTokenEditor = TokenEditor("Require password for read-write access:")
   private val roTokenEditor = TokenEditor("Require password for  read-only access:")
@@ -85,6 +84,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val urlAddress: String get() = urlHostsList.selected?.address ?: ""
 
   init {
+
     if (ProjectorService.isSessionRunning) {
       title = "Edit Current Session Parameters"
       description.text = "<html>The current session has already started.<br>Do you want to change passwords?"
@@ -115,6 +115,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     updateURLList()
     updateInvitationLinks()
     setResizable(false)
+    getHostList { ip -> resolver.resolve(ip) }
     init()
   }
 
@@ -154,6 +155,11 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     roInvitationLink.update(urlAddress, listenPort, roTokenEditor.token)
   }
 
+  fun cancelResolverRequests() {
+    resolver.cancelAllPendingRequests()
+    resolver.unsubscribeAll()
+  }
+
   private fun updateURLList() {
     val host = myHostsList.selected
 
@@ -161,7 +167,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       host == ALL_HOSTS -> {
         urlHostsList.setTooltip(null)
         val oldValue = urlHostsList.selected
-        val hostList = getHostList()
+        val hostList = getHostList { ip -> resolver.resolve(ip) }
         urlHostsList.setItems(hostList)
         urlHostsList.setSelectedItem(oldValue)
         urlHostsList.isEnabled = hostList.size > 1
@@ -252,22 +258,10 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       }
   }
 
-  private class Host(val address: String, val name: String) {
-    override fun toString(): String {
-      val displayName = when {
-        address == "127.0.0.1" -> "localhost"
-        name == address -> ""
-        else -> name
-      }
-
-      return if (displayName.isEmpty()) address else "$address ( $displayName )"
-    }
-  }
-
-  private class HostsList(label: String, selectedHost: String?) : JPanel() {
+  private inner class HostsList(label: String, selectedHost: String?) : JPanel(), ResolvedHostSubscriber {
     private val title = JLabel(label)
     private val hosts: JComboBox<Host> = ComboBox<Host>().apply {
-      val hosts = listOf(ALL_HOSTS) + getHostList()
+      val hosts = listOf(ALL_HOSTS) + getHostList { ip -> Host(ip) }
       hosts.forEach(::addItem)
       selectedHost?.let { selectedHost ->
         selectedItem = hosts.find { it.address == selectedHost }
@@ -307,6 +301,19 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     fun setTooltip(text: String?) {
       hosts.toolTipText = text
+    }
+
+    override fun resolved(h: Host) {
+      val oldSelection = hosts.selectedIndex
+      for (i in 1 until hosts.itemCount) {
+        val item = hosts.getItemAt(i)
+        if (item.address == h.address) {
+          hosts.removeItemAt(i)
+          hosts.insertItemAt(h, i)
+        }
+      }
+
+      hosts.selectedIndex = oldSelection
     }
   }
 
@@ -349,17 +356,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         .joinToString("")
     }
 
-    private fun toHost(ip: java.net.InetAddress): Host {
-      var ipString = ip.toString().substring(1)
-
-      if (ip is Inet6Address) {
-        ipString = "[${ipString.substring(0, ipString.indexOf('%'))}]"
-      }
-
-      return Host(ipString, getHostName(ip) ?: "")
-    }
-
-    private fun getHostList() = NetworkInterface.getNetworkInterfaces()
+    private fun getHostList(toHost: (ip: java.net.InetAddress) -> Host) = NetworkInterface.getNetworkInterfaces()
       .asSequence()
       .filterNotNull()
       .filterNot {
