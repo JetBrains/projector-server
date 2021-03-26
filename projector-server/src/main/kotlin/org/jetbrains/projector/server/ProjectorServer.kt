@@ -385,8 +385,6 @@ class ProjectorServer private constructor(
 
         val resource = ServerImageDataReplyEvent(message.imageId, imageData)
         clientSettings.requestedData.add(resource)
-
-        Unit
       }
 
       is ClientClipboardEvent -> {
