@@ -27,24 +27,24 @@ import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.concurrent.thread
 import org.jetbrains.projector.server.core.util.getHostName
+import java.net.InetAddress
 import javax.swing.SwingUtilities
+import kotlin.collections.HashSet
 
-class Host(val address: String, private val name: String) {
+class Host(val address: String, name: String) {
 
-  constructor(ip: java.net.InetAddress, name: String? = null) : this(ip2String(ip), name ?: "resolving ...")
-
-  override fun toString(): String {
-    val displayName = when {
-      address == "127.0.0.1" -> "localhost"
-      name == address -> ""
-      else -> name
-    }
-
-    return if (displayName.isEmpty()) address else "$address ( $displayName )"
+  val name: String = when {
+    address == "127.0.0.1" -> "localhost"
+    name == address -> ""
+    else -> name
   }
 
+  constructor(ip: InetAddress, name: String? = null) : this(ip2String(ip), name ?: "resolving ...")
+
+  override fun toString() = if (name.isEmpty()) address else "$address ( $name )"
+
   companion object {
-    private fun ip2String(ip: java.net.InetAddress) = ip.toString().substring(1)
+    private fun ip2String(ip: InetAddress) = ip.toString().substring(1)
   }
 }
 
@@ -53,54 +53,46 @@ interface ResolvedHostSubscriber {
 }
 
 class AsyncHostResolver {
-  private val subscribers = Collections.synchronizedList(ArrayList<ResolvedHostSubscriber>())
-  private val address2Name = Collections.synchronizedMap(HashMap<java.net.InetAddress, String>())
-  private val queue: MutableList<java.net.InetAddress> = Collections.synchronizedList(ArrayList<java.net.InetAddress>())
+  class Request(val client: ResolvedHostSubscriber, val ip: InetAddress)
 
-  fun subscribe(s: ResolvedHostSubscriber) = subscribers.add(s)
+  private val address2Name = Collections.synchronizedMap(HashMap<InetAddress, String>())
+  private val queue: MutableList<Request> = Collections.synchronizedList(ArrayList<Request>())
 
-  fun unsubscribe(s: ResolvedHostSubscriber) = subscribers.remove(s)
+  fun cancelPendingRequests() = queue.clear()
 
-  fun unsubscribeAll() = subscribers.clear()
-
-  fun cancelAllPendingRequests() = queue.clear()
-
-  fun resolve(ip: java.net.InetAddress): Host {
+  fun resolve(client: ResolvedHostSubscriber, ip: InetAddress): Host {
     val name = getName(ip)
 
     if (name == null) {
-      addRequest(ip)
+      addRequest(Request(client, ip))
     }
 
     return Host(ip, name)
   }
 
-  private fun getName(ip: java.net.InetAddress): String? = address2Name[ip]
+  private fun getName(ip: InetAddress): String? = address2Name[ip]
 
-  private fun addRequest(ip: java.net.InetAddress) {
-    queue.add(ip)
+  private fun addRequest(req: Request) {
+    queue.add(req)
     runWorker()
   }
 
   private fun runWorker() {
     thread {
       while (queue.isNotEmpty()) {
-        var item: java.net.InetAddress?
+        var item: Request?
 
         synchronized(queue) {
           item = queue.firstOrNull()
           item?.let { queue.removeAt(0) }
         }
 
-        item?.let { ip ->
-          val res = getHostName(ip)
+        item?.let { req ->
+          val res = getName(req.ip) ?: getHostName(req.ip)
 
           res?.let { name ->
-            address2Name[ip] = name
-
-            for (s in subscribers) {
-              SwingUtilities.invokeLater { s.resolved(Host(ip, name)) }
-            }
+            address2Name[req.ip] = name
+            SwingUtilities.invokeLater{ req.client.resolved(Host(req.ip, name))}
           }
         }
       }
