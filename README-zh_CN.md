@@ -2,32 +2,36 @@
 [![JetBrains incubator project](https://jb.gg/badges/incubator.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
 [![Tests status badge](https://github.com/JetBrains/projector-server/workflows/Tests/badge.svg)](https://github.com/JetBrains/projector-server/actions)
 
-Server-side library for running Swing applications remotely.
+通过网络远程运行 Swing 应用的服务器端库。
 
-[Documentation](https://jetbrains.github.io/projector-client/mkdocs/latest/) | [Issue tracker](https://youtrack.jetbrains.com/issues/PRJ)
+[文档](https://jetbrains.github.io/projector-client/mkdocs/latest/) | [Issue tracker](https://youtrack.jetbrains.com/issues/PRJ)
 
-## Building
-The following command creates a zip file with the whole runtime classpath:
+## 构建
+
+下面的命令创建一个包含整个运行时类路径的 zip 文件:
 
 ```shell script
 ./gradlew :projector-server:distZip
 ```
 
-You can find the file here: `projector-server/build/distibution/projector-server-VERSION.zip`.
+你可以在这里: `projector-server/build/distibution/projector-server-VERSION.zip` 找到文件。
 
-By default, a proper revision of `projector-client:projector-common` at GitHub will be used as a dependency. If you want to use local `projector-client`, please specify a special local property. You can find an example in [local.properties.example](local.properties.example) file.
+默认情况下，GitHub上的 'projector-client:projector-common' 的正确版本将被用作一个依赖项。如果你想使用本地 `projector-client`，请指定一个特殊的本地属性。 您可以在[local.properties.example](local.properties.example)文件中找到示例。
 
-## How to run my application using this?
-There are two ways.
+## 如何使用这个运行我的应用程序?
 
-### Not modifying your application code
-This is the recommended way. You can use it if you don't have any preference. You don't need to rebuild your app at all here.
+一共有 2 种方法。
 
-In the `projector-server` project, there is a `ProjectorLauncher` main class. It sets headless stuff up itself and then calls another main class. The name of the class-to-launch is obtained from the System Properties and program arguments are passed to the `main` of the class-to-launch without changing.
+### 不修改应用程序代码
 
-Extract `libs` folder from `projector-server-VERSION.zip` to add it to classpath later.
+这是推荐的方式。如果你没有特殊要求，你可以使用它。这样的话你根本不需要重建你的应用程序。
 
-To launch your app, change your run script like this:
+在 `projector-server` 项目中，有一个 `ProjectorLauncher` 主类。它自己设置无头的东西(译者注:[什么是无头](https://zh.wikipedia.org/wiki/%E6%97%A0%E5%A4%B4%E6%B5%8F%E8%A7%88%E5%99%A8))，然后调用另一个主类。要启动的类的名称是从系统属性中获取的，而程序参数会被传递到要启动类的 `main` ，而不需要做任何改变。
+
+从 `projector-server-VERSION.zip` 中提取 `libs` 文件夹。将它添加到类路径中。
+
+要启动你的应用程序，修改你的运行脚本如下:
+
 ```Shell Script
 java \
 -classpath YOUR_USUAL_CLASSPATH:libs/* \
@@ -36,11 +40,14 @@ org.jetbrains.projector.server.ProjectorLauncher \
 YOUR_USUAL_MAIN_ARGUMENTS
 ```
 
-As you see, you should add the `libs` folder to you classpath. Also, you should change the main class to the `ProjectorLauncher` but pass your original main class as a special System Property.
+如您所见，您应该将 `libs` 文件夹添加到类路径中。同样，你应该将main类更改为 `ProjectorLauncher` ，但将原始的main类作为一个特殊的系统属性传递。
 
-We have an example in our demo app called [projector-demo](https://github.com/JetBrains/projector-demo).
 
-Also, we've tested this variant with IntelliJ IDEA. Just download it from [the download page](https://www.jetbrains.com/idea/download/index.html) and only change the `idea.sh` script. In the end of default script, the are lines like the following:
+在我们的演示应用中有一个叫做[projector-demo](https://github.com/JetBrains/projector-demo)的例子。
+
+同时，我们也用 IntelliJ IDEA 测试了这个变体。只要从[下载页面](https://www.jetbrains.com/idea/download/index.html)下载它，只改变 `idea.sh` 脚本。在默认脚本的末尾，如下所示:
+
+
 ```shell script
 "$JAVA_BIN" \
   -classpath "$CLASSPATH" \
@@ -55,7 +62,8 @@ Also, we've tested this variant with IntelliJ IDEA. Just download it from [the d
   "$@"
 ```
 
-You should change them to:
+你应该把它们改为:
+
 ```shell script
 "$JAVA_BIN" \
   -classpath "$CLASSPATH:$IDE_HOME/projector-server/lib/*" \
@@ -71,14 +79,17 @@ You should change them to:
   "$@"
 ```
 
-Don't forget to place JARs from `projector-server` distribution to `$IDE_HOME/projector-server/lib`.
+不要忘记把 jar 从 `projector-server` 指定到 `$IDE_HOME/projector-server/lib`。
 
-Also, you can find this example in [projector-docker](https://github.com/JetBrains/projector-docker) where these actions are done automatically.
 
-### Modifying your application code
-Using this way, you can add a custom condition to start the server.
+同样，你可以在[projector-docker](https://github.com/JetBrains/projector-docker)中找到这个例子，这些操作都是自动完成的。
 
-Add a dependency to the `projector-server` project to your app. In the **beginning** of your `main`, decide if you want to run the app headlessly. If yes, invoke `System.setProperty("org.jetbrains.projector.server.enable", "true")` and call the `startServer` method of the `HeadlessServer`.
+### 修改应用程序代码
+
+使用这种方式，您可以添加一个自定义条件来启动服务器。
+
+给你的应用程序添加一个 `projector-server` 项目的依赖项。在 `main` 的**开头**中，决定你是否想要无头运行应用程序。如果是，调用`System.setProperty("org.jetbrains.projector.server.enable", "true")` 并调用 `HeadlessServer` 的 `startServer` 方法。
+
 
 When you go this way, ensure that no AWT nor Swing operations are performed before the initialization of the server. Such operations can cause some lazy operations of AWT happen and our server doesn't support that.
 
