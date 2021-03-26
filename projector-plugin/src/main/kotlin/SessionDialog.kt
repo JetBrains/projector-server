@@ -251,13 +251,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         requiredCheckBox.isVisible = value
         field = value
       }
-
-    var isEnabled = true
-      set(value) {
-        tokenTextField.isEnabled = value
-        requiredCheckBox.isEnabled = value
-        field = value
-      }
   }
 
   private inner class HostsList(label: String, selectedHost: String?) : JPanel(), ResolvedHostSubscriber {
@@ -295,12 +288,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       get() = hosts.selectedItem as? Host
       set(value) {
         hosts.selectedItem = value
-      }
-
-    var selectedIndex
-      get() = hosts.selectedIndex
-      set(value) {
-        hosts.selectedIndex = value
       }
 
     override fun setEnabled(enabled: Boolean) {
