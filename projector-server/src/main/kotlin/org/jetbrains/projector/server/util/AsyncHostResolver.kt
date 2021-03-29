@@ -1,4 +1,4 @@
-/*
+package org.jetbrains.projector.server.util/*
  * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -48,7 +48,7 @@ class Host(val address: String, name: String) {
 }
 
 interface ResolvedHostSubscriber {
-  fun resolved(h: Host)
+  fun resolved(host: Host)
 }
 
 class AsyncHostResolver {

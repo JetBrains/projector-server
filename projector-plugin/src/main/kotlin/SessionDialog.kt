@@ -26,6 +26,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import org.jetbrains.projector.server.ProjectorServer
+import org.jetbrains.projector.server.util.AsyncHostResolver
+import org.jetbrains.projector.server.util.Host
+import org.jetbrains.projector.server.util.ResolvedHostSubscriber
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.event.ItemEvent
@@ -299,13 +302,13 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       hosts.toolTipText = text
     }
 
-    override fun resolved(h: Host) {
+    override fun resolved(host: Host) {
       val oldSelection = hosts.selectedIndex
       for (i in 1 until hosts.itemCount) {
         val item = hosts.getItemAt(i)
-        if (item.address == h.address) {
+        if (item.address == host.address) {
           hosts.removeItemAt(i)
-          hosts.insertItemAt(h, i)
+          hosts.insertItemAt(host, i)
         }
       }
 
