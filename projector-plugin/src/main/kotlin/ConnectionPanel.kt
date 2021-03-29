@@ -23,6 +23,9 @@
  */
 
 import com.intellij.ui.table.JBTable
+import org.jetbrains.projector.server.util.AsyncHostResolver
+import org.jetbrains.projector.server.util.Host
+import org.jetbrains.projector.server.util.ResolvedHostSubscriber
 import java.awt.Dimension
 import javax.swing.*
 import javax.swing.table.DefaultTableModel
@@ -94,12 +97,12 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(), Resol
     }
   }
 
-  override fun resolved(h: Host) {
+  override fun resolved(host: Host) {
     for (i in 0 until clientTable.model.rowCount) {
       val addr = clientTable.model.getValueAt(i, 0)
 
-      if (addr == h.address) {
-        clientTable.model.setValueAt(h.name, i, 1)
+      if (addr == host.address) {
+        clientTable.model.setValueAt(host.name, i, 1)
       }
     }
   }

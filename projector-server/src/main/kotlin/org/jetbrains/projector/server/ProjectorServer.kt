@@ -75,7 +75,6 @@ import java.net.InetAddress
 import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
-import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
 import kotlin.math.roundToLong
@@ -514,7 +513,7 @@ class ProjectorServer private constructor(
     ) {
       logger.info { "Asking for connection confirmation because of agent mode..." }
 
-      var selectedOption = -1
+      var resp = false
 
       SwingUtilities.invokeAndWait {
         val accessType = when (hasWriteAccess) {
@@ -522,24 +521,10 @@ class ProjectorServer private constructor(
           false -> "read-only"
         }
 
-        val remoteHostName = when (remoteAddress) {
-          null -> "can't determine the host's name or IP"
-          else -> remoteAddress.hostAddress
-        }
-
-        selectedOption = JOptionPane.showOptionDialog(
-          null,
-          "Somebody ($remoteHostName) wants to connect with $accessType access. Allow the connection?",
-          "New connection",
-          JOptionPane.YES_NO_OPTION,
-          JOptionPane.QUESTION_MESSAGE,
-          null,
-          null,
-          null,
-        )
+        resp = ConfirmConnection.confirm(remoteAddress, accessType)
       }
 
-      if (selectedOption != 0) {  // 0=yes
+      if (!resp) {
         logger.info { "User has disallowed this connection..." }
         sendHandshakeFailureEvent("Other user has disallowed this connection.")
         return
