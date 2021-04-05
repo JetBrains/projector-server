@@ -19,6 +19,7 @@
 ## Fixed
 
 - Manual JSON decoder.
+- PRJ-315 Disable maximization of window when resizing.
 
 # 1.0.0
 
