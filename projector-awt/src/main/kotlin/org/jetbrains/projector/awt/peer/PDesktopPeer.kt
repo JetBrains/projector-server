@@ -25,6 +25,7 @@
 
 package org.jetbrains.projector.awt.peer
 
+import org.jetbrains.projector.util.logging.Logger
 import java.awt.Desktop.Action
 import java.awt.peer.DesktopPeer
 import java.io.File
@@ -33,16 +34,33 @@ import java.net.URI
 class PDesktopPeer : DesktopPeer {
 
   override fun isSupported(action: Action): Boolean {
-    return false
+    return action in setOf(Action.OPEN, Action.EDIT, Action.PRINT, Action.MAIL, Action.BROWSE)
   }
 
-  override fun open(file: File) {}
+  override fun open(file: File) {
+    logger.debug { "ignored open $file" }
+  }
 
-  override fun edit(file: File) {}
+  override fun edit(file: File) {
+    logger.debug { "ignored edit $file" }
+  }
 
-  override fun print(file: File) {}
+  override fun print(file: File) {
+    logger.debug { "ignored print $file" }
+  }
 
-  override fun mail(mailtoURL: URI) {}
+  override fun mail(mailtoURL: URI) {
+    logger.debug { "ignored mail $mailtoURL" }
+  }
 
-  override fun browse(url: URI) {}
+  override fun browse(url: URI) {
+    browseUriCallback?.invoke(url.toASCIIString()) ?: logger.debug { "ignored browse $url" }
+  }
+
+  companion object {
+
+    private val logger = Logger(PDesktopPeer::class.simpleName!!)
+
+    var browseUriCallback: ((link: String) -> Unit)? = null
+  }
 }

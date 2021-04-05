@@ -35,6 +35,7 @@ import org.jetbrains.projector.awt.image.PGraphicsDevice
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
 import org.jetbrains.projector.awt.image.PVolatileImage
 import org.jetbrains.projector.awt.peer.PComponentPeer
+import org.jetbrains.projector.awt.peer.PDesktopPeer
 import org.jetbrains.projector.awt.peer.PMouseInfoPeer
 import org.jetbrains.projector.common.misc.Do
 import org.jetbrains.projector.common.protocol.data.ImageData
@@ -234,7 +235,7 @@ class ProjectorServer private constructor(
     PanelUpdater.scrollCallback = { id, offset ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownScrollEvent(id, offset))
     }
-    PanelUpdater.browseUriCallback = { link ->
+    PDesktopPeer.browseUriCallback = { link ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownBrowseUriEvent(link))
     }
   }

@@ -42,6 +42,7 @@ import java.awt.dnd.InvalidDnDOperationException
 import java.awt.dnd.peer.DragSourceContextPeer
 import java.awt.font.TextAttribute
 import java.awt.im.InputMethodHighlight
+import java.awt.im.spi.InputMethodDescriptor
 import java.awt.image.ColorModel
 import java.awt.image.ImageObserver
 import java.awt.image.ImageProducer
@@ -49,7 +50,7 @@ import java.awt.peer.*
 import java.net.URL
 import java.util.*
 
-class PToolkit : Toolkit(), KeyboardFocusManagerPeerProvider, ComponentFactory {
+class PToolkit : SunToolkit(), KeyboardFocusManagerPeerProvider, ComponentFactory {
 
   override fun createDesktopPeer(target: Desktop): DesktopPeer {
     return PDesktopPeer()
@@ -287,7 +288,33 @@ class PToolkit : Toolkit(), KeyboardFocusManagerPeerProvider, ComponentFactory {
     return PKeyboardFocusManagerPeer
   }
 
+  override fun createLightweightFrame(target: LightweightFrame): FramePeer {
+    return PFramePeer(target)
+  }
+
+  override fun createTrayIcon(target: TrayIcon?): TrayIconPeer? = null
+
+  override fun createSystemTray(target: SystemTray?): SystemTrayPeer? = null
+
+  override fun isTraySupported(): Boolean = false
+
+  override fun syncNativeQueue(timeout: Long): Boolean = true
+
+  override fun grab(w: Window?) {
+    // todo
+  }
+
+  override fun ungrab(w: Window?) {
+    // todo
+  }
+
+  override fun isDesktopSupported(): Boolean = true
+
+  override fun isTaskbarSupported(): Boolean = false
+
   override fun getMouseInfoPeer(): MouseInfoPeer = PMouseInfoPeer
+
+  override fun getInputMethodAdapterDescriptor(): InputMethodDescriptor? = null
 
   override fun areExtraMouseButtonsEnabled(): Boolean {
     return true
