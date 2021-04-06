@@ -1,3 +1,9 @@
+# 1.1.2
+
+## Added
+
+- PRJ-188 Support links opening via Cmd+Click in code, "Open on GitHub", Markdown Preview
+
 # 1.1.1
 
 ## Fixed

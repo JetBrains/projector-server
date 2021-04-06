@@ -27,7 +27,7 @@ plugins {
   id("org.jetbrains.intellij")
 }
 
-version = "1.2.1"
+version = "1.2.2"
 
 val projectorClientVersion: String by project
 

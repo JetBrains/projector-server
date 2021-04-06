@@ -2,6 +2,25 @@
 
 Notable changes to this project are documented in this file.
 
+# 1.2.2
+
+## Added
+
+- Allow disabling connection confirmation.
+
+## Fixed
+
+- PRJ-388 Switch off EnableAction if Projector detected.
+- PRJ-314 Get rid of blocking calls getHostName.
+
+## Changed
+
+- Minor UI improvements.
+
+# Updated
+
+- Projector Server v1.1.2.
+
 # 1.2.1
 
 ## Added
