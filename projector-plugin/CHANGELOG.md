@@ -2,6 +2,12 @@
 
 Notable changes to this project are documented in this file.
 
+# 1.2.3
+
+## Fixed
+
+- PRJ-430 Fix headless projector detection.
+
 # 1.2.2
 
 ## Added
