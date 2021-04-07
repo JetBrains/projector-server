@@ -25,6 +25,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
+import org.jetbrains.projector.awt.PToolkit
+import java.awt.Toolkit
 
 class EnableAction : DumbAwareAction() {
 
@@ -47,13 +49,9 @@ class EnableAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-      val state = !isProjectorDetected() && ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
-      e.presentation.isEnabledAndVisible = state
+    val state = !isProjectorDetected() && ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
+    e.presentation.isEnabledAndVisible = state
   }
 
-  private fun isProjectorDetected() = ProcessHandle.current().info().commandLine().get().contains(PROJECTOR_MARK)
-
-  companion object {
-    private const val PROJECTOR_MARK = "-Dorg.jetbrains.projector.server.classToLaunch"
-  }
+  private fun isProjectorDetected() = Toolkit.getDefaultToolkit()::class.toString() == PToolkit::class.toString()
 }
