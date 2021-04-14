@@ -38,5 +38,7 @@ class RegisterPluginInstallerStateListener : StartupActivity {
         }
       }
     })
+
+    ProjectorService.autostartIfRequired()
   }
 }

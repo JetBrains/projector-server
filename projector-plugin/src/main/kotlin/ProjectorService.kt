@@ -53,6 +53,9 @@ class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
   var host: String? = null
   var port: String? = null
   var confirmConnection: Boolean? = null
+  var rwToken: String? = null
+  var roToken: String? = null
+  var autostart: Boolean? = null
 
   override fun getState(): ProjectorConfig {
     return this
@@ -62,6 +65,9 @@ class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
     host = state.host
     port = state.port
     confirmConnection = state.confirmConnection
+    rwToken = state.rwToken
+    roToken = state.roToken
+    autostart = state.autostart
   }
 }
 
@@ -77,6 +83,9 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       config.host = value?.host
       config.port = value?.port
       config.confirmConnection = value?.confirmConnection
+      config.rwToken = value?.rwToken
+      config.roToken = value?.roToken
+      config.autostart = value?.autostart
     }
 
   private var enabled: EnabledState = when (areRequiredVmOptionsPresented()) {
@@ -117,11 +126,6 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   private fun enable() {
     attachDynamicAgent()
     enabled = EnabledState.HAS_VM_OPTIONS_AND_ENABLED
-  }
-
-  private fun areRequiredVmOptionsPresented(): Boolean {
-    return System.getProperty("swing.bufferPerWindow")?.toBoolean() == false &&
-           System.getProperty("jdk.attach.allowAttachSelf")?.toBoolean() == true
   }
 
   private fun getVMOptions(): Pair<String, File>? {
@@ -169,7 +173,8 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   private fun getPluginPath(descriptor: IdeaPluginDescriptor): String {
     val method = try {
       IdeaPluginDescriptor::class.java.getMethod("getPluginPath")
-    } catch (e: NoSuchMethodException) {
+    }
+    catch (e: NoSuchMethodException) {
       IdeaPluginDescriptor::class.java.getMethod("getPath")
     }
 
@@ -184,13 +189,31 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   companion object {
     private val instance: ProjectorService by lazy { ServiceManager.getService(ProjectorService::class.java)!! }
 
-    fun enable() = instance.enable()
+    fun enable(session: Session ) {
+      currentSession = session
+      instance.enable()
+    }
+
     fun disable() = instance.disable()
     fun activate() = instance.activate()
 
     fun getClientList(): Array<Array<String?>> = AgentLauncher.getClientList()
     fun disconnectAll() = AgentLauncher.disconnectAll()
     fun disconnectByIp(ip: String) = AgentLauncher.disconnectByIp(ip)
+
+    fun autostartIfRequired() {
+      if (!isProjectorDetected()) {
+        with(ProjectorService) {
+          host?.let { host ->
+            port?.let { port ->
+              if (autostart) {
+                enable(Session(host, port, rwToken, roToken, confirmConnection, autostart))
+              }
+            }
+          }
+        }
+      }
+    }
 
     var enabled: EnabledState
       get() = instance.enabled
@@ -207,6 +230,16 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     val port: String? get() = instance.config.port
 
     val confirmConnection: Boolean get() = instance.config.confirmConnection ?: true
+
+    val rwToken: String? get() = instance.config.rwToken
+
+    val roToken: String? get() = instance.config.roToken
+
+    var autostart: Boolean
+      get() = instance.config.autostart ?: false
+      set(value) {
+        instance.config.autostart = value
+      }
 
     val isSessionRunning: Boolean get() = instance.currentSession != null
     var currentSession: Session

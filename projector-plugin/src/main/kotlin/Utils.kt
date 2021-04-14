@@ -1,3 +1,6 @@
+import org.jetbrains.projector.awt.PToolkit
+import java.awt.Toolkit
+
 /*
  * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -21,33 +24,11 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.DialogWrapper
 
-class EnableAction : DumbAwareAction() {
+fun isProjectorDetected() = Toolkit.getDefaultToolkit()::class.toString() == PToolkit::class.toString()
 
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = PlatformDataKeys.PROJECT.getData(e.dataContext)
-    val sessionDialog = SessionDialog(project)
-    sessionDialog.pack()
-    sessionDialog.show()
-
-    if (sessionDialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
-      ProjectorService.enable(Session(sessionDialog.listenAddress,
-                                      sessionDialog.listenPort,
-                                      sessionDialog.rwToken,
-                                      sessionDialog.roToken,
-                                      sessionDialog.confirmConnection,
-                                      sessionDialog.autostart))
-    }
-
-    sessionDialog.cancelResolverRequests()
-  }
-
-  override fun update(e: AnActionEvent) {
-    val state = !isProjectorDetected() && ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
-    e.presentation.isEnabledAndVisible = state
-  }
+fun areRequiredVmOptionsPresented(): Boolean {
+  return System.getProperty("swing.bufferPerWindow")?.toBoolean() == false &&
+         System.getProperty("jdk.attach.allowAttachSelf")?.toBoolean() == true
 }
+
