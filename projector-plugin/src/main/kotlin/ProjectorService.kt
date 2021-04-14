@@ -52,6 +52,7 @@ enum class EnabledState {
 class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
   var host: String? = null
   var port: String? = null
+  var confirmConnection: Boolean? = null
 
   override fun getState(): ProjectorConfig {
     return this
@@ -60,6 +61,7 @@ class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
   override fun loadState(state: ProjectorConfig) {
     host = state.host
     port = state.port
+    confirmConnection = state.confirmConnection
   }
 }
 
@@ -74,6 +76,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       field = value
       config.host = value?.host
       config.port = value?.port
+      config.confirmConnection = value?.confirmConnection
     }
 
   private var enabled: EnabledState = when (areRequiredVmOptionsPresented()) {
@@ -200,7 +203,10 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       set(value) {
         instance.config.host = value
       }
+
     val port: String? get() = instance.config.port
+
+    val confirmConnection: Boolean get() = instance.config.confirmConnection ?: true
 
     val isSessionRunning: Boolean get() = instance.currentSession != null
     var currentSession: Session
