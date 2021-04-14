@@ -32,7 +32,6 @@ class ActivateAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     val state = ProjectorService.enabled == EnabledState.NO_VM_OPTIONS_AND_DISABLED
-    e.presentation.isEnabled = state
-    e.presentation.isVisible = state
+    e.presentation.isEnabledAndVisible = state
   }
 }

@@ -29,7 +29,7 @@ class Session(
   rwToken: String?,
   roToken: String?,
   confirmConnection: Boolean,
-  val autostart: Boolean
+  autostart: Boolean
 ) {
   var host: String = host
     set(value) {
@@ -49,6 +49,12 @@ class Session(
     get() = System.getProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION) == "true"
     set(value) {
       System.setProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION, if (value) "true" else "false")
+    }
+
+  var autostart: Boolean = autostart
+    set(value) {
+      field = value
+      ProjectorService.autostart = value
     }
 
   init {

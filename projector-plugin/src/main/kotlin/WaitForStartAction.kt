@@ -22,36 +22,16 @@
  * if you need additional information or have any questions.
  */
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.DialogWrapper
 
-class EnableAction : DumbAwareAction() {
-
-  override fun actionPerformed(e: AnActionEvent) {
-    val project = PlatformDataKeys.PROJECT.getData(e.dataContext)
-    val sessionDialog = SessionDialog(project)
-    sessionDialog.pack()
-    sessionDialog.show()
-
-    if (sessionDialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
-      ProjectorService.enable(Session(sessionDialog.listenAddress,
-                                      sessionDialog.listenPort,
-                                      sessionDialog.rwToken,
-                                      sessionDialog.roToken,
-                                      sessionDialog.confirmConnection,
-                                      sessionDialog.autostart))
-    }
-
-    sessionDialog.cancelResolverRequests()
-  }
-
+class WaitForStartAction : DumbAwareAction() {
+  override fun actionPerformed(e: AnActionEvent) {}
   override fun update(e: AnActionEvent) {
-    val state = !isProjectorDetected()
-                &&
-                !ProjectorService.autostart
-                &&
-                ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
+    val state =  !isProjectorDetected()
+                 &&
+                 ProjectorService.autostart
+                 &&
+                 ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
 
     e.presentation.isEnabledAndVisible = state
   }
