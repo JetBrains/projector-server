@@ -47,9 +47,10 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val urlHostsList = HostsList("URL: ", null)
   private val connectionPanel = ConnectionPanel(resolver)
   private val portEditor = PortEditor(ProjectorService.port)
-  private val rwTokenEditor = TokenEditor("Require password for read-write access:")
-  private val roTokenEditor = TokenEditor("Require password for  read-only access:")
+  private val rwTokenEditor = TokenEditor("Require password for read-write access:", ProjectorService.rwToken)
+  private val roTokenEditor = TokenEditor("Require password for  read-only access:", ProjectorService.roToken)
   private val requireConnectConfirmation: JCheckBox = JCheckBox("Require connection confirmation", ProjectorService.confirmConnection)
+  private val autostartProjector: JCheckBox = JCheckBox("Autostart Projector on load", ProjectorService.autostart)
   private val rwInvitationLink = InvitationLink()
   private val roInvitationLink = InvitationLink()
   private val roInvitationTitle = JLabel("Read Only Link:")
@@ -64,7 +65,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     }
     bothAccess.addItemListener {
       if (it.stateChange == ItemEvent.SELECTED) {
-        roTokenEditor.token = generatePassword()
         changeRoVisibility(true)
         updateInvitationLinks()
       }
@@ -86,6 +86,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   val listenAddress: String get() = myHostsList.selected?.address ?: ""
   val listenPort: String get() = portEditor.value
   val confirmConnection: Boolean get() = requireConnectConfirmation.isSelected
+  val autostart: Boolean get() = autostartProjector.isSelected
   private val urlAddress: String get() = urlHostsList.selected?.address ?: ""
 
   init {
@@ -97,18 +98,11 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
       portEditor.isEnabled = false
       myHostsList.isEnabled = false
-      rwTokenEditor.token = ProjectorService.currentSession.rwToken
-      roTokenEditor.token = ProjectorService.currentSession.roToken
-      requireConnectConfirmation.isSelected = ProjectorService.currentSession.confirmConnection
-      requireConnectConfirmation.isEnabled = false
     }
     else {
       title = "Start Remote Access to IDE"
       description.text = "<html>Config remote access to IDE.<br>Listen on:"
       myOKAction.putValue(Action.NAME, "Start")
-
-      rwTokenEditor.token = generatePassword()
-      roTokenEditor.token = generatePassword()
     }
 
     myHostsList.onChange = ::updateURLList
@@ -132,9 +126,12 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .addNextComponent(onlyRwAccess, topGap = 5)
       .startNextLine().addNextComponent(rwTokenEditor.requiredCheckBox, gridWidth = 2)
       .addNextComponent(rwTokenEditor.tokenTextField, gridWidth = 2)
+      .addNextComponent(rwTokenEditor.refreshButton, gridWidth = 1)
       .startNextLine().addNextComponent(roTokenEditor.requiredCheckBox, gridWidth = 2)
       .addNextComponent(roTokenEditor.tokenTextField, gridWidth = 2)
+      .addNextComponent(roTokenEditor.refreshButton, gridWidth = 1)
       .startNextLine().addNextComponent(requireConnectConfirmation)
+      .startNextLine().addNextComponent(autostartProjector)
       .startNextLine().addNextComponent(urlHostsList, gridWidth = 2, weightx = 0.5, rightGap = 15)
       .startNextLine().addNextComponent(JLabel("Invitation Links:"), gridWidth = 4, topGap = 5, bottomGap = 5)
       .startNextLine().addNextComponent(JLabel("Full Access Link:")).addNextComponent(rwInvitationLink.link, gridWidth = 2)
@@ -222,20 +219,28 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       }
   }
 
-  private class TokenEditor(title: String) {
-    val requiredCheckBox: JCheckBox = JCheckBox(title).apply {
+  private class TokenEditor(title: String, token: String?) {
+    val requiredCheckBox: JCheckBox = JCheckBox(title, true).apply {
       addActionListener {
         tokenTextField.text = if (isSelected) generatePassword() else null
         tokenTextField.isEnabled = isSelected
         onChange?.invoke()
       }
     }
-    val tokenTextField: JTextField = JTextField().apply {
+    val tokenTextField: JTextField = JTextField(token ?: generatePassword()).apply {
       addKeyListener(object : KeyAdapter() {
         override fun keyReleased(e: KeyEvent) {
           onChange?.invoke()
         }
       })
+    }
+
+    val refreshButton = JButton(AllIcons.Actions.Refresh).apply {
+      toolTipText = "Generate random password"
+      addActionListener {
+        tokenTextField.text = generatePassword()
+        onChange?.invoke()
+      }
     }
 
     var onChange: (() -> Unit)? = null
@@ -252,6 +257,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       set(value) {
         tokenTextField.isVisible = value
         requiredCheckBox.isVisible = value
+        refreshButton.isVisible = value
         field = value
       }
   }

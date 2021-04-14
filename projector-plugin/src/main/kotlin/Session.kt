@@ -29,6 +29,7 @@ class Session(
   rwToken: String?,
   roToken: String?,
   confirmConnection: Boolean,
+  val autostart: Boolean
 ) {
   var host: String = host
     set(value) {

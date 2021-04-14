@@ -27,6 +27,7 @@ import com.intellij.openapi.project.DumbAwareAction
 class DisableAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
+    ProjectorService.autostart = false
     ProjectorService.disable()
   }
 
