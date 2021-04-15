@@ -33,6 +33,7 @@ class RegisterPluginInstallerStateListener : StartupActivity {
       override fun install(descriptor: IdeaPluginDescriptor) {}
 
       override fun uninstall(descriptor: IdeaPluginDescriptor) {
+        ProjectorService.autostart = false
         if (ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_ENABLED) {
           ProjectorService.disable()
         }
