@@ -72,4 +72,5 @@
 
 ## Fixed
 
+- Focus disappearing after closing dialogs (partial fix).
 - Detection of server start fail.
