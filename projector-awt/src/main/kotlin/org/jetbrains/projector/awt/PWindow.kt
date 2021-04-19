@@ -21,13 +21,14 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package org.jetbrains.projector.awt
 
-import org.jetbrains.projector.awt.data.AwtComponentAccessor
 import org.jetbrains.projector.awt.data.Direction
 import org.jetbrains.projector.awt.image.PGraphics2D
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
 import org.jetbrains.projector.awt.service.ImageCacher
+import sun.awt.AWTAccessor
 import java.awt.*
 import java.awt.event.ComponentEvent
 import java.lang.ref.WeakReference
@@ -105,7 +106,8 @@ class PWindow(val target: Component) {
     toFront()
     target.requestFocusInWindow()
 
-    AwtComponentAccessor.setBounds(target, x, y, width, height)
+    AWTAccessor.getComponentAccessor().setLocation(target, x, y)
+    AWTAccessor.getComponentAccessor().setSize(target, width, height)
 
     updateGraphics()
 

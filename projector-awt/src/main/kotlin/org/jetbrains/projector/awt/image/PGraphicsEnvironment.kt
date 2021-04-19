@@ -85,7 +85,7 @@ class PGraphicsEnvironment : SunGraphicsEnvironment() {
     defaultDevice.bounds.setSize(width, height)
   }
 
-  override fun getNumScreens(): Int = 1
+  override fun getNumScreens(): Int = devices.size
 
   override fun isDisplayLocal(): Boolean = false
 
