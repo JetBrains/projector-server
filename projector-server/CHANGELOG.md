@@ -1,3 +1,17 @@
+# 1.1.3
+
+## Fixed
+
+- Mobile keyboard now handles more keys more correctly
+- Optimize async render more
+- Optimize argbIntToRgbaString
+- Apple Web Applications support
+- PRJ-286 Fix Esc and Delete keys
+
+## Changed
+
+- PRJ-435 Merge AWT and server changelogs to make changelogs simpler
+
 # 1.1.2
 
 ## Added
