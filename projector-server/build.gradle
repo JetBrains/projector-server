@@ -134,7 +134,7 @@ if (ideaPath != null) {
 def fontsPath = "src/main/resources/fonts"
 
 task downloadDefaultFonts {
-  def defaultFontsLink = "https://assets.ubuntu.com/v1/0cef8205-ubuntu-font-family-0.83.zip"
+  def defaultFontsLink = "https://noto-website-2.storage.googleapis.com/pkgs/NotoSans-hinted.zip"
 
   doLast {
     def requiredFonts = ["Default-R", "Default-RI", "Default-B", "Default-BI"].stream().map { "$fontsPath/${it}.ttf" }.collect()
@@ -156,17 +156,17 @@ task downloadDefaultFonts {
       url.withInputStream { i -> tempFile.withOutputStream { it << i } }
 
       def originalToDest = [
-        "Ubuntu-R" : "Default-R",
-        "Ubuntu-RI": "Default-RI",
-        "Ubuntu-B" : "Default-B",
-        "Ubuntu-BI": "Default-BI",
+        "NotoSans-Regular" : "Default-R",
+        "NotoSans-Italic": "Default-RI",
+        "NotoSans-Bold" : "Default-B",
+        "NotoSans-BoldItalic": "Default-BI",
       ]
 
       def zipFile = new ZipFile(tempFile)
 
       originalToDest.forEach { original, dest ->
         def destFile = project.file("$fontsPath/${dest}.ttf")
-        def srcPath = "ubuntu-font-family-0.83/${original}.ttf"
+        def srcPath = "${original}.ttf"
 
         destFile.delete()
         destFile.createNewFile()
