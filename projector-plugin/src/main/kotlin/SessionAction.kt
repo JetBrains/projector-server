@@ -40,7 +40,6 @@ class SessionAction : DumbAwareAction() {
 
     if (sessionDialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
       ProjectorService.currentSession.apply {
-        host = sessionDialog.listenAddress
         rwToken = sessionDialog.rwToken
         roToken = sessionDialog.roToken
         confirmConnection = sessionDialog.confirmConnection

@@ -21,7 +21,9 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.diagnostic.VMOptions
+import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
@@ -41,6 +43,10 @@ import java.nio.file.Path
 import java.util.function.Function
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
+import com.intellij.credentialStore.generateServiceName
+import com.intellij.credentialStore.Credentials
+import org.jetbrains.projector.server.ProjectorServer
+
 
 enum class EnabledState {
 
@@ -50,12 +56,34 @@ enum class EnabledState {
 }
 
 class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
+
   var host: String? = null
   var port: String? = null
   var confirmConnection: Boolean? = null
-  var rwToken: String? = null
-  var roToken: String? = null
   var autostart: Boolean? = null
+
+  @com.intellij.util.xmlb.annotations.Transient
+  var rwToken: String? = null
+    set(value) {
+      if (field != value) {
+        field = value
+        storeToken(PROJECTOR_RW_TOKEN_KEY, value)
+      }
+    }
+
+  @com.intellij.util.xmlb.annotations.Transient
+  var roToken: String? = null
+    set(value) {
+      if (field != value) {
+        field = value
+        storeToken(PROJECTOR_RO_TOKEN_KEY, value)
+      }
+    }
+
+  init {
+    roToken = loadToken(PROJECTOR_RO_TOKEN_KEY)
+    rwToken = loadToken(PROJECTOR_RW_TOKEN_KEY)
+  }
 
   override fun getState(): ProjectorConfig {
     return this
@@ -65,13 +93,31 @@ class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
     host = state.host
     port = state.port
     confirmConnection = state.confirmConnection
-    rwToken = state.rwToken
-    roToken = state.roToken
     autostart = state.autostart
+  }
+
+  companion object {
+    private const val PROJECTOR_RW_TOKEN_KEY = "PROJECTOR_RW_TOKEN"
+    private const val PROJECTOR_RO_TOKEN_KEY = "PROJECTOR_RO_TOKEN"
+    private const val SUBSYSTEM = "PROJECTOR_SERVICE_CONFIG"
+    const val STORAGE_NAME = "ProjectorConfig.xml"
+
+    private fun loadToken(key: String): String? {
+      val credentialAttributes = createCredentialAttributes(key)
+      return PasswordSafe.instance.getPassword(credentialAttributes)
+    }
+
+    private fun storeToken(key: String, value: String?) {
+      val attributes = createCredentialAttributes(key)
+      val credentials = Credentials(user = null, password = value)
+      PasswordSafe.instance.set(attributes, credentials)
+    }
+
+    private fun createCredentialAttributes(key: String) = CredentialAttributes(generateServiceName(SUBSYSTEM, key))
   }
 }
 
-@State(name = "Projector", storages = [Storage("ProjectorConfig.xml")])
+@State(name = "Projector", storages = [Storage(ProjectorConfig.STORAGE_NAME)])
 class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   private var config: ProjectorConfig = ProjectorConfig()
   private val logger = Logger.getInstance(ProjectorService::class.java)
@@ -189,7 +235,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   companion object {
     private val instance: ProjectorService by lazy { ServiceManager.getService(ProjectorService::class.java)!! }
 
-    fun enable(session: Session ) {
+    fun enable(session: Session) {
       currentSession = session
       instance.enable()
     }
@@ -224,16 +270,38 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     var host: String?
       get() = instance.config.host
       set(value) {
+        setSystemProperty(ProjectorServer.HOST_PROPERTY_NAME, value)
         instance.config.host = value
       }
 
-    val port: String? get() = instance.config.port
+    var port: String?
+      get() = instance.config.port
+      set(value) {
+        setSystemProperty(ProjectorServer.PORT_PROPERTY_NAME, value)
+        instance.config.port = value
+      }
 
-    val confirmConnection: Boolean get() = instance.config.confirmConnection ?: true
 
-    val rwToken: String? get() = instance.config.rwToken
+    var confirmConnection: Boolean
+      get() = instance.config.confirmConnection ?: true
+      set(value) {
+        setSystemProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION, if (value) "true" else "false")
+        instance.config.confirmConnection = value
+      }
 
-    val roToken: String? get() = instance.config.roToken
+    var rwToken: String?
+      get() = instance.config.rwToken
+      set(value) {
+        setSystemProperty(ProjectorServer.TOKEN_ENV_NAME, value)
+        instance.config.rwToken = value
+      }
+
+    var roToken: String?
+      get() = instance.config.roToken
+      set(value) {
+        setSystemProperty(ProjectorServer.RO_TOKEN_ENV_NAME, value)
+        instance.config.roToken = value
+      }
 
     var autostart: Boolean
       get() = instance.config.autostart ?: false
