@@ -21,7 +21,6 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-import org.jetbrains.projector.server.ProjectorServer
 
 class Session(
   val host: String,
@@ -31,17 +30,15 @@ class Session(
   confirmConnection: Boolean,
   autostart: Boolean,
 ) {
-  var rwToken: String? = rwToken
+  var rwToken: String?
     get() = ProjectorService.rwToken
     set(value) {
-      field = value
       ProjectorService.rwToken = value
     }
 
-  var roToken: String? = roToken
+  var roToken: String?
     get() = ProjectorService.roToken
     set(value) {
-      field = value
       ProjectorService.roToken = value
     }
 
