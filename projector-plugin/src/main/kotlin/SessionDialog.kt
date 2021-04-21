@@ -54,6 +54,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val rwInvitationLink = InvitationLink()
   private val roInvitationLink = InvitationLink()
   private val roInvitationTitle = JLabel("Read Only Link:")
+  private var oldROTokenValue: String? = null
 
   private val bothAccess = JRadioButton("RW & RO", true)
   private val onlyRwAccess = JRadioButton("RW only", false)
@@ -63,14 +64,21 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       roInvitationLink.isVisible = isVisible
       roInvitationTitle.isVisible = isVisible
     }
+
     bothAccess.addItemListener {
       if (it.stateChange == ItemEvent.SELECTED) {
+        if (this@SessionDialog.oldROTokenValue == rwTokenEditor.token ) {
+          this@SessionDialog.oldROTokenValue = generatePassword()
+        }
+
+        roTokenEditor.token = this@SessionDialog.oldROTokenValue
         changeRoVisibility(true)
         updateInvitationLinks()
       }
     }
     onlyRwAccess.addItemListener {
       if (it.stateChange == ItemEvent.SELECTED) {
+        this@SessionDialog.oldROTokenValue = roTokenEditor.token
         roTokenEditor.token = rwTokenEditor.token
         changeRoVisibility(false)
         updateInvitationLinks()
@@ -144,12 +152,12 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   override fun createCenterPanel(): JComponent? = null
 
   private fun updateInvitationLinks() {
-    //if (onlyRwAccess.isSelected) {
-    //  roTokenEditor.token = rwTokenEditor.token
-    //}
-    //else if (rwTokenEditor.token == roTokenEditor.token) {
-    //  onlyRwAccess.isSelected = true
-    //}
+    if (onlyRwAccess.isSelected) {
+      roTokenEditor.token = rwTokenEditor.token
+    }
+    else if (rwTokenEditor.token == roTokenEditor.token) {
+      onlyRwAccess.isSelected = true
+    }
 
     rwInvitationLink.update(urlAddress, listenPort, rwTokenEditor.token)
     roInvitationLink.update(urlAddress, listenPort, roTokenEditor.token)
