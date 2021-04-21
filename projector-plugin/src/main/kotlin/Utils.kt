@@ -32,3 +32,11 @@ fun areRequiredVmOptionsPresented(): Boolean {
          System.getProperty("jdk.attach.allowAttachSelf")?.toBoolean() == true
 }
 
+fun setSystemProperty(name: String, value: String?) {
+  if (value == null) {
+    System.clearProperty(name)
+  } else {
+    System.setProperty(name, value)
+  }
+}
+

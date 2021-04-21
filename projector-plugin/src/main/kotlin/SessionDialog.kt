@@ -55,8 +55,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val roInvitationLink = InvitationLink()
   private val roInvitationTitle = JLabel("Read Only Link:")
 
-  private val bothAccess = JRadioButton("RW & RO")
-  private val onlyRwAccess = JRadioButton("RW only")
+  private val bothAccess = JRadioButton("RW & RO", true)
+  private val onlyRwAccess = JRadioButton("RW only", false)
   private val accessGroup = ButtonGroup().apply {
     fun changeRoVisibility(isVisible: Boolean) {
       roTokenEditor.isVisible = isVisible
@@ -76,7 +76,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         updateInvitationLinks()
       }
     }
-    bothAccess.isSelected = true
+
     add(bothAccess)
     add(onlyRwAccess)
   }
@@ -144,12 +144,12 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   override fun createCenterPanel(): JComponent? = null
 
   private fun updateInvitationLinks() {
-    if (onlyRwAccess.isSelected) {
-      roTokenEditor.token = rwTokenEditor.token
-    }
-    else if (rwTokenEditor.token == roTokenEditor.token) {
-      onlyRwAccess.isSelected = true
-    }
+    //if (onlyRwAccess.isSelected) {
+    //  roTokenEditor.token = rwTokenEditor.token
+    //}
+    //else if (rwTokenEditor.token == roTokenEditor.token) {
+    //  onlyRwAccess.isSelected = true
+    //}
 
     rwInvitationLink.update(urlAddress, listenPort, rwTokenEditor.token)
     roInvitationLink.update(urlAddress, listenPort, roTokenEditor.token)

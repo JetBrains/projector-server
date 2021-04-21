@@ -24,54 +24,47 @@
 import org.jetbrains.projector.server.ProjectorServer
 
 class Session(
-  host: String,
+  val host: String,
   val port: String,
   rwToken: String?,
   roToken: String?,
   confirmConnection: Boolean,
-  autostart: Boolean
+  autostart: Boolean,
 ) {
-  var host: String = host
+  var rwToken: String? = rwToken
+    get() = ProjectorService.rwToken
     set(value) {
       field = value
-      ProjectorService.host = value
+      ProjectorService.rwToken = value
     }
 
-  var rwToken: String?
-    get() = getToken(ProjectorServer.TOKEN_ENV_NAME)
-    set(value) = setToken(ProjectorServer.TOKEN_ENV_NAME, value)
-
-  var roToken: String?
-    get() = getToken(ProjectorServer.RO_TOKEN_ENV_NAME)
-    set(value) = setToken(ProjectorServer.RO_TOKEN_ENV_NAME, value)
-
-  var confirmConnection: Boolean
-    get() = System.getProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION) == "true"
+  var roToken: String? = roToken
+    get() = ProjectorService.roToken
     set(value) {
-      System.setProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION, if (value) "true" else "false")
+      field = value
+      ProjectorService.roToken = value
+    }
+
+  var confirmConnection: Boolean = confirmConnection
+    get() = ProjectorService.confirmConnection
+    set(value) {
+      field = value
+      ProjectorService.confirmConnection = value
     }
 
   var autostart: Boolean = autostart
+    get() = ProjectorService.autostart
     set(value) {
       field = value
       ProjectorService.autostart = value
     }
 
   init {
-    System.setProperty(ProjectorServer.PORT_PROPERTY_NAME, port)
-    System.setProperty(ProjectorServer.HOST_PROPERTY_NAME, host)
-    this.rwToken = rwToken
-    this.roToken = roToken
-    this.confirmConnection = confirmConnection
-  }
-
-  private fun getToken(tokenPropertyName: String): String? = System.getProperty(tokenPropertyName)
-  private fun setToken(tokenPropertyName: String, token: String?) {
-    if (token == null) {
-      System.clearProperty(tokenPropertyName)
-    }
-    else {
-      System.setProperty(tokenPropertyName, token)
-    }
+    ProjectorService.host = host
+    ProjectorService.port = port
+    ProjectorService.rwToken = rwToken
+    ProjectorService.roToken = roToken
+    ProjectorService.confirmConnection = confirmConnection
+    ProjectorService.autostart = autostart
   }
 }
