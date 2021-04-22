@@ -209,7 +209,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
             }
             catch (t: Throwable) {
               if (!errorOccurred) {
-                logger.error(t) { "Can't get caret info" }
+                logger.info(t) { "Can't get caret info" }
                 errorOccurred = true
               }
             }
