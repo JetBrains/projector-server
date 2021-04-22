@@ -21,32 +21,25 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-import com.intellij.credentialStore.CredentialAttributes
+
 import com.intellij.diagnostic.VMOptions
-import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.ApplicationEx
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.projector.agent.AgentLauncher
+import org.jetbrains.projector.server.ProjectorServer
 import java.io.File
 import java.nio.file.Path
 import java.util.function.Function
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
-import com.intellij.credentialStore.generateServiceName
-import com.intellij.credentialStore.Credentials
-import org.jetbrains.projector.server.ProjectorServer
-
 
 enum class EnabledState {
 
@@ -56,29 +49,31 @@ enum class EnabledState {
 }
 
 class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
-
   var host: String? = null
   var port: String? = null
   var confirmConnection: Boolean? = null
   var autostart: Boolean? = null
 
-  @com.intellij.util.xmlb.annotations.Transient
-  var rwToken: String? = null
-    set(value) {
-      if (field != value) {
-        field = value
-        storeToken(PROJECTOR_RW_TOKEN_KEY, value)
-      }
-    }
+  private var rwToken: String? = null
+  private var roToken: String? = null
 
-  @com.intellij.util.xmlb.annotations.Transient
-  var roToken: String? = null
-    set(value) {
-      if (field != value) {
-        field = value
-        storeToken(PROJECTOR_RO_TOKEN_KEY, value)
-      }
+  fun storeRWToken(token: String?) {
+    if (token != rwToken) {
+      rwToken = token
+      storeToken(PROJECTOR_RW_TOKEN_KEY, rwToken)
     }
+  }
+
+  fun obtainRWToken() = rwToken
+
+  fun storeROToken(token: String?) {
+    if (token != roToken) {
+      roToken = token
+      storeToken(PROJECTOR_RO_TOKEN_KEY, roToken)
+    }
+  }
+
+  fun obtainROToken() = roToken
 
   init {
     roToken = loadToken(PROJECTOR_RO_TOKEN_KEY)
@@ -97,23 +92,11 @@ class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
   }
 
   companion object {
-    private const val PROJECTOR_RW_TOKEN_KEY = "PROJECTOR_RW_TOKEN"
-    private const val PROJECTOR_RO_TOKEN_KEY = "PROJECTOR_RO_TOKEN"
-    private const val SUBSYSTEM = "PROJECTOR_SERVICE_CONFIG"
+    init {
+      migrateTokensToSecureStorage()
+    }
+
     const val STORAGE_NAME = "ProjectorConfig.xml"
-
-    private fun loadToken(key: String): String? {
-      val credentialAttributes = createCredentialAttributes(key)
-      return PasswordSafe.instance.getPassword(credentialAttributes)
-    }
-
-    private fun storeToken(key: String, value: String?) {
-      val attributes = createCredentialAttributes(key)
-      val credentials = Credentials(user = null, password = value)
-      PasswordSafe.instance.set(attributes, credentials)
-    }
-
-    private fun createCredentialAttributes(key: String) = CredentialAttributes(generateServiceName(SUBSYSTEM, key))
   }
 }
 
@@ -129,8 +112,8 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       config.host = value?.host
       config.port = value?.port
       config.confirmConnection = value?.confirmConnection
-      config.rwToken = value?.rwToken
-      config.roToken = value?.roToken
+      config.storeRWToken(value?.rwToken)
+      config.storeROToken(value?.roToken)
       config.autostart = value?.autostart
     }
 
@@ -248,7 +231,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     fun disconnectByIp(ip: String) = AgentLauncher.disconnectByIp(ip)
 
     fun autostartIfRequired() {
-      if (!isProjectorDetected()) {
+      if (!isHeadlessProjectorDetected()) {
         with(ProjectorService) {
           host?.let { host ->
             port?.let { port ->
@@ -281,7 +264,6 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
         instance.config.port = value
       }
 
-
     var confirmConnection: Boolean
       get() = instance.config.confirmConnection ?: true
       set(value) {
@@ -290,17 +272,17 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       }
 
     var rwToken: String?
-      get() = instance.config.rwToken
+      get() = instance.config.obtainRWToken()
       set(value) {
         setSystemProperty(ProjectorServer.TOKEN_ENV_NAME, value)
-        instance.config.rwToken = value
+        instance.config.storeRWToken(value)
       }
 
     var roToken: String?
-      get() = instance.config.roToken
+      get() = instance.config.obtainROToken()
       set(value) {
         setSystemProperty(ProjectorServer.RO_TOKEN_ENV_NAME, value)
-        instance.config.roToken = value
+        instance.config.storeROToken(value)
       }
 
     var autostart: Boolean
@@ -310,6 +292,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       }
 
     val isSessionRunning: Boolean get() = instance.currentSession != null
+
     var currentSession: Session
       get() {
         check(isSessionRunning) { "Current session is not available - no active sessions" }

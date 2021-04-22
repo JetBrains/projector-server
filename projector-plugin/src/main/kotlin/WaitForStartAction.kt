@@ -27,7 +27,7 @@ import com.intellij.openapi.project.DumbAwareAction
 class WaitForStartAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {}
   override fun update(e: AnActionEvent) {
-    val state =  !isProjectorDetected()
+    val state =  !isHeadlessProjectorDetected()
                  &&
                  ProjectorService.autostart
                  &&

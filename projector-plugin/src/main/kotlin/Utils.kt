@@ -1,6 +1,3 @@
-import org.jetbrains.projector.awt.PToolkit
-import java.awt.Toolkit
-
 /*
  * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -25,7 +22,25 @@ import java.awt.Toolkit
  * if you need additional information or have any questions.
  */
 
-fun isProjectorDetected() = Toolkit.getDefaultToolkit()::class.toString() == PToolkit::class.toString()
+import com.intellij.credentialStore.CredentialAttributes
+import com.intellij.credentialStore.Credentials
+import com.intellij.credentialStore.generateServiceName
+import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.openapi.application.PathManager
+import org.jetbrains.projector.awt.PToolkit
+import org.w3c.dom.Node
+import java.awt.Toolkit
+import java.nio.file.Paths
+import javax.xml.parsers.DocumentBuilderFactory
+import org.w3c.dom.Document
+import java.io.File
+import javax.xml.transform.OutputKeys
+import javax.xml.transform.TransformerFactory
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.stream.StreamResult
+
+
+fun isHeadlessProjectorDetected() = Toolkit.getDefaultToolkit()::class.toString() == PToolkit::class.toString()
 
 fun areRequiredVmOptionsPresented(): Boolean {
   return System.getProperty("swing.bufferPerWindow")?.toBoolean() == false &&
@@ -35,8 +50,122 @@ fun areRequiredVmOptionsPresented(): Boolean {
 fun setSystemProperty(name: String, value: String?) {
   if (value == null) {
     System.clearProperty(name)
-  } else {
+  }
+  else {
     System.setProperty(name, value)
   }
 }
 
+private const val SUBSYSTEM = "PROJECTOR_SERVICE_CONFIG"
+const val PROJECTOR_RW_TOKEN_KEY = "PROJECTOR_RW_TOKEN"
+const val PROJECTOR_RO_TOKEN_KEY = "PROJECTOR_RO_TOKEN"
+
+private fun createCredentialAttributes(key: String) = CredentialAttributes(generateServiceName(SUBSYSTEM, key))
+
+fun loadToken(key: String): String? {
+  val credentialAttributes = createCredentialAttributes(key)
+  return PasswordSafe.instance.getPassword(credentialAttributes)
+}
+
+fun storeToken(key: String, value: String?) {
+  val attributes = createCredentialAttributes(key)
+  val credentials = Credentials(user = null, password = value)
+  PasswordSafe.instance.set(attributes, credentials)
+}
+
+fun migrateTokensToSecureStorage() {
+  copyTokenToSecureStorage(PROJECTOR_RW_TOKEN_KEY, "rwToken")
+  copyTokenToSecureStorage(PROJECTOR_RO_TOKEN_KEY, "roToken")
+  removeTokensFromXmlStorage()
+}
+
+private fun loadTokenFromXmlStorage(tokenName: String): String? {
+  val file = Paths.get(PathManager.getOptionsPath(), ProjectorConfig.STORAGE_NAME).toFile()
+  var result: String? = null
+
+  if (file.exists()) {
+    val factory = DocumentBuilderFactory.newInstance()
+
+    try {
+      val builder = factory.newDocumentBuilder()
+      val doc = builder.parse(file)
+      val elements = doc.getElementsByTagName("option")
+
+      for (i in 0 until elements.length) {
+        val e = elements.item(i)
+        val attrs = e.attributes
+        val name = attrs.getNamedItem("name")
+
+        if (name.nodeValue == tokenName) {
+          val token = attrs.getNamedItem("value")
+          result = token.nodeValue
+          break
+        }
+      }
+    }
+    catch (e: Exception) {
+
+    }
+  }
+
+  return result
+}
+
+private fun removeTokensFromXmlStorage() {
+  val file = Paths.get(PathManager.getOptionsPath(), ProjectorConfig.STORAGE_NAME).toFile()
+  val factory = DocumentBuilderFactory.newInstance()
+
+  if (file.exists()) {
+
+    try {
+      val builder = factory.newDocumentBuilder()
+      val doc = builder.parse(file)
+      val elements = doc.getElementsByTagName("option")
+      val toRemove: ArrayList<Node> = arrayListOf()
+
+      for (i in 0 until elements.length) {
+        val e = elements.item(i)
+
+        if (isTokenNode(e)) {
+          toRemove.add(e)
+        }
+      }
+
+      toRemove.forEach { it.parentNode.removeChild(it) }
+
+      if (toRemove.isNotEmpty()) {
+        writeXml(doc, file)
+      }
+    }
+    catch (e: Exception) {
+    }
+  }
+}
+
+private fun copyTokenToSecureStorage(key: String, tokenName: String) {
+  val token = loadTokenFromXmlStorage(tokenName)
+  token?.let {
+    storeToken(key, it)
+  }
+}
+
+private fun isTokenNode(n: Node): Boolean {
+  val attrs = n.attributes
+  val nameNode = attrs.getNamedItem("name")
+  val name = nameNode.nodeValue
+
+  return name == "roToken" || name == "rwToken"
+}
+
+private fun writeXml(doc: Document, file: File) {
+  try {
+    val factory = TransformerFactory.newInstance()
+    val transformer = factory.newTransformer()
+    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
+    transformer.setOutputProperty(OutputKeys.INDENT, "yes")
+    val out = StreamResult(file)
+    transformer.transform(DOMSource(doc), out)
+  }
+  catch (e: Exception) {
+  }
+}
