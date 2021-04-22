@@ -83,4 +83,5 @@ internal fun setupSystemProperties() {
   System.setProperty("swing.bufferPerWindow", false.toString())
   System.setProperty("awt.nativeDoubleBuffering", true.toString())  // enable "native" double buffering to disable db in Swing
   System.setProperty("swing.volatileImageBufferEnabled", false.toString())
+  System.setProperty("keymap.current.os.only", false.toString())
 }
