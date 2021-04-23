@@ -94,10 +94,10 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     LinearPanelBuilder(panel).addNextComponent(description, gridWidth = 4, bottomGap = 5)
       .startNextLine().addNextComponent(myHostsList, gridWidth = 2, weightx = 0.5, rightGap = 15)
       .addNextComponent(portEditor, gridWidth = 2, weightx = 0.5)
-      .startNextLine().addNextComponent(rwTokenEditor.requiredCheckBox, gridWidth = 2)
+      .startNextLine().addNextComponent(rwTokenEditor.label, gridWidth = 2)
       .addNextComponent(rwTokenEditor.tokenTextField, gridWidth = 2)
       .addNextComponent(rwTokenEditor.refreshButton, gridWidth = 1)
-      .startNextLine().addNextComponent(roTokenEditor.requiredCheckBox, gridWidth = 2)
+      .startNextLine().addNextComponent(roTokenEditor.label, gridWidth = 2)
       .addNextComponent(roTokenEditor.tokenTextField, gridWidth = 2)
       .addNextComponent(roTokenEditor.refreshButton, gridWidth = 1)
       .startNextLine().addNextComponent(requireConnectConfirmation, gridWidth = 2).addNextComponent(autostartProjector)
@@ -175,13 +175,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   }
 
   private class TokenEditor(title: String, token: String?) {
-    val requiredCheckBox: JCheckBox = JCheckBox(title, true).apply {
-      addActionListener {
-        tokenTextField.text = if (isSelected) generatePassword() else null
-        tokenTextField.isEnabled = isSelected
-        onChange?.invoke()
-      }
-    }
+    val label = JLabel(title)
     val tokenTextField: JTextField = JTextField(token ?: generatePassword()).apply {
       addKeyListener(object : KeyAdapter() {
         override fun keyReleased(e: KeyEvent) {
@@ -201,10 +195,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     var onChange: (() -> Unit)? = null
 
     var token
-      get() = if (requiredCheckBox.isSelected) tokenTextField.text else null
+      get() = if (tokenTextField.text.isNullOrEmpty()) null else tokenTextField.text
       set(value) {
-        requiredCheckBox.isSelected = value != null
-        tokenTextField.isEnabled = requiredCheckBox.isSelected
         tokenTextField.text = value
       }
   }
