@@ -31,7 +31,6 @@ import org.jetbrains.projector.server.util.Host
 import org.jetbrains.projector.server.util.ResolvedHostSubscriber
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
-import java.awt.event.ItemEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
 import java.net.Inet6Address
@@ -53,41 +52,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val autostartProjector: JCheckBox = JCheckBox("Autostart Projector on load", ProjectorService.autostart)
   private val rwInvitationLink = InvitationLink()
   private val roInvitationLink = InvitationLink()
-  private val roInvitationTitle = JLabel("Read Only Link:")
-  private var oldROTokenValue: String? = null
-
-  private val bothAccess = JRadioButton("RW & RO", true)
-  private val onlyRwAccess = JRadioButton("RW only", false)
-  private val accessGroup = ButtonGroup().apply {
-    fun changeRoVisibility(isVisible: Boolean) {
-      roTokenEditor.isVisible = isVisible
-      roInvitationLink.isVisible = isVisible
-      roInvitationTitle.isVisible = isVisible
-    }
-
-    bothAccess.addItemListener {
-      if (it.stateChange == ItemEvent.SELECTED) {
-        if (this@SessionDialog.oldROTokenValue == rwTokenEditor.token ) {
-          this@SessionDialog.oldROTokenValue = generatePassword()
-        }
-
-        roTokenEditor.token = this@SessionDialog.oldROTokenValue
-        changeRoVisibility(true)
-        updateInvitationLinks()
-      }
-    }
-    onlyRwAccess.addItemListener {
-      if (it.stateChange == ItemEvent.SELECTED) {
-        this@SessionDialog.oldROTokenValue = roTokenEditor.token
-        roTokenEditor.token = rwTokenEditor.token
-        changeRoVisibility(false)
-        updateInvitationLinks()
-      }
-    }
-
-    add(bothAccess)
-    add(onlyRwAccess)
-  }
 
   val rwToken: String? get() = rwTokenEditor.token
   val roToken: String? get() = roTokenEditor.token
@@ -130,8 +94,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     LinearPanelBuilder(panel).addNextComponent(description, gridWidth = 4, bottomGap = 5)
       .startNextLine().addNextComponent(myHostsList, gridWidth = 2, weightx = 0.5, rightGap = 15)
       .addNextComponent(portEditor, gridWidth = 2, weightx = 0.5)
-      .startNextLine().addNextComponent(JLabel("Access Types:"), topGap = 5).addNextComponent(bothAccess, topGap = 5)
-      .addNextComponent(onlyRwAccess, topGap = 5)
       .startNextLine().addNextComponent(rwTokenEditor.requiredCheckBox, gridWidth = 2)
       .addNextComponent(rwTokenEditor.tokenTextField, gridWidth = 2)
       .addNextComponent(rwTokenEditor.refreshButton, gridWidth = 1)
@@ -143,7 +105,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .startNextLine().addNextComponent(JLabel("Invitation Links:"), gridWidth = 4, topGap = 5, bottomGap = 5)
       .startNextLine().addNextComponent(JLabel("Full Access Link:")).addNextComponent(rwInvitationLink.link, gridWidth = 2)
       .addNextComponent(rwInvitationLink.copyButton, gridWidth = 2)
-      .startNextLine().addNextComponent(roInvitationTitle).addNextComponent(roInvitationLink.link, gridWidth = 2)
+      .startNextLine().addNextComponent(JLabel("Read Only Link:")).addNextComponent(roInvitationLink.link, gridWidth = 2)
       .addNextComponent(roInvitationLink.copyButton, gridWidth = 2)
       .startNextLine().addNextComponent(connectionPanel, gridWidth = 4)
     return panel
@@ -152,13 +114,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   override fun createCenterPanel(): JComponent? = null
 
   private fun updateInvitationLinks() {
-    if (onlyRwAccess.isSelected) {
-      roTokenEditor.token = rwTokenEditor.token
-    }
-    else if (rwTokenEditor.token == roTokenEditor.token) {
-      onlyRwAccess.isSelected = true
-    }
-
     rwInvitationLink.update(urlAddress, listenPort, rwTokenEditor.token)
     roInvitationLink.update(urlAddress, listenPort, roTokenEditor.token)
   }
@@ -217,13 +172,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     fun update(host: String, port: String, token: String?) {
       link.text = "http://${host}:${port}" + if (token == null) "" else "/?token=${token}"
     }
-
-    var isVisible = true
-      set(value) {
-        link.isVisible = value
-        copyButton.isVisible = value
-        field = value
-      }
   }
 
   private class TokenEditor(title: String, token: String?) {
@@ -258,14 +206,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         requiredCheckBox.isSelected = value != null
         tokenTextField.isEnabled = requiredCheckBox.isSelected
         tokenTextField.text = value
-      }
-
-    var isVisible = true
-      set(value) {
-        tokenTextField.isVisible = value
-        requiredCheckBox.isVisible = value
-        refreshButton.isVisible = value
-        field = value
       }
   }
 
