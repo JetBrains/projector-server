@@ -30,29 +30,27 @@ class Session(
   confirmConnection: Boolean,
   autostart: Boolean,
 ) {
-  var rwToken: String?
+  var rwToken
     get() = ProjectorService.rwToken
     set(value) {
       ProjectorService.rwToken = value
     }
 
-  var roToken: String?
+  var roToken
     get() = ProjectorService.roToken
     set(value) {
       ProjectorService.roToken = value
     }
 
-  var confirmConnection: Boolean = confirmConnection
+  var confirmConnection
     get() = ProjectorService.confirmConnection
     set(value) {
-      field = value
       ProjectorService.confirmConnection = value
     }
 
-  var autostart: Boolean = autostart
+  var autostart
     get() = ProjectorService.autostart
     set(value) {
-      field = value
       ProjectorService.autostart = value
     }
 

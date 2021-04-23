@@ -236,7 +236,8 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
           host?.let { host ->
             port?.let { port ->
               if (autostart) {
-                enable(Session(host, port, rwToken, roToken, confirmConnection, autostart))
+                val session = Session(host, port, rwToken, roToken, confirmConnection, autostart)
+                enable(session)
               }
             }
           }
