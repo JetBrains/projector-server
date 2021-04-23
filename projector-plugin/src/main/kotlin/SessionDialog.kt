@@ -93,38 +93,40 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     val panel = JPanel()
     LinearPanelBuilder(panel).addNextComponent(description, bottomGap = 5)
       .startNextLine()
-      .addNextComponent(myHostsList, gridWidth = 2)
+      .addNextComponent(myHostsList, gridWidth = 8)
       .addNextComponent(portEditor)
 
       .startNextLine()
-      .addNextComponent(rwTokenEditor.label)
-      .addNextComponent(rwTokenEditor.tokenTextField)
-      .addNextComponent(rwTokenEditor.refreshButton)
+      .addNextComponent(rwTokenEditor.label, gridWidth = 4)
+      .addNextComponent(JLabel(), gridWidth = 3)
+      .addNextComponent(rwTokenEditor.tokenTextField, gridWidth = 1)
+      .addNextComponent(rwTokenEditor.refreshButton, gridWidth = 1)
 
       .startNextLine()
-      .addNextComponent(roTokenEditor.label)
-      .addNextComponent(roTokenEditor.tokenTextField)
-      .addNextComponent(roTokenEditor.refreshButton)
+      .addNextComponent(roTokenEditor.label, gridWidth = 4)
+      .addNextComponent(JLabel(), gridWidth = 3)
+      .addNextComponent(roTokenEditor.tokenTextField, gridWidth = 1)
+      .addNextComponent(roTokenEditor.refreshButton, gridWidth = 1)
 
-      .startNextLine().addNextComponent(requireConnectConfirmation)
-      .startNextLine().addNextComponent(autostartProjector)
-
-
-      .startNextLine().addNextComponent(urlHostsList,  gridWidth = 2)
-
+      .startNextLine().addNextComponent(requireConnectConfirmation, topGap = 5, bottomGap = 5)
+      .startNextLine().addNextComponent(autostartProjector, bottomGap = 5)
 
       .startNextLine().addNextComponent(JLabel("Invitation Links:"), topGap = 5, bottomGap = 5)
 
+      .startNextLine().addNextComponent(urlHostsList,  gridWidth = 8)
+
       .startNextLine()
-      .addNextComponent(JLabel("Full Access Link:"))
-      .addNextComponent(rwInvitationLink.link)
-      .addNextComponent(rwInvitationLink.copyButton)
+      .addNextComponent(JLabel("Full Access Link:"), gridWidth = 5)
+      .addNextComponent(rwInvitationLink.link, gridWidth = 3)
+      .addNextComponent(rwInvitationLink.copyButton, gridWidth = 1)
 
 
-      .startNextLine().addNextComponent(JLabel("Read Only Link:"))
-      .addNextComponent(roInvitationLink.link)
-      .addNextComponent(roInvitationLink.copyButton)
-      .startNextLine().addNextComponent(connectionPanel, gridWidth = 3)
+      .startNextLine().addNextComponent(JLabel("Read Only Link:"), gridWidth = 5)
+      .addNextComponent(roInvitationLink.link, gridWidth = 3)
+      .addNextComponent(roInvitationLink.copyButton, gridWidth = 1)
+
+
+      .startNextLine().addNextComponent(connectionPanel, gridWidth = 9)
 
     return panel
   }
