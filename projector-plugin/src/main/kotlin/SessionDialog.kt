@@ -97,19 +97,22 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .addNextComponent(portEditor)
 
       .startNextLine()
-      .addNextComponent(rwTokenEditor.label, gridWidth = 4)
-      .addNextComponent(JLabel(), gridWidth = 3)
+      .addNextComponent(rwTokenEditor.label, gridWidth = 6)
+      .addNextComponent(JLabel(), gridWidth = 1)
       .addNextComponent(rwTokenEditor.tokenTextField, gridWidth = 1)
       .addNextComponent(rwTokenEditor.refreshButton, gridWidth = 1)
 
       .startNextLine()
-      .addNextComponent(roTokenEditor.label, gridWidth = 4)
-      .addNextComponent(JLabel(), gridWidth = 3)
+      .addNextComponent(roTokenEditor.label, gridWidth = 6)
+      .addNextComponent(JLabel(), gridWidth = 1)
       .addNextComponent(roTokenEditor.tokenTextField, gridWidth = 1)
       .addNextComponent(roTokenEditor.refreshButton, gridWidth = 1)
 
-      .startNextLine().addNextComponent(requireConnectConfirmation, topGap = 5, bottomGap = 5)
-      .startNextLine().addNextComponent(autostartProjector, bottomGap = 5)
+      .startNextLine().
+      addNextComponent(requireConnectConfirmation, topGap = 5, bottomGap = 5)
+
+      .startNextLine()
+      .addNextComponent(autostartProjector, topGap = 5, bottomGap = 5)
 
       .startNextLine().addNextComponent(JLabel("Invitation Links:"), topGap = 5, bottomGap = 5)
 
@@ -197,7 +200,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private class TokenEditor(title: String, token: String?) {
     val label = JLabel(title)
     val tokenTextField: JTextField = JTextField(token ?: generatePassword()).apply {
-      columns = RANDOM_PASSWORD_LEN
+      columns = 5
       addKeyListener(object : KeyAdapter() {
         override fun keyReleased(e: KeyEvent) {
           onChange?.invoke()
@@ -245,7 +248,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     }
 
     init {
-      hosts.prototypeDisplayValue = Host("255.255.255.255", "very.very.long.host.name.com")
+      hosts.prototypeDisplayValue = Host("255.255.255.255", "long.host.name.com")
       LinearPanelBuilder(this)
         .addNextComponent(title)
         .addNextComponent(hosts)
