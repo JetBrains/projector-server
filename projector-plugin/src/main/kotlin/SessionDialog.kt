@@ -46,8 +46,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val urlHostsList = HostsList("URL: ", null)
   private val connectionPanel = ConnectionPanel(resolver)
   private val portEditor = PortEditor(ProjectorService.port)
-  private val rwTokenEditor = TokenEditor("Require password for read-write access:", ProjectorService.rwToken)
-  private val roTokenEditor = TokenEditor("Require password for  read-only access:", ProjectorService.roToken)
+  private val rwTokenEditor = TokenEditor("Password for read-write access:", ProjectorService.rwToken)
+  private val roTokenEditor = TokenEditor("Password for read-only access:", ProjectorService.roToken)
   private val requireConnectConfirmation: JCheckBox = JCheckBox("Require connection confirmation", ProjectorService.confirmConnection)
   private val autostartProjector: JCheckBox = JCheckBox("Autostart Projector on load", ProjectorService.autostart)
   private val rwInvitationLink = InvitationLink()
@@ -89,29 +89,45 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     init()
   }
 
-  override fun createNorthPanel(): JComponent {
+  override fun createCenterPanel(): JComponent {
     val panel = JPanel()
-    LinearPanelBuilder(panel).addNextComponent(description, gridWidth = 4, bottomGap = 5)
-      .startNextLine().addNextComponent(myHostsList, gridWidth = 2, weightx = 0.5, rightGap = 15)
-      .addNextComponent(portEditor, gridWidth = 2, weightx = 0.5)
-      .startNextLine().addNextComponent(rwTokenEditor.label, gridWidth = 2)
-      .addNextComponent(rwTokenEditor.tokenTextField, gridWidth = 2)
-      .addNextComponent(rwTokenEditor.refreshButton, gridWidth = 1)
-      .startNextLine().addNextComponent(roTokenEditor.label, gridWidth = 2)
-      .addNextComponent(roTokenEditor.tokenTextField, gridWidth = 2)
-      .addNextComponent(roTokenEditor.refreshButton, gridWidth = 1)
-      .startNextLine().addNextComponent(requireConnectConfirmation, gridWidth = 2).addNextComponent(autostartProjector)
-      .startNextLine().addNextComponent(urlHostsList, gridWidth = 2, weightx = 0.5, rightGap = 15)
-      .startNextLine().addNextComponent(JLabel("Invitation Links:"), gridWidth = 4, topGap = 5, bottomGap = 5)
-      .startNextLine().addNextComponent(JLabel("Full Access Link:")).addNextComponent(rwInvitationLink.link, gridWidth = 2)
-      .addNextComponent(rwInvitationLink.copyButton, gridWidth = 2)
-      .startNextLine().addNextComponent(JLabel("Read Only Link:")).addNextComponent(roInvitationLink.link, gridWidth = 2)
-      .addNextComponent(roInvitationLink.copyButton, gridWidth = 2)
-      .startNextLine().addNextComponent(connectionPanel, gridWidth = 4)
+    LinearPanelBuilder(panel).addNextComponent(description, bottomGap = 5)
+      .startNextLine()
+      .addNextComponent(myHostsList, gridWidth = 2)
+      .addNextComponent(portEditor)
+
+      .startNextLine()
+      .addNextComponent(rwTokenEditor.label)
+      .addNextComponent(rwTokenEditor.tokenTextField)
+      .addNextComponent(rwTokenEditor.refreshButton)
+
+      .startNextLine()
+      .addNextComponent(roTokenEditor.label)
+      .addNextComponent(roTokenEditor.tokenTextField)
+      .addNextComponent(roTokenEditor.refreshButton)
+
+      .startNextLine().addNextComponent(requireConnectConfirmation)
+      .startNextLine().addNextComponent(autostartProjector)
+
+
+      .startNextLine().addNextComponent(urlHostsList,  gridWidth = 2)
+
+
+      .startNextLine().addNextComponent(JLabel("Invitation Links:"), topGap = 5, bottomGap = 5)
+
+      .startNextLine()
+      .addNextComponent(JLabel("Full Access Link:"))
+      .addNextComponent(rwInvitationLink.link)
+      .addNextComponent(rwInvitationLink.copyButton)
+
+
+      .startNextLine().addNextComponent(JLabel("Read Only Link:"))
+      .addNextComponent(roInvitationLink.link)
+      .addNextComponent(roInvitationLink.copyButton)
+      .startNextLine().addNextComponent(connectionPanel, gridWidth = 3)
+
     return panel
   }
-
-  override fun createCenterPanel(): JComponent? = null
 
   private fun updateInvitationLinks() {
     rwInvitationLink.update(urlAddress, listenPort, rwTokenEditor.token)
@@ -166,6 +182,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       isEditable = false
       background = null
       border = null
+      horizontalAlignment = SwingConstants.LEFT
       columns = 35
     }
 
@@ -177,6 +194,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private class TokenEditor(title: String, token: String?) {
     val label = JLabel(title)
     val tokenTextField: JTextField = JTextField(token ?: generatePassword()).apply {
+      columns = RANDOM_PASSWORD_LEN
       addKeyListener(object : KeyAdapter() {
         override fun keyReleased(e: KeyEvent) {
           onChange?.invoke()
@@ -226,7 +244,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     init {
       hosts.prototypeDisplayValue = Host("255.255.255.255", "very.very.long.host.name.com")
       LinearPanelBuilder(this)
-        .addNextComponent(title, weightx = 0.1)
+        .addNextComponent(title)
         .addNextComponent(hosts)
     }
 
@@ -275,7 +293,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     init {
       LinearPanelBuilder(this)
-        .addNextComponent(title, weightx = 0.1)
+        .addNextComponent(title, gridWidth = 2)
         .addNextComponent(port)
     }
 
@@ -292,9 +310,11 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     private val ALL_HOSTS = Host("0.0.0.0", "all addresses")
     private val dockerVendor = byteArrayOf(0x02.toByte(), 0x42.toByte())
 
+    private const val RANDOM_PASSWORD_LEN = 11
+
     private fun generatePassword(): String {
       val charPool: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
-      return (1..11)
+      return (1..RANDOM_PASSWORD_LEN)
         .map { Random.nextInt(0, charPool.size) }
         .map(charPool::get)
         .joinToString("")
