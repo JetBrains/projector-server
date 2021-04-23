@@ -172,6 +172,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
   private class InvitationLink {
     val copyButton = JButton(AllIcons.Actions.Copy).apply {
+      toolTipText = "Copy URL"
       addActionListener {
         Toolkit
           .getDefaultToolkit()
