@@ -27,6 +27,7 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.projector.awt.PToolkit
 import org.w3c.dom.Node
 import java.awt.Toolkit
@@ -74,9 +75,17 @@ fun storeToken(key: String, value: String?) {
 }
 
 fun migrateTokensToSecureStorage() {
-  copyTokenToSecureStorage(PROJECTOR_RW_TOKEN_KEY, "rwToken")
-  copyTokenToSecureStorage(PROJECTOR_RO_TOKEN_KEY, "roToken")
-  removeTokensFromXmlStorage()
+  try {
+    copyTokenToSecureStorage(PROJECTOR_RW_TOKEN_KEY, "rwToken")
+    copyTokenToSecureStorage(PROJECTOR_RO_TOKEN_KEY, "roToken")
+    removeTokensFromXmlStorage()
+  }
+  catch (e: Exception) {
+    // Something wrong is happened: broken XML, locked file, etc
+    // We can't recover such error - just log it and try migrate tokens next time
+    val logger = Logger.getInstance("migrateTokensToSecureStorage")
+    logger.warn("Can't migrate tokens to secure storage: $e")
+  }
 }
 
 private fun loadTokenFromXmlStorage(tokenName: String): String? {
@@ -86,25 +95,20 @@ private fun loadTokenFromXmlStorage(tokenName: String): String? {
   if (file.exists()) {
     val factory = DocumentBuilderFactory.newInstance()
 
-    try {
-      val builder = factory.newDocumentBuilder()
-      val doc = builder.parse(file)
-      val elements = doc.getElementsByTagName("option")
+    val builder = factory.newDocumentBuilder()
+    val doc = builder.parse(file)
+    val elements = doc.getElementsByTagName("option")
 
-      for (i in 0 until elements.length) {
-        val e = elements.item(i)
-        val attrs = e.attributes
-        val name = attrs.getNamedItem("name")
+    for (i in 0 until elements.length) {
+      val e = elements.item(i)
+      val attrs = e.attributes
+      val name = attrs.getNamedItem("name")
 
-        if (name.nodeValue == tokenName) {
-          val token = attrs.getNamedItem("value")
-          result = token.nodeValue
-          break
-        }
+      if (name.nodeValue == tokenName) {
+        val token = attrs.getNamedItem("value")
+        result = token.nodeValue
+        break
       }
-    }
-    catch (e: Exception) {
-
     }
   }
 
@@ -116,28 +120,23 @@ private fun removeTokensFromXmlStorage() {
   val factory = DocumentBuilderFactory.newInstance()
 
   if (file.exists()) {
+    val builder = factory.newDocumentBuilder()
+    val doc = builder.parse(file)
+    val elements = doc.getElementsByTagName("option")
+    val toRemove: ArrayList<Node> = arrayListOf()
 
-    try {
-      val builder = factory.newDocumentBuilder()
-      val doc = builder.parse(file)
-      val elements = doc.getElementsByTagName("option")
-      val toRemove: ArrayList<Node> = arrayListOf()
+    for (i in 0 until elements.length) {
+      val e = elements.item(i)
 
-      for (i in 0 until elements.length) {
-        val e = elements.item(i)
-
-        if (isTokenNode(e)) {
-          toRemove.add(e)
-        }
-      }
-
-      toRemove.forEach { it.parentNode.removeChild(it) }
-
-      if (toRemove.isNotEmpty()) {
-        writeXml(doc, file)
+      if (isTokenNode(e)) {
+        toRemove.add(e)
       }
     }
-    catch (e: Exception) {
+
+    toRemove.forEach { it.parentNode.removeChild(it) }
+
+    if (toRemove.isNotEmpty()) {
+      writeXml(doc, file)
     }
   }
 }
@@ -158,14 +157,10 @@ private fun isTokenNode(n: Node): Boolean {
 }
 
 private fun writeXml(doc: Document, file: File) {
-  try {
-    val factory = TransformerFactory.newInstance()
-    val transformer = factory.newTransformer()
-    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
-    transformer.setOutputProperty(OutputKeys.INDENT, "yes")
-    val out = StreamResult(file)
-    transformer.transform(DOMSource(doc), out)
-  }
-  catch (e: Exception) {
-  }
+  val factory = TransformerFactory.newInstance()
+  val transformer = factory.newTransformer()
+  transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8")
+  transformer.setOutputProperty(OutputKeys.INDENT, "yes")
+  val out = StreamResult(file)
+  transformer.transform(DOMSource(doc), out)
 }
