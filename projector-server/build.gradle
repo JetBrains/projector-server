@@ -133,6 +133,51 @@ if (ideaPath != null) {
 
 def fontsPath = "src/main/resources/fonts"
 
+task downloadCjkFonts {
+  def defaultFontsLink = "https://noto-website-2.storage.googleapis.com/pkgs/NotoSansCJKjp-hinted.zip"
+
+  doLast {
+    def requiredFonts = ["CJK-R"].stream().map { "$fontsPath/${it}.otf" }.collect()
+
+    println("Checking CJK fonts: $requiredFonts")
+
+    def haveAll = requiredFonts.stream().allMatch { project.file(it).exists() }
+
+    if (haveAll) {
+      println("CJK fonts already exist, skipping download.")
+    }
+    else {
+      println("Some CJK fonts are missing, downloading... If some fonts exist, they will be overwritten.")
+
+      project.file(fontsPath).mkdirs()
+
+      def url = new URL(defaultFontsLink)
+      def tempFile = File.createTempFile("cjkFonts", "zip")
+      url.withInputStream { i -> tempFile.withOutputStream { it << i } }
+
+      def originalToDest = [
+        "NotoSansCJKjp-Regular" : "CJK-R",
+      ]
+
+      def zipFile = new ZipFile(tempFile)
+
+      originalToDest.forEach { original, dest ->
+        def destFile = project.file("$fontsPath/${dest}.otf")
+        def srcPath = "${original}.otf"
+
+        destFile.delete()
+        destFile.createNewFile()
+
+        destFile.withOutputStream { it << zipFile.getInputStream(zipFile.getEntry(srcPath)) }
+      }
+
+      tempFile.delete()
+
+      println("Download complete")
+    }
+  }
+}
+
 task downloadDefaultFonts {
   def defaultFontsLink = "https://noto-website-2.storage.googleapis.com/pkgs/NotoSans-hinted.zip"
 
@@ -230,7 +275,7 @@ task downloadMonoFonts {
 }
 
 task downloadFonts {
-  dependsOn(downloadDefaultFonts, downloadMonoFonts)
+  dependsOn(downloadCjkFonts, downloadDefaultFonts, downloadMonoFonts)
 }
 
 // Modify existing task which puts resources to the target dir:
