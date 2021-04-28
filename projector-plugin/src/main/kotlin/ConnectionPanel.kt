@@ -32,8 +32,8 @@ import javax.swing.table.DefaultTableModel
 
 
 class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(), ResolvedHostSubscriber {
-  private val title = JLabel("Current connections")
-  private val disconnectButton = JButton("Disconnect").apply {
+  private val title = JLabel("Current connections:")
+  private val disconnectButton = JButton("Disconnect Selected").apply {
     addActionListener {
       val ip = clientTable.model.getValueAt(clientTable.selectedRow, 0).toString()
       ProjectorService.disconnectByIp(ip)
@@ -46,7 +46,7 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(), Resol
       update()
     }
   }
-  private val updateButton = JButton("Update").apply {
+  private val updateButton = JButton("Update List").apply {
     addActionListener {
       update()
     }
