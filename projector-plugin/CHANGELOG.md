@@ -2,6 +2,18 @@
 
 Notable changes to this project are documented in this file.
 
+# 1.4.0
+
+## Changed
+
+- Store tokens in secure storage.
+- Remove existing tokens from secure storage.
+- Simplify GUI.
+
+# Updated
+
+- Projector Server v1.1.4.
+
 # 1.3.0
 
 ## Added

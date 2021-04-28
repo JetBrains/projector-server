@@ -1,3 +1,16 @@
+# 1.1.4
+
+## Changed
+
+- PRJ-453 Decrease log level of missing caret info
+- PRJ-437 Decrease log level of missing MD preview
+- PRJ-130 Allow selecting MacOS keymap for 203+ on Linux
+- Switch Ubuntu font to Noto
+
+## Added
+
+- PRJ-369 Support full-shape CJK characters rendering
+
 # 1.1.3
 
 ## Fixed
