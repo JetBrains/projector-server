@@ -34,8 +34,11 @@ import java.awt.Font
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import kotlin.properties.Delegates
 
 object ProjectorFontProvider : FontProvider {
+
+  var isAgent by Delegates.notNull<Boolean>()
 
   private val cjkRegularFile by lazy { createFontFile(CJK_R_NAME, CJK_R_PATH) }
   private val cjkRegularFont by lazy { loadPhysicalFont(cjkRegularFile) }
@@ -106,26 +109,31 @@ object ProjectorFontProvider : FontProvider {
       CJK_R_NAME -> return cjkRegularFont
     }
 
+    fun headlessOrAgent(headless: Font2D, agent: Font2D): Font2D = when (isAgent) {
+      false -> headless
+      true -> agent
+    }
+
     if (isMonospacedFont(name)) {
       return when (style) {
-        Font.BOLD or Font.ITALIC -> monoBoldItalicComposite
+        Font.BOLD or Font.ITALIC -> headlessOrAgent(monoBoldItalicComposite, monoBoldItalicFont)
 
-        Font.BOLD -> monoBoldComposite
+        Font.BOLD -> headlessOrAgent(monoBoldComposite, monoBoldFont)
 
-        Font.ITALIC -> monoRegularItalicComposite
+        Font.ITALIC -> headlessOrAgent(monoRegularItalicComposite, monoRegularItalicFont)
 
-        else -> monoRegularComposite
+        else -> headlessOrAgent(monoRegularComposite, monoRegularFont)
       }
     }
     else {
       return when (style) {
-        Font.BOLD or Font.ITALIC -> defaultBoldItalicComposite
+        Font.BOLD or Font.ITALIC -> headlessOrAgent(defaultBoldItalicComposite, defaultBoldItalicFont)
 
-        Font.BOLD -> defaultBoldComposite
+        Font.BOLD -> headlessOrAgent(defaultBoldComposite, defaultBoldFont)
 
-        Font.ITALIC -> defaultRegularItalicComposite
+        Font.ITALIC -> headlessOrAgent(defaultRegularItalicComposite, defaultRegularItalicFont)
 
-        else -> defaultRegularComposite
+        else -> headlessOrAgent(defaultRegularComposite, defaultRegularFont)
       }
     }
   }

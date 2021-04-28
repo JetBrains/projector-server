@@ -23,6 +23,7 @@
  */
 package org.jetbrains.projector.server
 
+import org.jetbrains.projector.server.service.ProjectorFontProvider
 import java.lang.reflect.Method
 import kotlin.system.exitProcess
 
@@ -63,6 +64,7 @@ object ProjectorLauncher {
   private fun initalizeHeadless() {
     setupSystemProperties()
     setupSingletons()
+    ProjectorFontProvider.isAgent = false
   }
 
   private fun runProjectorServer(): Boolean {
