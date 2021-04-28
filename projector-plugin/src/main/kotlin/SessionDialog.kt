@@ -47,11 +47,11 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val connectionPanel = ConnectionPanel(resolver)
   private val portEditor = PortEditor(ProjectorService.port)
   private val rwTokenEditor = TokenEditor("Password for read-write access:", ProjectorService.rwToken)
-  private val roTokenEditor = TokenEditor("Password for read-only access:", ProjectorService.roToken)
+  private val roTokenEditor = TokenEditor("Password for read-only  access:", ProjectorService.roToken)
   private val requireConnectConfirmation: JCheckBox = JCheckBox("Require connection confirmation", ProjectorService.confirmConnection)
-  private val autostartProjector: JCheckBox = JCheckBox("Autostart Projector on load", ProjectorService.autostart)
-  private val rwInvitationLink = InvitationLink("Full Access Link:")
-  private val roInvitationLink = InvitationLink("Read  Only  Link:")
+  private val autostartProjector: JCheckBox = JCheckBox("Start Projector automatically when the IDE starts", ProjectorService.autostart)
+  private val rwInvitationLink = InvitationLink("Read/Write Link:")
+  private val roInvitationLink = InvitationLink("Read Only  Link:")
 
   val rwToken: String? get() = rwTokenEditor.token
   val roToken: String? get() = roTokenEditor.token
@@ -65,7 +65,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     if (ProjectorService.isSessionRunning) {
       title = "Edit Current Session Parameters"
-      description.text = "<html>The current session has already started.<br>Do you want to change passwords?"
+      description.text = "<html>The current session has already started.<br>Do you want to change settings?"
       myOKAction.putValue(Action.NAME, "Save")
 
       portEditor.isEnabled = false
