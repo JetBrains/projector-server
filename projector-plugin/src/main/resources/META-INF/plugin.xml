@@ -59,6 +59,8 @@
               description="Activate projector"/>
       <action id="projector.starting" class="WaitForStartAction" text="Projector Is Starting ..."
               description="Waiting for Projector start"/>
+      <action id="projector.headless" class="HeadlessProjectorAction" text= "Headless Projector Detected. Plugin Is Disabled"
+              description="Plugin is disabled"/>
     </group>
   </actions>
 </idea-plugin>
