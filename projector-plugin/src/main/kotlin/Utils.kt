@@ -26,6 +26,7 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.projector.awt.PToolkit
@@ -40,6 +41,7 @@ import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
+fun productName(): String = ApplicationInfo.getInstance().versionName
 
 fun isHeadlessProjectorDetected() = Toolkit.getDefaultToolkit()::class.toString() == PToolkit::class.toString()
 
