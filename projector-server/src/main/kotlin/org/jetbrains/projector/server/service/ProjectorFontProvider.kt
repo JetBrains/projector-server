@@ -98,14 +98,18 @@ object ProjectorFontProvider : FontProvider {
 
   override fun findFont2D(name: String, style: Int, fallback: Int): Font2D {
     when (name) {
-      DEFAULT_R_NAME -> return defaultRegularFont
-      DEFAULT_RI_NAME -> return defaultRegularItalicFont
-      DEFAULT_B_NAME -> return defaultBoldFont
-      DEFAULT_BI_NAME -> return defaultBoldItalicFont
-      MONO_R_NAME -> return monoRegularFont
-      MONO_RI_NAME -> return monoRegularItalicFont
-      MONO_B_NAME -> return monoBoldFont
-      MONO_BI_NAME -> return monoBoldItalicFont
+      DEFAULT_R_NAME, DEFAULT_RI_NAME, DEFAULT_B_NAME, DEFAULT_BI_NAME -> return when (style) {
+        Font.BOLD or Font.ITALIC -> defaultBoldItalicFont
+        Font.BOLD -> defaultBoldFont
+        Font.ITALIC -> defaultRegularItalicFont
+        else -> defaultRegularFont
+      }
+      MONO_R_NAME, MONO_RI_NAME, MONO_B_NAME, MONO_BI_NAME -> return when (style) {
+        Font.BOLD or Font.ITALIC -> monoBoldItalicFont
+        Font.BOLD -> monoBoldFont
+        Font.ITALIC -> monoRegularItalicFont
+        else -> monoRegularFont
+      }
       CJK_R_NAME -> return cjkRegularFont
     }
 
