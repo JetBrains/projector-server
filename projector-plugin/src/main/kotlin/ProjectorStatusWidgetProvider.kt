@@ -21,16 +21,17 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAwareAction
 
-class ActivateAction : DumbAwareAction() {
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.wm.StatusBarWidgetProvider
 
-  override fun actionPerformed(e: AnActionEvent) {
-    ProjectorService.activate()
-  }
+class ProjectorStatusWidgetProvider : StatusBarWidgetProvider {
+  override fun getWidget(project: Project): StatusBarWidget? = ProjectorStatusWidget(project)
 
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isActivationNeeded()
+  override fun getAnchor(): String {
+    //return StatusBar.Anchors.before(StatusBar.StandardWidgets.ENCODING_PANEL)
+    return StatusBar.Anchors.DEFAULT_ANCHOR
   }
 }

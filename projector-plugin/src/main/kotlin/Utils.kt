@@ -59,11 +59,29 @@ fun setSystemProperty(name: String, value: String?) {
   }
 }
 
+fun isActivationNeeded() = ProjectorService.enabled == EnabledState.NO_VM_OPTIONS_AND_DISABLED
+
+fun isProjectorRunning() = ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_ENABLED
+
+fun isProjectorAutoStarting() : Boolean {
+  return !isHeadlessProjectorDetected()
+        &&
+        ProjectorService.autostart
+        &&
+        ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
+}
+
+fun isProjectorDisabled(): Boolean {
+  return  !isHeadlessProjectorDetected()
+          &&
+          !ProjectorService.autostart
+          &&
+          ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
+}
+
 private const val SUBSYSTEM = "PROJECTOR_SERVICE_CONFIG"
 const val PROJECTOR_RW_TOKEN_KEY = "PROJECTOR_RW_TOKEN"
 const val PROJECTOR_RO_TOKEN_KEY = "PROJECTOR_RO_TOKEN"
-
-private fun createCredentialAttributes(key: String) = CredentialAttributes(generateServiceName(SUBSYSTEM, key))
 
 fun loadToken(key: String): String? {
   val credentialAttributes = createCredentialAttributes(key)
@@ -89,6 +107,8 @@ fun migrateTokensToSecureStorage() {
     logger.warn("Can't migrate tokens to secure storage: $e")
   }
 }
+
+private fun createCredentialAttributes(key: String) = CredentialAttributes(generateServiceName(SUBSYSTEM, key))
 
 private fun loadTokenFromXmlStorage(tokenName: String): String? {
   val file = Paths.get(PathManager.getOptionsPath(), ProjectorConfig.STORAGE_NAME).toFile()

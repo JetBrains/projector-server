@@ -47,12 +47,6 @@ class EnableAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    val state = !isHeadlessProjectorDetected()
-                &&
-                !ProjectorService.autostart
-                &&
-                ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
-
-    e.presentation.isEnabledAndVisible = state
+    e.presentation.isEnabledAndVisible = isProjectorDisabled()
   }
 }

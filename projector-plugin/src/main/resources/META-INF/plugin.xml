@@ -47,6 +47,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="ProjectorService"/>
     <postStartupActivity implementation="RegisterPluginInstallerStateListener"/>
+    <statusBarWidgetProvider implementation="ProjectorStatusWidgetProvider" />
   </extensions>
 
   <actions>
