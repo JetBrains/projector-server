@@ -28,10 +28,7 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetProvider
 
 class ProjectorStatusWidgetProvider : StatusBarWidgetProvider {
-  override fun getWidget(project: Project): StatusBarWidget? = ProjectorStatusWidget(project)
+  override fun getWidget(project: Project) = ProjectorStatusWidget(project)
 
-  override fun getAnchor(): String {
-    //return StatusBar.Anchors.before(StatusBar.StandardWidgets.ENCODING_PANEL)
-    return StatusBar.Anchors.DEFAULT_ANCHOR
-  }
+  override fun getAnchor(): String = StatusBar.Anchors.DEFAULT_ANCHOR
 }
