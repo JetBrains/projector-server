@@ -26,6 +26,9 @@ import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginStateListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.WindowManager
+
 
 class RegisterPluginInstallerStateListener : StartupActivity {
   override fun runActivity(project: Project) {
@@ -34,12 +37,20 @@ class RegisterPluginInstallerStateListener : StartupActivity {
 
       override fun uninstall(descriptor: IdeaPluginDescriptor) {
         ProjectorService.autostart = false
-        if (ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_ENABLED) {
+
+        if (isProjectorRunning()) {
           ProjectorService.disable()
         }
       }
     })
 
     ProjectorService.autostartIfRequired()
+    installProjectorWidget(project)
+  }
+
+  private fun installProjectorWidget(project: Project) {
+    val widget = ProjectorStatusWidget(project)
+    WindowManager.getInstance().getStatusBar(project)?.addWidget(widget, StatusBar.Anchors.DEFAULT_ANCHOR)
+    widget.update()
   }
 }

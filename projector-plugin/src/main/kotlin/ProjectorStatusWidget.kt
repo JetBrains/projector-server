@@ -22,6 +22,7 @@
  * if you need additional information or have any questions.
  */
 
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -35,6 +36,7 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget
 import com.intellij.util.Consumer
+import java.awt.Component
 import java.awt.event.MouseEvent
 
 class ProjectorStatusWidget(project: Project)
@@ -48,9 +50,10 @@ class ProjectorStatusWidget(project: Project)
   override fun copy(): StatusBarWidget = ProjectorStatusWidget(project)
 
   override fun getPopupStep(): ListPopup {
+    val context = DataManager.getInstance().getDataContext(myStatusBar as Component)
     return JBPopupFactory.getInstance().createActionGroupPopup("TITLE Projector",
                                                                actions,
-                                                               DataContext.EMPTY_CONTEXT,
+                                                               context,
                                                                false,
                                                                null,
                                                                5)
@@ -65,6 +68,10 @@ class ProjectorStatusWidget(project: Project)
   override fun getPresentation(): WidgetPresentation = this
 
   override fun getIcon() = GREEN_DOT
+
+  fun update() {
+    myStatusBar.updateWidget(ID())
+  }
 
   companion object {
     private val actions = object : ActionGroup() {
