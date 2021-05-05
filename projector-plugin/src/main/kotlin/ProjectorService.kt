@@ -100,11 +100,16 @@ class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
   }
 }
 
+interface ProjectorStateListener {
+  fun stateChanged()
+}
+
 @State(name = "Projector", storages = [Storage(ProjectorConfig.STORAGE_NAME)])
 class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   private var config: ProjectorConfig = ProjectorConfig()
   private val logger = Logger.getInstance(ProjectorService::class.java)
   private val plugin = PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.projector-plugin"))!!
+  private val listeners = arrayListOf<ProjectorStateListener>()
 
   private var currentSession: Session? = null
     set(value) {
@@ -122,6 +127,18 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     false -> EnabledState.NO_VM_OPTIONS_AND_DISABLED
   }
 
+  fun subscribe(l: ProjectorStateListener) {
+    listeners.add(l)
+  }
+
+  fun unsubscribe(l: ProjectorStateListener) {
+    listeners.remove(l)
+  }
+
+  private fun stateChanged() {
+    listeners.forEach { it.stateChanged() }
+  }
+
   fun activate() {
     if (confirmRestart(
         "Before enabling Projector for the first time, some run arguments (VM properties) should be set. Can I set them and restart the IDE now?")) {
@@ -134,6 +151,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
           .joinToString(separator = System.lineSeparator())
           .let { FileUtil.writeToFile(writeFile, it) }
 
+        stateChanged()
         restartIde()
       } ?: SwingUtilities.invokeLater {
         JOptionPane.showMessageDialog(
@@ -148,6 +166,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
 
   private fun disable() {
     if (confirmRestart("To disable Projector, restart is needed. Can I restart the IDE now?")) {
+      stateChanged()
       restartIde()
     }
   }
@@ -155,6 +174,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   private fun enable() {
     attachDynamicAgent()
     enabled = EnabledState.HAS_VM_OPTIONS_AND_ENABLED
+    stateChanged()
   }
 
   private fun getVMOptions(): Pair<String, File>? {
@@ -217,6 +237,10 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
 
   companion object {
     private val instance: ProjectorService by lazy { ServiceManager.getService(ProjectorService::class.java)!! }
+
+    fun subscribe(l: ProjectorStateListener) = instance.subscribe(l)
+
+    fun unsubscribe(l: ProjectorStateListener) = instance.unsubscribe(l)
 
     fun enable(session: Session) {
       currentSession = session

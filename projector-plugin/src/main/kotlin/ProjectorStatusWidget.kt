@@ -31,6 +31,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget
@@ -42,7 +43,8 @@ import javax.swing.Icon
 class ProjectorStatusWidget(project: Project)
   : EditorBasedWidget(project),
     StatusBarWidget.MultipleTextValuesPresentation,
-    StatusBarWidget.Multiframe {
+    StatusBarWidget.Multiframe,
+    ProjectorStateListener {
   private val logger = Logger.getInstance(ProjectorStatusWidget::class.java.name)
 
   override fun ID(): String = ProjectorStatusWidget::class.java.name
@@ -69,7 +71,13 @@ class ProjectorStatusWidget(project: Project)
 
   override fun getIcon() = updateIcon()
 
+  override fun install(statusBar: StatusBar) {
+    super.install(statusBar)
+    ProjectorService.subscribe(this)
+  }
+
   override fun dispose() {
+    ProjectorService.unsubscribe(this)
     super.dispose()
   }
 
@@ -77,13 +85,15 @@ class ProjectorStatusWidget(project: Project)
     myStatusBar.updateWidget(ID())
   }
 
+  override fun stateChanged() = update()
+
   private fun updateIcon(): Icon {
     return when {
       isActivationNeeded() -> RED_DOT
       isProjectorRunning() -> GREEN_DOT
       isProjectorAutoStarting() -> YELLOW_DOT
       isProjectorDisabled() -> BLACK_DOT
-      else  -> BLACK_DOT
+      else -> BLACK_DOT
     }
   }
 
@@ -97,7 +107,7 @@ class ProjectorStatusWidget(project: Project)
       isProjectorRunning() -> "Projector is running"
       isProjectorAutoStarting() -> "Projector is starting"
       isProjectorDisabled() -> "Projector is disabled"
-      else  -> "Impossible state"
+      else -> "Impossible state"
     }
   }
 
@@ -122,6 +132,4 @@ class ProjectorStatusWidget(project: Project)
     @JvmField
     val BLACK_DOT = IconLoader.getIcon("/META-INF/blackSign.svg", ProjectorStatusWidget::class.java)
   }
-
-
 }
