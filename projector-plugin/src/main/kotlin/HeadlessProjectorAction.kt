@@ -29,9 +29,5 @@ class HeadlessProjectorAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {}
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isHeadlessProjectorDetected()
-
-    if (e.presentation.isEnabledAndVisible) {
-      e.presentation.text = "Headless Projector Detected. Plugin Is Disabled"
-    }
   }
 }

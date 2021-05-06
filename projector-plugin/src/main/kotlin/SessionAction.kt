@@ -50,9 +50,5 @@ class SessionAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isProjectorRunning()
-
-    if (e.presentation.isEnabledAndVisible) {
-      e.presentation.text = "Current Session"
-    }
   }
 }

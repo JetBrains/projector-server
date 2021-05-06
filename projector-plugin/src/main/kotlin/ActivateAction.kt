@@ -32,9 +32,5 @@ class ActivateAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isActivationNeeded()
-
-    if (e.presentation.isEnabledAndVisible) {
-      e.presentation.text = "Activate Remote Access to IDE (First Time Setup)"
-    }
   }
 }

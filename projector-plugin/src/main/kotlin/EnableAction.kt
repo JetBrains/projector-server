@@ -49,9 +49,5 @@ class EnableAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isProjectorDisabled()
-
-    if (e.presentation.isEnabledAndVisible) {
-      e.presentation.text = "Start Remote Access to IDE"
-    }
   }
 }

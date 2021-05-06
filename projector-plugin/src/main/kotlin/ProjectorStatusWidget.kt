@@ -24,6 +24,7 @@
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
@@ -45,7 +46,6 @@ class ProjectorStatusWidget(project: Project)
     StatusBarWidget.MultipleTextValuesPresentation,
     StatusBarWidget.Multiframe,
     ProjectorStateListener {
-  private val logger = Logger.getInstance(ProjectorStatusWidget::class.java.name)
 
   override fun ID(): String = ProjectorStatusWidget::class.java.name
 
@@ -53,7 +53,10 @@ class ProjectorStatusWidget(project: Project)
 
   override fun getPopupStep(): ListPopup {
     val context = DataManager.getInstance().getDataContext(myStatusBar as Component)
-    return JBPopupFactory.getInstance().createActionGroupPopup("TITLE Projector",
+    val actionManager = ActionManager.getInstance()
+    val actionGroup = actionManager.getAction(PROJECTOR_ACTION_GROUP) as ActionGroup
+
+    return JBPopupFactory.getInstance().createActionGroupPopup("Projector",
                                                                actionGroup,
                                                                context,
                                                                false,
@@ -81,10 +84,7 @@ class ProjectorStatusWidget(project: Project)
     super.dispose()
   }
 
-  fun update() {
-
-    myStatusBar.updateWidget(ID())
-  }
+  fun update() = myStatusBar.updateWidget(ID())
 
   override fun stateChanged() = update()
 
@@ -98,9 +98,7 @@ class ProjectorStatusWidget(project: Project)
     }
   }
 
-  private fun updateText(): String {
-    return "Projector"
-  }
+  private fun updateText() = "Projector"
 
   private fun updateTooltip(): String {
     return when {
@@ -112,18 +110,8 @@ class ProjectorStatusWidget(project: Project)
     }
   }
 
-  class ProjectorActions(title: String, popup: Boolean) : ActionGroup(title, popup) {
-    override fun getChildren(e: AnActionEvent?) = ACTIONS
-  }
-
   companion object {
-    private val ACTIONS = arrayOf(ActivateAction(),
-                                  EnableAction(),
-                                  DisableAction(),
-                                  HeadlessProjectorAction(),
-                                  SessionAction())
-
-    private val actionGroup = ProjectorActions("Projector", true)
+    private const val PROJECTOR_ACTION_GROUP = "projector.menu"
 
     @JvmField
     val RED_DOT = IconLoader.getIcon("/META-INF/redSign.svg", ProjectorStatusWidget::class.java)

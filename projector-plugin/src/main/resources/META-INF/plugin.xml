@@ -50,8 +50,7 @@
   </extensions>
 
   <actions>
-    <group id="projector.menu" text="Projector" description="Projector menu">
-      <add-to-group group-id="MainMenu" anchor="last"/>
+    <group id="projector.menu" text="Projector" description="Projector menu" popup="true">
       <action id="projector.enable" class="EnableAction" text="Start Remote Access to IDE" description="Enable projector"/>
       <action id="projector.disable" class="DisableAction" text="Stop Remote Access to IDE" description="Disable projector"/>
       <action id="projector.session" class="SessionAction" text="Current Session" description="Current session parameters"/>

@@ -33,9 +33,5 @@ class DisableAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isProjectorRunning()
-
-    if (e.presentation.isEnabledAndVisible) {
-      e.presentation.text = "Stop Remote Access to IDE"
-    }
   }
 }
