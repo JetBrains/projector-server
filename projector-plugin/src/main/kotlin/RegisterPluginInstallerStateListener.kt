@@ -44,8 +44,8 @@ class RegisterPluginInstallerStateListener : StartupActivity {
       }
     })
 
-    ProjectorService.autostartIfRequired()
     installProjectorWidget(project)
+    ProjectorService.autostartIfRequired()
   }
 
   private fun installProjectorWidget(project: Project) {
