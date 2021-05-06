@@ -28,5 +28,9 @@ class WaitForStartAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {}
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isProjectorAutoStarting()
+
+    if (e.presentation.isEnabledAndVisible) {
+      e.presentation.text = "Projector Is Starting ..."
+    }
   }
 }

@@ -54,7 +54,7 @@ class ProjectorStatusWidget(project: Project)
   override fun getPopupStep(): ListPopup {
     val context = DataManager.getInstance().getDataContext(myStatusBar as Component)
     return JBPopupFactory.getInstance().createActionGroupPopup("TITLE Projector",
-                                                               actions,
+                                                               actionGroup,
                                                                context,
                                                                false,
                                                                null,
@@ -82,6 +82,7 @@ class ProjectorStatusWidget(project: Project)
   }
 
   fun update() {
+
     myStatusBar.updateWidget(ID())
   }
 
@@ -111,14 +112,18 @@ class ProjectorStatusWidget(project: Project)
     }
   }
 
+  class ProjectorActions(title: String, popup: Boolean) : ActionGroup(title, popup) {
+    override fun getChildren(e: AnActionEvent?) = ACTIONS
+  }
+
   companion object {
-    private val actions = object : ActionGroup() {
-      override fun getChildren(e: AnActionEvent?): Array<AnAction> = arrayOf(ActivateAction(),
-                                                                             EnableAction(),
-                                                                             DisableAction(),
-                                                                             HeadlessProjectorAction(),
-                                                                             SessionAction())
-    }
+    private val ACTIONS = arrayOf(ActivateAction(),
+                                  EnableAction(),
+                                  DisableAction(),
+                                  HeadlessProjectorAction(),
+                                  SessionAction())
+
+    private val actionGroup = ProjectorActions("Projector", true)
 
     @JvmField
     val RED_DOT = IconLoader.getIcon("/META-INF/redSign.svg", ProjectorStatusWidget::class.java)

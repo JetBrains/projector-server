@@ -21,6 +21,7 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
@@ -48,5 +49,9 @@ class EnableAction : DumbAwareAction() {
 
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isProjectorDisabled()
+
+    if (e.presentation.isEnabledAndVisible) {
+      e.presentation.text = "Start Remote Access to IDE"
+    }
   }
 }
