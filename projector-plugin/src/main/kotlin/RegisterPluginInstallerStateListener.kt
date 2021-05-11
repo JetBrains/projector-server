@@ -24,13 +24,17 @@
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginStateListener
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.WindowManager
 
 
 class RegisterPluginInstallerStateListener : StartupActivity {
+  private val logger = Logger.getInstance(RegisterPluginInstallerStateListener::class.java)
+
   override fun runActivity(project: Project) {
     PluginInstaller.addStateListener(object : PluginStateListener {
       override fun install(descriptor: IdeaPluginDescriptor) {}
@@ -49,8 +53,22 @@ class RegisterPluginInstallerStateListener : StartupActivity {
   }
 
   private fun installProjectorWidget(project: Project) {
-    val widget = ProjectorStatusWidget(project)
-    WindowManager.getInstance().getStatusBar(project)?.addWidget(widget, StatusBar.Anchors.DEFAULT_ANCHOR)
-    widget.update()
+    val statusBar = WindowManager.getInstance().getStatusBar(project)
+
+    statusBar?.let { bar ->
+      val method = try {
+        StatusBar::class.java.getMethod("addWidget", StatusBarWidget::class.java, String::class.java)
+      }
+      catch (e: NoSuchMethodException) {
+        logger.error("Unsupported IDEA version: StatusBar has no addWidget method")
+        null
+      }
+
+      method?.let {
+        val widget = ProjectorStatusWidget(project)
+        it.invoke(bar, widget, StatusBar.Anchors.DEFAULT_ANCHOR)
+        widget.update()
+      }
+    }
   }
 }
