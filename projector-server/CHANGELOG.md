@@ -1,3 +1,9 @@
+# 1.1.5
+
+## Fixed
+
+- PRJ-474 Fix italic fonts are shown as plain in editor
+
 # 1.1.4
 
 ## Changed
