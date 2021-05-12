@@ -28,6 +28,7 @@ import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
@@ -65,27 +66,32 @@ fun isActivationNeeded() = ProjectorService.enabled == EnabledState.NO_VM_OPTION
 
 fun isProjectorRunning() = ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_ENABLED
 
-fun isProjectorAutoStarting() : Boolean {
+fun isProjectorAutoStarting(): Boolean {
   return !isHeadlessProjectorDetected()
-        &&
-        ProjectorService.autostart
-        &&
-        ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
+         &&
+         ProjectorService.autostart
+         &&
+         ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
 }
 
 fun isProjectorDisabled(): Boolean {
-  return  !isHeadlessProjectorDetected()
-          &&
-          !ProjectorService.autostart
-          &&
-          ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
+  return !isHeadlessProjectorDetected()
+         &&
+         !ProjectorService.autostart
+         &&
+         ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
 }
 
-fun getProjectorActionGroup() : ActionGroup {
-  return ActionManager.getInstance().getAction(PROJECTOR_ACTION_GROUP) as ActionGroup
+fun getProjectorAction(actionId: String): AnAction {
+  val action = ActionManager.getInstance().getAction(actionId)
+  requireNotNull(action) { "Unknown action: $actionId" }
+  return action
 }
 
-private const val PROJECTOR_ACTION_GROUP = "projector.menu"
+fun getProjectorActionGroup(groupId: String): ActionGroup {
+  return ActionManager.getInstance().getAction(groupId) as ActionGroup
+}
+
 private const val SUBSYSTEM = "PROJECTOR_SERVICE_CONFIG"
 const val PROJECTOR_RW_TOKEN_KEY = "PROJECTOR_RW_TOKEN"
 const val PROJECTOR_RO_TOKEN_KEY = "PROJECTOR_RO_TOKEN"

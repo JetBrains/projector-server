@@ -56,4 +56,8 @@ class HeadlessProjectorAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isHeadlessProjectorDetected()
   }
+
+  companion object {
+    const val ID = "projector.headless"
+  }
 }

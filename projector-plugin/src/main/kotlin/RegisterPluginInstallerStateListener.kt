@@ -21,11 +21,10 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+import actions.ProjectorActionGroup
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginStateListener
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
@@ -58,15 +57,14 @@ class RegisterPluginInstallerStateListener : StartupActivity {
 
   private fun installUI(project: Project) {
     if (!installProjectorWidget(project)) {
-      installMenu()
-      displayNotification(project, "Warning", "Can't display status bar widget",
-                          "Use Projector menu to manage plugin")
+      installMenu(project)
     }
   }
 
-  private fun installMenu() {
-    val actionGroup = getProjectorActionGroup()
-    ActionManager.getInstance().createActionPopupMenu(ActionPlaces.MAIN_MENU, actionGroup)
+  private fun installMenu(project: Project) {
+    ProjectorActionGroup.isMenuRequired = true
+    displayNotification(project, "Warning", "Can't display status bar widget",
+                        "Use Projector menu to manage plugin")
   }
 
   private fun installProjectorWidget(project: Project): Boolean {

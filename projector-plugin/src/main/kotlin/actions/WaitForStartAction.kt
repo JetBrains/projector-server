@@ -53,4 +53,8 @@ class WaitForStartAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isProjectorAutoStarting()
   }
+
+  companion object {
+    const val ID = "projector.starting"
+  }
 }

@@ -59,4 +59,8 @@ class DisableAction : DumbAwareAction() {
   override fun update(e: AnActionEvent) {
     e.presentation.isEnabledAndVisible = isProjectorRunning()
   }
+
+  companion object {
+    const val ID = "projector.disable"
+  }
 }
