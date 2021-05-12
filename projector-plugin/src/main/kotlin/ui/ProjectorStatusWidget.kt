@@ -21,10 +21,33 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+package ui/*
+ * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation. JetBrains designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
+ * if you need additional information or have any questions.
+ */
 
+import ProjectorService
+import ProjectorStateListener
 import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
@@ -34,6 +57,11 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget
 import com.intellij.util.Consumer
+import getProjectorActionGroup
+import isActivationNeeded
+import isProjectorAutoStarting
+import isProjectorDisabled
+import isProjectorRunning
 import java.awt.Component
 import java.awt.event.MouseEvent
 import javax.swing.Icon
@@ -50,8 +78,7 @@ class ProjectorStatusWidget(project: Project)
 
   override fun getPopupStep(): ListPopup {
     val context = DataManager.getInstance().getDataContext(myStatusBar as Component)
-    val actionManager = ActionManager.getInstance()
-    val actionGroup = actionManager.getAction(PROJECTOR_ACTION_GROUP) as ActionGroup
+    val actionGroup = getProjectorActionGroup()
 
     return JBPopupFactory.getInstance().createActionGroupPopup("Projector",
                                                                actionGroup,
@@ -108,8 +135,6 @@ class ProjectorStatusWidget(project: Project)
   }
 
   companion object {
-    private const val PROJECTOR_ACTION_GROUP = "projector.menu"
-
     @JvmField
     val RED_DOT = IconLoader.getIcon("/META-INF/redSign.svg", ProjectorStatusWidget::class.java)
 

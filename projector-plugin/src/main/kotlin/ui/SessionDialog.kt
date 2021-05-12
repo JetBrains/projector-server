@@ -21,6 +21,30 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+package ui/*
+ * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation. JetBrains designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
+ * if you need additional information or have any questions.
+ */
+import ProjectorService
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -29,6 +53,7 @@ import org.jetbrains.projector.server.ProjectorServer
 import org.jetbrains.projector.server.util.AsyncHostResolver
 import org.jetbrains.projector.server.util.Host
 import org.jetbrains.projector.server.util.ResolvedHostSubscriber
+import productName
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyAdapter
@@ -49,7 +74,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val rwTokenEditor = TokenEditor("Password for read-write access:", ProjectorService.rwToken)
   private val roTokenEditor = TokenEditor("Password for read-only  access:", ProjectorService.roToken)
   private val requireConnectConfirmation: JCheckBox = JCheckBox("Require connection confirmation", ProjectorService.confirmConnection)
-  private val autostartProjector: JCheckBox = JCheckBox("Start Projector automatically when ${productName()} starts", ProjectorService.autostart)
+  private val autostartProjector: JCheckBox = JCheckBox("Start Projector automatically when ${productName()} starts",
+                                                        ProjectorService.autostart)
   private val rwInvitationLink = InvitationLink("Read/Write Link:")
   private val roInvitationLink = InvitationLink("Read Only  Link:")
 
