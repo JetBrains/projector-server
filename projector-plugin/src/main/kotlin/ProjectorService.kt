@@ -255,7 +255,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     fun disconnectByIp(ip: String) = AgentLauncher.disconnectByIp(ip)
 
     fun autostartIfRequired() {
-      if (!isHeadlessProjectorDetected()) {
+      if (!isHeadlessProjectorDetected() && !isProjectorRunning()) {
         with(ProjectorService) {
           host?.let { host ->
             port?.let { port ->
