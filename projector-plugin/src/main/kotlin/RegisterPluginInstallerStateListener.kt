@@ -33,6 +33,7 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.WindowManager
 import ui.ProjectorStatusWidget
+import ui.displayNotification
 
 
 class RegisterPluginInstallerStateListener : StartupActivity {
@@ -51,10 +52,6 @@ class RegisterPluginInstallerStateListener : StartupActivity {
       }
     })
 
-    //val n = Notification("Projector warning", "")
-    //Notification.fire(n)
-
-    installMenu()
     installUI(project)
     ProjectorService.autostartIfRequired()
   }
@@ -62,6 +59,8 @@ class RegisterPluginInstallerStateListener : StartupActivity {
   private fun installUI(project: Project) {
     if (!installProjectorWidget(project)) {
       installMenu()
+      displayNotification(project, "Warning", "Can't display status bar widget",
+                          "Use Projector menu to manage plugin")
     }
   }
 
