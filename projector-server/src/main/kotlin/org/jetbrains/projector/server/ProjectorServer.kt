@@ -58,6 +58,10 @@ import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshakeEncoder
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshakeDecoder
 import org.jetbrains.projector.server.core.util.*
+import org.jetbrains.projector.server.core.websocket.HttpWsClientBuilder
+import org.jetbrains.projector.server.core.websocket.HttpWsServer
+import org.jetbrains.projector.server.core.websocket.ProjectorHttpWsServerBuilder
+import org.jetbrains.projector.server.core.websocket.TransportBuilder
 import org.jetbrains.projector.server.idea.CaretInfoUpdater
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
@@ -72,8 +76,6 @@ import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.awt.peer.ComponentPeer
 import java.net.InetAddress
-import java.nio.ByteBuffer
-import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
@@ -81,17 +83,13 @@ import kotlin.math.roundToLong
 import java.awt.Point as AwtPoint
 
 class ProjectorServer private constructor(
-  host: InetAddress,
-  port: Int,
+  builder: TransportBuilder,
   private val laterInvokator: LaterInvokator,
   private val isAgent: Boolean,
 ) {
 
-  private val httpWsServer = object : ProjectorHttpWsServer(host, port) {
-
-    override fun onStart() {
-      logger.info { "Server started on host $host and port $port" }
-
+  init {
+    builder.onStart = {
       updateThread = thread(isDaemon = true) {
         // TODO: remove this thread: encapsulate the logic in an extracted class and maybe even don't use threads but coroutines' channels
         logger.debug { "Daemon thread starts" }
@@ -116,11 +114,11 @@ class ProjectorServer private constructor(
       caretInfoUpdater.start()
     }
 
-    override fun onWsMessage(connection: WebSocket, message: ByteBuffer) {
+    builder.onWsMessageByteBuffer = { _, message ->
       throw RuntimeException("Unsupported message type: $message")
     }
 
-    override fun onWsMessage(connection: WebSocket, message: String) {
+    builder.onWsMessageString = { connection, message ->
       when (val clientSettings = connection.getAttachment<ClientSettings>()!!) {
         is ConnectedClientSettings -> setUpClient(connection, clientSettings, message)
 
@@ -155,35 +153,41 @@ class ProjectorServer private constructor(
       }
     }
 
-    override fun onWsClose(connection: WebSocket) {
+    builder.onWsClose =  { connection ->
       // todo: we need more informative message, add parameters to this method inside the superclass
-      val clientSettings = connection.getAttachment<ClientSettings>()!!
-      val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
-      logger.info { "${clientSettings.address} disconnected, was connected for ${connectionTime.roundToLong()} s." }
+      connection.getAttachment<ClientSettings>()
+        ?.let { clientSettings ->
+          val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
+          logger.info { "${clientSettings.address} disconnected, was connected for ${connectionTime.roundToLong()} s." }
+        } ?: logger.info { "Disconnected. This client hasn't clientSettings" }
     }
 
-    override fun onWsOpen(connection: WebSocket) {
+    builder.onWsOpen = { connection ->
       val address = connection.remoteSocketAddress?.address?.hostAddress
       connection.setAttachment(ConnectedClientSettings(connectionMillis = System.currentTimeMillis(), address = address))
       logger.info { "$address connected." }
     }
 
-    override fun onError(connection: WebSocket?, e: Exception) {
+    builder.onError = { _, e ->
       logger.error(e) { "onError" }
     }
 
-    override fun getMainWindows(): List<MainWindow> = ProjectorServer.getMainWindows().map {
-      MainWindow(
-        title = it.title,
-        pngBase64Icon = it.icons
-          ?.firstOrNull()
-          ?.let { imageId -> ProjectorImageCacher.getImage(imageId as ImageId) as? ImageData.PngBase64 }
-          ?.pngBase64,
-      )
+    builder.getMainWindow = {
+      getMainWindows().map {
+        MainWindow(
+          title = it.title,
+          pngBase64Icon = it.icons
+            ?.firstOrNull()
+            ?.let { imageId -> ProjectorImageCacher.getImage(imageId as ImageId) as? ImageData.PngBase64 }
+            ?.pngBase64,
+        )
+      }
     }
   }
 
-  val wasStarted: Boolean by httpWsServer::wasStarted
+  private val httpWsTransport = builder.build()
+
+  val wasStarted: Boolean by httpWsTransport::wasStarted
 
   private lateinit var updateThread: Thread
 
@@ -573,7 +577,7 @@ class ProjectorServer private constructor(
   }
 
   private fun sendPictures(dataToSend: List<ServerEvent>) {
-    httpWsServer.forEachOpenedConnection { client ->
+    httpWsTransport.forEachOpenedConnection { client ->
       val readyClientSettings = client.getAttachment<ClientSettings?>() as? ReadyClientSettings ?: return@forEachOpenedConnection
 
       val compressed = with(readyClientSettings.setUpClientData) {
@@ -613,12 +617,12 @@ class ProjectorServer private constructor(
   }
 
   fun start() {
-    httpWsServer.start()
+    httpWsTransport.start()
   }
 
   @JvmOverloads
   fun stop(timeout: Int = 0) {
-    httpWsServer.stop(timeout)
+    httpWsTransport.stop(timeout)
 
     if (::updateThread.isInitialized) {
       updateThread.interrupt()
@@ -629,7 +633,7 @@ class ProjectorServer private constructor(
 
   fun getClientList(): Array<Array<String?>> {
     val s = arrayListOf<Array<String?>>()
-    httpWsServer.forEachOpenedConnection {
+    httpWsTransport.forEachOpenedConnection {
       val remoteAddress = it.remoteSocketAddress?.address
       if (remoteAddress != null) {
         s.add(arrayOf(
@@ -642,13 +646,13 @@ class ProjectorServer private constructor(
   }
 
   fun disconnectAll() {
-    httpWsServer.forEachOpenedConnection {
+    httpWsTransport.forEachOpenedConnection {
       it.close()
     }
   }
 
   fun disconnectByIp(ip: String) {
-    httpWsServer.forEachOpenedConnection {
+    httpWsTransport.forEachOpenedConnection {
       if (it.remoteSocketAddress?.address?.hostAddress == ip) {
         it.close()
       }
@@ -758,12 +762,39 @@ class ProjectorServer private constructor(
         logger.info { "Currently collections will log size if it exceeds $BIG_COLLECTIONS_CHECKS_START_SIZE" }
       }
 
-      return ProjectorServer(host, port, LaterInvokator.defaultLaterInvokator, isAgent).also {
-        val message = when (val hint = setSsl(it.httpWsServer::setWebSocketFactory)) {
+      return ProjectorServer(ProjectorHttpWsServerBuilder(host, port), LaterInvokator.defaultLaterInvokator, isAgent).also {
+        val message = when (val hint = setSsl((it.httpWsTransport as HttpWsServer)::setWebSocketFactory)) {
           null -> "WebSocket SSL is disabled"
           else -> "WebSocket SSL is enabled: $hint"
         }
         logger.info { message }
+        it.start()
+      }
+    }
+
+    @JvmStatic
+    fun connectToRelay(isAgent: Boolean, initializer: Runnable): ProjectorServer {
+      loggerFactory = { DelegatingJvmLogger(it) }
+
+      ProjectorAwtInitializer.initProjectorAwt()
+
+      initializer.run()
+
+      IjInjectorAgentInitializer.init(isAgent)
+
+      ProjectorAwtInitializer.initDefaults()  // this should be done after setting classes because some headless operations can happen here
+
+      SettingsInitializer.addTaskToInitializeIdea(PGraphics2D.defaultAa)
+
+      // val token -- todo
+      val relayUrl = System.getProperty("projector.relayUrl") ?: DEFAULT_RELAY_URL
+      val serverId = System.getProperty("projector.serverId") ?: DEFAULT_SERVER_ID
+
+      if (ENABLE_BIG_COLLECTIONS_CHECKS) {
+        logger.info { "Currently collections will log size if it exceeds $BIG_COLLECTIONS_CHECKS_START_SIZE" }
+      }
+
+      return ProjectorServer(HttpWsClientBuilder(relayUrl, serverId), LaterInvokator.defaultLaterInvokator, isAgent).also {
         it.start()
       }
     }
@@ -774,6 +805,8 @@ class ProjectorServer private constructor(
     const val DEFAULT_PORT = 8887
     const val TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HANDSHAKE_TOKEN"
     const val RO_TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RO_HANDSHAKE_TOKEN"
+    private const val DEFAULT_RELAY_URL = "wss://localhost:8887"
+    private const val DEFAULT_SERVER_ID = "DEFAULT_SERVER_ID"
 
     var ENABLE_BIG_COLLECTIONS_CHECKS = System.getProperty("org.jetbrains.projector.server.debug.collections.checks") == "true"
     private const val DEFAULT_BIG_COLLECTIONS_CHECKS_SIZE = 10_000
