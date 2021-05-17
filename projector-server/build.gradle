@@ -102,6 +102,14 @@ if (ideaPath != null) {
   def ideaLib = "$ideaPath/lib"
   def ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar:$ideaLib/trove4j.jar"
   def jdkHome = System.getProperty('java.home')
+  def relayURL=localProperties['projector.relayUrl']
+  def serverId=localProperties['projector.serverId']
+
+  def relayArgs = []
+
+  if (relayURL!=null && serverId != null) {
+    relayArgs = ["-Dprojector.relayUrl=$relayURL", "-Dprojector.serverId=$serverId"]
+  }
 
   println(jdkHome)
 
@@ -127,7 +135,7 @@ if (ideaPath != null) {
       "--add-opens=java.base/java.lang=ALL-UNNAMED",
       "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
       "-Djdk.attach.allowAttachSelf=true",
-    ]
+    ] + relayArgs
   }
 }
 

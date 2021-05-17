@@ -153,7 +153,7 @@ class ProjectorServer private constructor(
       }
     }
 
-    builder.onWsClose =  { connection ->
+    builder.onWsClose = { connection ->
       // todo: we need more informative message, add parameters to this method inside the superclass
       connection.getAttachment<ClientSettings>()
         ?.let { clientSettings ->
@@ -377,11 +377,11 @@ class ProjectorServer private constructor(
         }
 
       is ClientRawKeyEvent -> SwingUtilities.invokeLater {
-          laterInvokator(message.toAwtKeyEvent(
-            connectionMillis = clientSettings.connectionMillis,
-            target = focusOwnerOrTarget(PWindow.windows.last().target),
-          ))
-        }
+        laterInvokator(message.toAwtKeyEvent(
+          connectionMillis = clientSettings.connectionMillis,
+          target = focusOwnerOrTarget(PWindow.windows.last().target),
+        ))
+      }
 
       is ClientRequestImageDataEvent -> {
         val imageData = ProjectorImageCacher.getImage(message.imageId) ?: ImageData.Empty
@@ -740,6 +740,22 @@ class ProjectorServer private constructor(
       }
     }
 
+    private fun createTransportBuilder() : TransportBuilder {
+      val relayUrl = getProperty(RELAY_PROPERTY_NAME)
+      val serverId = getProperty(SERVER_ID_PROPERTY_NAME)
+
+      if (relayUrl != null && serverId != null ) {
+        return HttpWsClientBuilder("wss://$relayUrl", serverId)
+      }
+
+      val host = getEnvHost()
+      val port = getEnvPort()
+
+      logger.info { "${ProjectorServer::class.simpleName} is starting on host $host and port $port" }
+
+      return ProjectorHttpWsServerBuilder(host, port)
+    }
+
     @JvmStatic
     fun startServer(isAgent: Boolean, initializer: Runnable): ProjectorServer {
       loggerFactory = { DelegatingJvmLogger(it) }
@@ -754,47 +770,11 @@ class ProjectorServer private constructor(
 
       SettingsInitializer.addTaskToInitializeIdea(PGraphics2D.defaultAa)
 
-      val host = getEnvHost()
-      val port = getEnvPort()
-
-      logger.info { "${ProjectorServer::class.simpleName} is starting on host $host and port $port" }
       if (ENABLE_BIG_COLLECTIONS_CHECKS) {
         logger.info { "Currently collections will log size if it exceeds $BIG_COLLECTIONS_CHECKS_START_SIZE" }
       }
 
-      return ProjectorServer(ProjectorHttpWsServerBuilder(host, port), LaterInvokator.defaultLaterInvokator, isAgent).also {
-        val message = when (val hint = setSsl((it.httpWsTransport as HttpWsServer)::setWebSocketFactory)) {
-          null -> "WebSocket SSL is disabled"
-          else -> "WebSocket SSL is enabled: $hint"
-        }
-        logger.info { message }
-        it.start()
-      }
-    }
-
-    @JvmStatic
-    fun connectToRelay(isAgent: Boolean, initializer: Runnable): ProjectorServer {
-      loggerFactory = { DelegatingJvmLogger(it) }
-
-      ProjectorAwtInitializer.initProjectorAwt()
-
-      initializer.run()
-
-      IjInjectorAgentInitializer.init(isAgent)
-
-      ProjectorAwtInitializer.initDefaults()  // this should be done after setting classes because some headless operations can happen here
-
-      SettingsInitializer.addTaskToInitializeIdea(PGraphics2D.defaultAa)
-
-      // val token -- todo
-      val relayUrl = System.getProperty("projector.relayUrl") ?: DEFAULT_RELAY_URL
-      val serverId = System.getProperty("projector.serverId") ?: DEFAULT_SERVER_ID
-
-      if (ENABLE_BIG_COLLECTIONS_CHECKS) {
-        logger.info { "Currently collections will log size if it exceeds $BIG_COLLECTIONS_CHECKS_START_SIZE" }
-      }
-
-      return ProjectorServer(HttpWsClientBuilder(relayUrl, serverId), LaterInvokator.defaultLaterInvokator, isAgent).also {
+      return ProjectorServer(createTransportBuilder(), LaterInvokator.defaultLaterInvokator, isAgent).also {
         it.start()
       }
     }
@@ -802,11 +782,11 @@ class ProjectorServer private constructor(
     const val ENABLE_PROPERTY_NAME = "org.jetbrains.projector.server.enable"
     const val HOST_PROPERTY_NAME = "org.jetbrains.projector.server.host"
     const val PORT_PROPERTY_NAME = "org.jetbrains.projector.server.port"
-    const val DEFAULT_PORT = 8887
+    private const val DEFAULT_PORT = 8887
     const val TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HANDSHAKE_TOKEN"
     const val RO_TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RO_HANDSHAKE_TOKEN"
-    private const val DEFAULT_RELAY_URL = "wss://localhost:8887"
-    private const val DEFAULT_SERVER_ID = "DEFAULT_SERVER_ID"
+    private const val RELAY_PROPERTY_NAME = "projector.relayUrl"
+    private const val SERVER_ID_PROPERTY_NAME="projector.serverId"
 
     var ENABLE_BIG_COLLECTIONS_CHECKS = System.getProperty("org.jetbrains.projector.server.debug.collections.checks") == "true"
     private const val DEFAULT_BIG_COLLECTIONS_CHECKS_SIZE = 10_000
@@ -817,7 +797,7 @@ class ProjectorServer private constructor(
     const val ENABLE_AUTO_KEYMAP_SETTING = "ORG_JETBRAINS_PROJECTOR_SERVER_AUTO_KEYMAP"
     const val ENABLE_CONNECTION_CONFIRMATION = "ORG_JETBRAINS_PROJECTOR_SERVER_CONNECTION_CONFIRMATION"
 
-    fun getEnvHost(): InetAddress {
+    private fun getEnvHost(): InetAddress {
       val host = System.getProperty(HOST_PROPERTY_NAME)
       return if (host != null) InetAddress.getByName(host) else getWildcardHostAddress()
     }
