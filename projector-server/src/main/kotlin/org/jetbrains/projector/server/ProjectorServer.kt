@@ -734,7 +734,7 @@ class ProjectorServer private constructor(
       val serverId = getProperty(SERVER_ID_PROPERTY_NAME)
 
       if (relayUrl != null && serverId != null) {
-        logger.info { "${ProjectorServer::class.simpleName} cnecting to relay: $relayUrl with serverId $serverId" }
+        logger.info { "${ProjectorServer::class.simpleName} connecting to relay $relayUrl with serverId $serverId" }
         return HttpWsClientBuilder("wss://$relayUrl", serverId)
       }
 
