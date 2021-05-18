@@ -59,8 +59,7 @@ import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshake
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshakeDecoder
 import org.jetbrains.projector.server.core.util.*
 import org.jetbrains.projector.server.core.websocket.HttpWsClientBuilder
-import org.jetbrains.projector.server.core.websocket.HttpWsServer
-import org.jetbrains.projector.server.core.websocket.ProjectorHttpWsServerBuilder
+import org.jetbrains.projector.server.core.websocket.HttpWsServerBuilder
 import org.jetbrains.projector.server.core.websocket.TransportBuilder
 import org.jetbrains.projector.server.idea.CaretInfoUpdater
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
@@ -170,18 +169,6 @@ class ProjectorServer private constructor(
 
     builder.onError = { _, e ->
       logger.error(e) { "onError" }
-    }
-
-    builder.getMainWindow = {
-      getMainWindows().map {
-        MainWindow(
-          title = it.title,
-          pngBase64Icon = it.icons
-            ?.firstOrNull()
-            ?.let { imageId -> ProjectorImageCacher.getImage(imageId as ImageId) as? ImageData.PngBase64 }
-            ?.pngBase64,
-        )
-      }
     }
   }
 
@@ -422,14 +409,16 @@ class ProjectorServer private constructor(
 
       is ClientOpenLinkEvent -> PanelUpdater.openInExternalBrowser(message.link)
 
-      is ClientSetKeymapEvent -> if (isAgent) {
-        logger.info { "Client keymap was ignored (agent mode)!" }
-      }
-      else if (getProperty(ENABLE_AUTO_KEYMAP_SETTING)?.toBoolean() == false) {
-        logger.info { "Client keymap was ignored (property specified)!" }
-      }
-      else {
-        KeymapSetter.setKeymap(message.keymap)
+      is ClientSetKeymapEvent -> when {
+        isAgent -> {
+          logger.info { "Client keymap was ignored (agent mode)!" }
+        }
+        getProperty(ENABLE_AUTO_KEYMAP_SETTING)?.toBoolean() == false -> {
+          logger.info { "Client keymap was ignored (property specified)!" }
+        }
+        else -> {
+          KeymapSetter.setKeymap(message.keymap)
+        }
       }
 
       is ClientWindowMoveEvent -> {
@@ -740,11 +729,12 @@ class ProjectorServer private constructor(
       }
     }
 
-    private fun createTransportBuilder() : TransportBuilder {
+    private fun createTransportBuilder(): TransportBuilder {
       val relayUrl = getProperty(RELAY_PROPERTY_NAME)
       val serverId = getProperty(SERVER_ID_PROPERTY_NAME)
 
-      if (relayUrl != null && serverId != null ) {
+      if (relayUrl != null && serverId != null) {
+        logger.info { "${ProjectorServer::class.simpleName} cnecting to relay: $relayUrl with serverId $serverId" }
         return HttpWsClientBuilder("wss://$relayUrl", serverId)
       }
 
@@ -753,7 +743,20 @@ class ProjectorServer private constructor(
 
       logger.info { "${ProjectorServer::class.simpleName} is starting on host $host and port $port" }
 
-      return ProjectorHttpWsServerBuilder(host, port)
+      val builder = HttpWsServerBuilder(host, port)
+      builder.getMainWindow = {
+        getMainWindows().map {
+          MainWindow(
+            title = it.title,
+            pngBase64Icon = it.icons
+              ?.firstOrNull()
+              ?.let { imageId -> ProjectorImageCacher.getImage(imageId as ImageId) as? ImageData.PngBase64 }
+              ?.pngBase64,
+          )
+        }
+      }
+
+      return builder
     }
 
     @JvmStatic
@@ -786,7 +789,7 @@ class ProjectorServer private constructor(
     const val TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HANDSHAKE_TOKEN"
     const val RO_TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RO_HANDSHAKE_TOKEN"
     private const val RELAY_PROPERTY_NAME = "projector.relayUrl"
-    private const val SERVER_ID_PROPERTY_NAME="projector.serverId"
+    private const val SERVER_ID_PROPERTY_NAME = "projector.serverId"
 
     var ENABLE_BIG_COLLECTIONS_CHECKS = System.getProperty("org.jetbrains.projector.server.debug.collections.checks") == "true"
     private const val DEFAULT_BIG_COLLECTIONS_CHECKS_SIZE = 10_000
