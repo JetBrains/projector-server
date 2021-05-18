@@ -60,6 +60,7 @@ import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshake
 import org.jetbrains.projector.server.core.util.*
 import org.jetbrains.projector.server.core.websocket.HttpWsClientBuilder
 import org.jetbrains.projector.server.core.websocket.HttpWsServerBuilder
+import org.jetbrains.projector.server.core.websocket.MultiTransportBuilder
 import org.jetbrains.projector.server.core.websocket.TransportBuilder
 import org.jetbrains.projector.server.idea.CaretInfoUpdater
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
@@ -730,21 +731,22 @@ class ProjectorServer private constructor(
     }
 
     private fun createTransportBuilder(): TransportBuilder {
+      val builders = arrayListOf<TransportBuilder>()
+
       val relayUrl = getProperty(RELAY_PROPERTY_NAME)
       val serverId = getProperty(SERVER_ID_PROPERTY_NAME)
 
       if (relayUrl != null && serverId != null) {
         logger.info { "${ProjectorServer::class.simpleName} connecting to relay $relayUrl with serverId $serverId" }
-        return HttpWsClientBuilder("wss://$relayUrl", serverId)
+        builders.add(HttpWsClientBuilder("wss://$relayUrl", serverId))
       }
 
       val host = getEnvHost()
       val port = getEnvPort()
-
       logger.info { "${ProjectorServer::class.simpleName} is starting on host $host and port $port" }
 
-      val builder = HttpWsServerBuilder(host, port)
-      builder.getMainWindow = {
+      val serverBuilder = HttpWsServerBuilder(host, port)
+      serverBuilder.getMainWindow = {
         getMainWindows().map {
           MainWindow(
             title = it.title,
@@ -756,7 +758,9 @@ class ProjectorServer private constructor(
         }
       }
 
-      return builder
+      builders.add(serverBuilder)
+
+      return MultiTransportBuilder(builders)
     }
 
     @JvmStatic
