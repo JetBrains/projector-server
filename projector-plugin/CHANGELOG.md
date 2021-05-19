@@ -2,6 +2,12 @@
 
 Notable changes to this project are documented in this file.
 
+# 1.4.2
+
+# Updated
+
+- Projector Server v1.1.6.
+
 # 1.4.1
 
 ## Changed
