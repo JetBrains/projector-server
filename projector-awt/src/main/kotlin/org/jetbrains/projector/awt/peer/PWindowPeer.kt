@@ -92,37 +92,32 @@ open class PWindowPeer(target: Window) : PContainerPeer(target), WindowPeer {
       return
     }
 
-    val newBounds = Rectangle(x, y, width, height)
-    val screenBounds = PGraphicsEnvironment.defaultDevice.clientScreenBounds
-
-    if (!isWindowHeaderVisibleEnough(
-        HEADER_VISIBLE_HEIGHT_PX,
-        windowBounds = newBounds,
-        screenBounds = screenBounds
-      )
-    ) {
-      val visibleWindowBounds =
-        createVisibleWindowBounds(
-          HEADER_VISIBLE_HEIGHT_PX,
-          targetWindowBounds = newBounds,
-          screenBounds = screenBounds
-        )
-
-      if (!isWindowHeaderVisibleEnough(
-          HEADER_VISIBLE_HEIGHT_PX,
-          windowBounds = visibleWindowBounds,
-          screenBounds = screenBounds
-        )
-      ) {
-        logger.error { "Can't create visible window bounds... ($HEADER_VISIBLE_HEIGHT_PX, $newBounds, $screenBounds)" }
-        return
-      }
-
-      pWindow.target.bounds = visibleWindowBounds
-    }
+    getVisibleWindowBoundsIfNeeded(x, y, width, height)?.let { pWindow.target.bounds = it }
   }
 
   companion object {
+
+    fun getVisibleWindowBoundsIfNeeded(x: Int, y: Int, width: Int, height: Int): Rectangle? {
+      val newBounds = Rectangle(x, y, width, height)
+      val screenBounds = PGraphicsEnvironment.defaultDevice.clientScreenBounds
+
+      if (isWindowHeaderVisibleEnough(HEADER_VISIBLE_HEIGHT_PX, windowBounds = newBounds, screenBounds = screenBounds)) {
+        return null
+      }
+
+      val visibleWindowBounds = createVisibleWindowBounds(
+        HEADER_VISIBLE_HEIGHT_PX,
+        targetWindowBounds = newBounds,
+        screenBounds = screenBounds,
+      )
+
+      if (isWindowHeaderVisibleEnough(HEADER_VISIBLE_HEIGHT_PX, windowBounds = visibleWindowBounds, screenBounds = screenBounds)) {
+        return visibleWindowBounds
+      }
+
+      logger.error { "Can't create visible window bounds... ($HEADER_VISIBLE_HEIGHT_PX, $newBounds, $screenBounds)" }
+      return null
+    }
 
     fun isWindowHeaderVisibleEnough(headerVisibleHeightPx: Int, windowBounds: Rectangle, screenBounds: Rectangle): Boolean {
       val headerBounds = Rectangle(

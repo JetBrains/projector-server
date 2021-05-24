@@ -27,6 +27,7 @@ package org.jetbrains.projector.awt
 import org.jetbrains.projector.awt.data.Direction
 import org.jetbrains.projector.awt.image.PGraphics2D
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
+import org.jetbrains.projector.awt.peer.PWindowPeer.Companion.getVisibleWindowBoundsIfNeeded
 import org.jetbrains.projector.awt.service.ImageCacher
 import sun.awt.AWTAccessor
 import java.awt.*
@@ -101,13 +102,27 @@ class PWindow(val target: Component) {
     val hasMoved = target.x != x || target.y != y
     val hasResized = target.width != width || target.height != height
 
-    if(!hasMoved && !hasResized) return
+    if (!hasMoved && !hasResized) return
 
     toFront()
     target.requestFocusInWindow()
 
-    AWTAccessor.getComponentAccessor().setLocation(target, x, y)
-    AWTAccessor.getComponentAccessor().setSize(target, width, height)
+    if (PGraphicsEnvironment.clientDoesWindowManagement) {
+      AWTAccessor.getComponentAccessor().setLocation(target, x, y)
+      AWTAccessor.getComponentAccessor().setSize(target, width, height)
+    }
+    else {
+      val visibleBounds = getVisibleWindowBoundsIfNeeded(x, y, width, height)
+
+      if (visibleBounds == null) {
+        AWTAccessor.getComponentAccessor().setLocation(target, x, y)
+        AWTAccessor.getComponentAccessor().setSize(target, width, height)
+      }
+      else {
+        AWTAccessor.getComponentAccessor().setLocation(target, visibleBounds.x, visibleBounds.y)
+        AWTAccessor.getComponentAccessor().setSize(target, visibleBounds.width, visibleBounds.height)
+      }
+    }
 
     updateGraphics()
 
