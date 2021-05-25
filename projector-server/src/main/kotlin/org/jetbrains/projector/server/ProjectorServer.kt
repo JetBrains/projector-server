@@ -707,6 +707,8 @@ class ProjectorServer private constructor(
         ge.setDefaultDeviceSize(width, height)
       }
 
+      calculateMainWindowShift()  // trigger manual update of clientShift because it can be outdated at the moment
+
       if (PGraphicsEnvironment.clientDoesWindowManagement) return
 
       getMainWindows().map(PWindow::target).let { mainWindows ->
