@@ -46,16 +46,18 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val urlHostsList = HostsList("URL: ", null)
   private val connectionPanel = ConnectionPanel(resolver)
   private val portEditor = PortEditor(ProjectorService.port)
-  private val rwTokenEditor = TokenEditor("Password for read-write access:", ProjectorService.rwToken)
-  private val roTokenEditor = TokenEditor("Password for read-only  access:", ProjectorService.roToken)
+  private val rwTokenEditor = TokenEditor("Password for read-write access:",
+                                          ProjectorService.rwToken ?: generatePassword())
+  private val roTokenEditor = TokenEditor("Password for read-only  access:",
+                                          ProjectorService.roToken ?: generatePassword())
   private val requireConnectConfirmation: JCheckBox = JCheckBox("Require connection confirmation", ProjectorService.confirmConnection)
   private val autostartProjector: JCheckBox = JCheckBox("Start Projector automatically when ${productName()} starts",
                                                         ProjectorService.autostart)
   private val rwInvitationLink = InvitationLink("Read/Write Link:")
   private val roInvitationLink = InvitationLink("Read Only  Link:")
 
-  val rwToken: String? get() = rwTokenEditor.token
-  val roToken: String? get() = roTokenEditor.token
+  val rwToken: String get() = rwTokenEditor.token
+  val roToken: String get() = roTokenEditor.token
   val listenAddress: String get() = myHostsList.selected?.address ?: ""
   val listenPort: String get() = portEditor.value
   val confirmConnection: Boolean get() = requireConnectConfirmation.isSelected
@@ -202,9 +204,9 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     }
   }
 
-  private class TokenEditor(title: String, token: String?) {
+  private class TokenEditor(title: String, token: String) {
     val label = JLabel(title)
-    val tokenTextField: JTextField = JTextField(token ?: generatePassword()).apply {
+    val tokenTextField: JTextField = JTextField(token).apply {
       columns = RANDOM_PASSWORD_LEN
       addKeyListener(object : KeyAdapter() {
         override fun keyReleased(e: KeyEvent) {
@@ -223,7 +225,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     var onChange: (() -> Unit)? = null
 
-    var token: String?
+    var token: String
       get() = tokenTextField.text
       set(value) {
         tokenTextField.text = value
