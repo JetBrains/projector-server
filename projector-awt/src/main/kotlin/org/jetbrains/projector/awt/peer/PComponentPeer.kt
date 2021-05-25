@@ -48,7 +48,7 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
   private val toolkit: Toolkit
     get() = Toolkit.getDefaultToolkit()
 
-  val pWindow = PWindow(target)
+  val pWindow = PWindow(target, isAgent = false)
   private var myGraphicsConfiguration: GraphicsConfiguration? = null
 
   override fun dispose() {

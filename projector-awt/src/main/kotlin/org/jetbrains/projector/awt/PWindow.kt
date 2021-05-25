@@ -37,7 +37,7 @@ import java.util.*
 import kotlin.math.abs
 import kotlin.math.min
 
-class PWindow(val target: Component) {
+class PWindow(val target: Component, val isAgent: Boolean) {
 
   val id: Int
 
@@ -149,21 +149,54 @@ class PWindow(val target: Component) {
   }
 
   fun move(deltaX: Int, deltaY: Int) {
-    setBounds(target.x + deltaX, target.y + deltaY, target.width, target.height)
+    if (isAgent) {
+      toFront()
+      target.requestFocusInWindow()
+      target.setLocation(target.x + deltaX, target.y + deltaY)
+      repaint()
+    }
+    else {
+      // this doesn't change position of native peer, so doesn't work well for agent
+      setBounds(target.x + deltaX, target.y + deltaY, target.width, target.height)
+    }
   }
 
   fun resize(deltaX: Int, deltaY: Int, direction: Direction) {
-    if (direction == Direction.E || direction == Direction.S || direction == Direction.SE) {
-      setBounds(target.x, target.y, target.size.width + deltaX, target.size.height + deltaY)
-    }
-    else if (direction == Direction.SW) {
-      setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
-    }
-    else if (direction == Direction.NE) {
-      setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
+    if (isAgent) {
+      toFront()
+      target.requestFocusInWindow()
+
+      if (direction == Direction.E || direction == Direction.S || direction == Direction.SE) {
+        target.setSize(target.size.width + deltaX, target.size.height + deltaY)
+      }
+      else if (direction == Direction.SW) {
+        target.setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
+      }
+      else if (direction == Direction.NE) {
+        target.setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
+      }
+      else {
+        target.setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
+      }
+
+      // We need to trigger layout recalculation manually.
+      target.revalidate()
+      repaint()
     }
     else {
-      setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
+      // this doesn't change position of native peer, so doesn't work well for agent
+      if (direction == Direction.E || direction == Direction.S || direction == Direction.SE) {
+        setBounds(target.x, target.y, target.size.width + deltaX, target.size.height + deltaY)
+      }
+      else if (direction == Direction.SW) {
+        setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
+      }
+      else if (direction == Direction.NE) {
+        setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
+      }
+      else {
+        setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
+      }
     }
   }
 
