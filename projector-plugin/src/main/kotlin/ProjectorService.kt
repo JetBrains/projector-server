@@ -275,14 +275,14 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     var rwToken: String?
       get() = instance.config.obtainRWToken()
       set(value) {
-        setSystemProperty(ProjectorServer.TOKEN_ENV_NAME, value)
+        setSystemProperty(ProjectorServer.TOKEN_ENV_NAME, if (value.isNullOrEmpty()) null else value)
         instance.config.storeRWToken(value)
       }
 
     var roToken: String?
       get() = instance.config.obtainROToken()
       set(value) {
-        setSystemProperty(ProjectorServer.RO_TOKEN_ENV_NAME, value)
+        setSystemProperty(ProjectorServer.RO_TOKEN_ENV_NAME, if (value.isNullOrEmpty()) null else value)
         instance.config.storeROToken(value)
       }
 
