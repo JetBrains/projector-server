@@ -72,7 +72,7 @@ fun loadToken(key: String): String? {
 
 fun storeToken(key: String, value: String?) {
   val attributes = createCredentialAttributes(key)
-  val credentials = Credentials(user = null, password = value)
+  val credentials = Credentials(user = key, password = value)
   PasswordSafe.instance.set(attributes, credentials)
 }
 
