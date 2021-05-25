@@ -49,7 +49,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val rwTokenEditor = TokenEditor("Password for read-write access:", ProjectorService.rwToken)
   private val roTokenEditor = TokenEditor("Password for read-only  access:", ProjectorService.roToken)
   private val requireConnectConfirmation: JCheckBox = JCheckBox("Require connection confirmation", ProjectorService.confirmConnection)
-  private val autostartProjector: JCheckBox = JCheckBox("Start Projector automatically when ${productName()} starts", ProjectorService.autostart)
+  private val autostartProjector: JCheckBox = JCheckBox("Start Projector automatically when ${productName()} starts",
+                                                        ProjectorService.autostart)
   private val rwInvitationLink = InvitationLink("Read/Write Link:")
   private val roInvitationLink = InvitationLink("Read Only  Link:")
 
@@ -108,21 +109,20 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .addNextComponent(roTokenEditor.tokenTextField, gridWidth = 2)
       .addNextComponent(roTokenEditor.refreshButton, gridWidth = 1)
 
-      .startNextLine().
-      addNextComponent(requireConnectConfirmation, topGap = 5, bottomGap = 5)
+      .startNextLine().addNextComponent(requireConnectConfirmation, topGap = 5, bottomGap = 5)
 
       .startNextLine()
       .addNextComponent(autostartProjector, topGap = 5, bottomGap = 5)
 
       .startNextLine().addNextComponent(JLabel("Invitation Links:"), topGap = 5, bottomGap = 5)
 
-      .startNextLine().addNextComponent(urlHostsList,  gridWidth = 7)
+      .startNextLine().addNextComponent(urlHostsList, gridWidth = 7)
 
       .startNextLine().addNextComponent(rwInvitationLink, gridWidth = 7)
-      .addNextComponent(rwInvitationLink.copyButton,gridWidth = 1 )
+      .addNextComponent(rwInvitationLink.copyButton, gridWidth = 1)
 
       .startNextLine().addNextComponent(roInvitationLink, gridWidth = 7)
-      .addNextComponent(roInvitationLink.copyButton,gridWidth = 1 )
+      .addNextComponent(roInvitationLink.copyButton, gridWidth = 1)
 
       .startNextLine().addNextComponent(connectionPanel, gridWidth = 8)
 
@@ -168,7 +168,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     urlHostsList.onChange?.invoke()
   }
 
-  private class InvitationLink (title: String) : JPanel() {
+  private class InvitationLink(title: String) : JPanel() {
     val label = JLabel(title)
 
     val link: JTextField = JTextField(null).apply {
@@ -198,7 +198,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
 
     fun update(host: String, port: String, token: String?) {
-      link.text = "http://${host}:${port}" + if (token == null) "" else "/?token=${token}"
+      link.text = "http://${host}:${port}" + if (token.isNullOrEmpty()) "" else "/?token=${token}"
     }
   }
 
@@ -223,8 +223,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     var onChange: (() -> Unit)? = null
 
-    var token
-      get() = if (tokenTextField.text.isNullOrEmpty()) null else tokenTextField.text
+    var token: String?
+      get() = tokenTextField.text
       set(value) {
         tokenTextField.text = value
       }
