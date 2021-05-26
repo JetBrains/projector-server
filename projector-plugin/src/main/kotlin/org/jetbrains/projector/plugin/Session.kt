@@ -21,19 +21,47 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-package actions
 
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAwareAction
-import isHeadlessProjectorDetected
+package org.jetbrains.projector.plugin
 
-class HeadlessProjectorAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {}
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isHeadlessProjectorDetected()
-  }
+class Session(
+  val host: String,
+  val port: String,
+  rwToken: String?,
+  roToken: String?,
+  confirmConnection: Boolean,
+  autostart: Boolean,
+) {
+  var rwToken
+    get() = ProjectorService.rwToken
+    set(value) {
+      ProjectorService.rwToken = value
+    }
 
-  companion object {
-    const val ID = "projector.headless"
+  var roToken
+    get() = ProjectorService.roToken
+    set(value) {
+      ProjectorService.roToken = value
+    }
+
+  var confirmConnection
+    get() = ProjectorService.confirmConnection
+    set(value) {
+      ProjectorService.confirmConnection = value
+    }
+
+  var autostart
+    get() = ProjectorService.autostart
+    set(value) {
+      ProjectorService.autostart = value
+    }
+
+  init {
+    ProjectorService.host = host
+    ProjectorService.port = port
+    ProjectorService.rwToken = rwToken
+    ProjectorService.roToken = roToken
+    ProjectorService.confirmConnection = confirmConnection
+    ProjectorService.autostart = autostart
   }
 }

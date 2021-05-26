@@ -21,18 +21,25 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-package actions
+package org.jetbrains.projector.plugin.actions
+
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
-import isProjectorAutoStarting
+import org.jetbrains.projector.plugin.ProjectorService
+import org.jetbrains.projector.plugin.isProjectorRunning
 
-class WaitForStartAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {}
+class DisableAction : DumbAwareAction() {
+
+  override fun actionPerformed(e: AnActionEvent) {
+    ProjectorService.autostart = false
+    ProjectorService.disable()
+  }
+
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isProjectorAutoStarting()
+    e.presentation.isEnabledAndVisible = isProjectorRunning()
   }
 
   companion object {
-    const val ID = "projector.starting"
+    const val ID = "projector.disable"
   }
 }

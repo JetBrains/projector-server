@@ -21,25 +21,38 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-package actions
 
-import ProjectorService
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAwareAction
-import isProjectorRunning
+package org.jetbrains.projector.plugin.ui
 
-class DisableAction : DumbAwareAction() {
+import java.awt.*
+import javax.swing.JPanel
 
-  override fun actionPerformed(e: AnActionEvent) {
-    ProjectorService.autostart = false
-    ProjectorService.disable()
+class LinearPanelBuilder(private var panel: JPanel) {
+  private val constraints = GridBagConstraints()
+
+  init {
+    panel.componentOrientation = ComponentOrientation.LEFT_TO_RIGHT
+    panel.layout = GridBagLayout()
+    constraints.fill = GridBagConstraints.HORIZONTAL
+    constraints.gridx = 0
+    constraints.gridy = 0
   }
 
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isProjectorRunning()
+  fun addNextComponent(
+    c: Component, gridWidth: Int = 1, weightx: Double = 1.0,
+    leftGap: Int = 0, rightGap: Int = 0, topGap: Int = 0, bottomGap: Int = 0,
+  ): LinearPanelBuilder {
+    constraints.gridwidth = gridWidth
+    constraints.weightx = weightx
+    constraints.insets = Insets(topGap, leftGap, bottomGap, rightGap)
+    panel.add(c, constraints)
+    constraints.gridx += gridWidth
+    return this
   }
 
-  companion object {
-    const val ID = "projector.disable"
+  fun startNextLine(): LinearPanelBuilder {
+    constraints.gridx = 0
+    constraints.gridy += 1
+    return this
   }
 }

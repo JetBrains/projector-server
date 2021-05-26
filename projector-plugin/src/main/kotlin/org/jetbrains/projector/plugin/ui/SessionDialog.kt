@@ -21,17 +21,19 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-package ui
-import ProjectorService
+
+package org.jetbrains.projector.plugin.ui
+
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import org.jetbrains.projector.plugin.ProjectorService
+import org.jetbrains.projector.plugin.productName
 import org.jetbrains.projector.server.ProjectorServer
 import org.jetbrains.projector.server.util.AsyncHostResolver
 import org.jetbrains.projector.server.util.Host
 import org.jetbrains.projector.server.util.ResolvedHostSubscriber
-import productName
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyAdapter

@@ -22,41 +22,24 @@
  * if you need additional information or have any questions.
  */
 
-package actions
-import ProjectorService
-import Session
-import ui.SessionDialog
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.PlatformDataKeys
-import com.intellij.openapi.project.DumbAwareAction
-import com.intellij.openapi.ui.DialogWrapper
-import isProjectorDisabled
+package org.jetbrains.projector.plugin.actions
 
-class EnableAction : DumbAwareAction() {
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.projector.plugin.ProjectorService
+import org.jetbrains.projector.plugin.isActivationNeeded
+
+class ActivateAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    val project = PlatformDataKeys.PROJECT.getData(e.dataContext)
-    val sessionDialog = SessionDialog(project)
-    sessionDialog.pack()
-    sessionDialog.show()
-
-    if (sessionDialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
-      ProjectorService.enable(Session(sessionDialog.listenAddress,
-                                      sessionDialog.listenPort,
-                                      sessionDialog.rwToken,
-                                      sessionDialog.roToken,
-                                      sessionDialog.confirmConnection,
-                                      sessionDialog.autostart))
-    }
-
-    sessionDialog.cancelResolverRequests()
+    ProjectorService.activate()
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isProjectorDisabled()
+    e.presentation.isEnabledAndVisible = isActivationNeeded()
   }
 
   companion object {
-    const val ID = "projector.enable"
+    const val ID = "projector.activate"
   }
 }

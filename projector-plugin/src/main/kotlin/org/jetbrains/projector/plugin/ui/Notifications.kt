@@ -22,44 +22,20 @@
  * if you need additional information or have any questions.
  */
 
-class Session(
-  val host: String,
-  val port: String,
-  rwToken: String?,
-  roToken: String?,
-  confirmConnection: Boolean,
-  autostart: Boolean,
-) {
-  var rwToken
-    get() = ProjectorService.rwToken
-    set(value) {
-      ProjectorService.rwToken = value
-    }
+package org.jetbrains.projector.plugin.ui
 
-  var roToken
-    get() = ProjectorService.roToken
-    set(value) {
-      ProjectorService.roToken = value
-    }
+import com.intellij.notification.NotificationDisplayType
 
-  var confirmConnection
-    get() = ProjectorService.confirmConnection
-    set(value) {
-      ProjectorService.confirmConnection = value
-    }
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.project.Project
 
-  var autostart
-    get() = ProjectorService.autostart
-    set(value) {
-      ProjectorService.autostart = value
-    }
 
-  init {
-    ProjectorService.host = host
-    ProjectorService.port = port
-    ProjectorService.rwToken = rwToken
-    ProjectorService.roToken = roToken
-    ProjectorService.confirmConnection = confirmConnection
-    ProjectorService.autostart = autostart
-  }
+private val PROJECTOR_GROUP = NotificationGroup("projector.notifications.group",
+                                                NotificationDisplayType.STICKY_BALLOON,
+                                                true)
+
+fun displayNotification(project: Project, title: String, subtitle: String, content: String) {
+  val msg = PROJECTOR_GROUP.createNotification(title, subtitle, content, NotificationType.INFORMATION)
+  msg.notify(project)
 }
