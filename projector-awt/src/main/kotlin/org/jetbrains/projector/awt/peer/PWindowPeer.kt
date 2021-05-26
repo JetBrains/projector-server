@@ -26,7 +26,7 @@
 package org.jetbrains.projector.awt.peer
 
 import org.jetbrains.projector.awt.PWindow
-import org.jetbrains.projector.awt.image.PGraphicsDevice
+import org.jetbrains.projector.awt.image.PGraphicsEnvironment
 import org.jetbrains.projector.util.logging.Logger
 import java.awt.Dialog
 import java.awt.Point
@@ -88,41 +88,36 @@ open class PWindowPeer(target: Window) : PContainerPeer(target), WindowPeer {
   override fun setBounds(x: Int, y: Int, width: Int, height: Int, op: Int) {
     super.setBounds(x, y, width, height, op)
 
-    if (pWindow.undecorated || PWindow.windows.first() == pWindow) {  // don't change undecorated and root windows
+    if (pWindow.undecorated || PWindow.windows.first() == pWindow || PGraphicsEnvironment.clientDoesWindowManagement) {  // don't change undecorated and root windows
       return
     }
 
-    val newBounds = Rectangle(x, y, width, height)
-    val screenBounds = PGraphicsDevice.clientScreenBounds
-
-    if (!isWindowHeaderVisibleEnough(
-        HEADER_VISIBLE_HEIGHT_PX,
-        windowBounds = newBounds,
-        screenBounds = screenBounds
-      )
-    ) {
-      val visibleWindowBounds =
-        createVisibleWindowBounds(
-          HEADER_VISIBLE_HEIGHT_PX,
-          targetWindowBounds = newBounds,
-          screenBounds = screenBounds
-        )
-
-      if (!isWindowHeaderVisibleEnough(
-          HEADER_VISIBLE_HEIGHT_PX,
-          windowBounds = visibleWindowBounds,
-          screenBounds = screenBounds
-        )
-      ) {
-        logger.error { "Can't create visible window bounds... ($HEADER_VISIBLE_HEIGHT_PX, $newBounds, $screenBounds)" }
-        return
-      }
-
-      pWindow.target.bounds = visibleWindowBounds
-    }
+    getVisibleWindowBoundsIfNeeded(x, y, width, height)?.let { pWindow.target.bounds = it }
   }
 
   companion object {
+
+    fun getVisibleWindowBoundsIfNeeded(x: Int, y: Int, width: Int, height: Int): Rectangle? {
+      val newBounds = Rectangle(x, y, width, height)
+      val screenBounds = PGraphicsEnvironment.defaultDevice.clientScreenBounds
+
+      if (isWindowHeaderVisibleEnough(HEADER_VISIBLE_HEIGHT_PX, windowBounds = newBounds, screenBounds = screenBounds)) {
+        return null
+      }
+
+      val visibleWindowBounds = createVisibleWindowBounds(
+        HEADER_VISIBLE_HEIGHT_PX,
+        targetWindowBounds = newBounds,
+        screenBounds = screenBounds,
+      )
+
+      if (isWindowHeaderVisibleEnough(HEADER_VISIBLE_HEIGHT_PX, windowBounds = visibleWindowBounds, screenBounds = screenBounds)) {
+        return visibleWindowBounds
+      }
+
+      logger.error { "Can't create visible window bounds... ($HEADER_VISIBLE_HEIGHT_PX, $newBounds, $screenBounds)" }
+      return null
+    }
 
     fun isWindowHeaderVisibleEnough(headerVisibleHeightPx: Int, windowBounds: Rectangle, screenBounds: Rectangle): Boolean {
       val headerBounds = Rectangle(

@@ -28,12 +28,13 @@ import java.awt.GraphicsDevice
 import java.awt.Point
 import java.awt.Rectangle
 
-object PGraphicsDevice : GraphicsDevice() {
+class PGraphicsDevice(val idString: String) : GraphicsDevice() {
 
-  private const val idString: String = "Display0"
+  val configuration = PGraphicsConfiguration(this)
 
   val bounds = Rectangle(1024, 768)
   val clientShift = Point(0, 0)
+  var scaleFactor = 1.0
 
   val clientScreenBounds
     get() = Rectangle(bounds).apply {
@@ -56,6 +57,6 @@ object PGraphicsDevice : GraphicsDevice() {
   }
 
   override fun getDefaultConfiguration(): GraphicsConfiguration {
-    return PGraphicsConfiguration
+    return configuration
   }
 }

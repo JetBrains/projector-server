@@ -21,16 +21,23 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package org.jetbrains.projector.awt
 
 import org.jetbrains.projector.awt.data.Direction
 import org.jetbrains.projector.awt.image.PGraphics2D
+import org.jetbrains.projector.awt.image.PGraphicsEnvironment
+import org.jetbrains.projector.awt.peer.PWindowPeer.Companion.getVisibleWindowBoundsIfNeeded
 import org.jetbrains.projector.awt.service.ImageCacher
+import sun.awt.AWTAccessor
 import java.awt.*
+import java.awt.event.ComponentEvent
 import java.lang.ref.WeakReference
 import java.util.*
+import kotlin.math.abs
+import kotlin.math.min
 
-class PWindow(val target: Component) {
+class PWindow(val target: Component, val isAgent: Boolean) {
 
   val id: Int
 
@@ -87,33 +94,110 @@ class PWindow(val target: Component) {
 
   val graphics = PGraphics2D(target, Descriptor(id))
 
-  fun move(deltaX: Int, deltaY: Int) {
+  init {
+    updateGraphics()
+  }
+
+  fun setBounds(x: Int, y: Int, width: Int, height: Int) {
+    val hasMoved = target.x != x || target.y != y
+    val hasResized = target.width != width || target.height != height
+
+    if (!hasMoved && !hasResized) return
+
     toFront()
     target.requestFocusInWindow()
-    target.setLocation(target.x + deltaX, target.y + deltaY)
+
+    if (PGraphicsEnvironment.clientDoesWindowManagement) {
+      AWTAccessor.getComponentAccessor().setLocation(target, x, y)
+      AWTAccessor.getComponentAccessor().setSize(target, width, height)
+    }
+    else {
+      val visibleBounds = getVisibleWindowBoundsIfNeeded(x, y, width, height)
+
+      if (visibleBounds == null) {
+        AWTAccessor.getComponentAccessor().setLocation(target, x, y)
+        AWTAccessor.getComponentAccessor().setSize(target, width, height)
+      }
+      else {
+        AWTAccessor.getComponentAccessor().setLocation(target, visibleBounds.x, visibleBounds.y)
+        AWTAccessor.getComponentAccessor().setSize(target, visibleBounds.width, visibleBounds.height)
+      }
+    }
+
+    updateGraphics()
+
+    if (hasMoved)
+      (target as? Window)?.dispatchEvent(ComponentEvent(target, ComponentEvent.COMPONENT_MOVED))
+    if (hasResized)
+      (target as? Window)?.dispatchEvent(ComponentEvent(target, ComponentEvent.COMPONENT_RESIZED))
+
+    // We need to trigger layout recalculation manually.
+    if (hasResized) target.revalidate()
     repaint()
   }
 
-  fun resize(deltaX: Int, deltaY: Int, direction: Direction) {
-    toFront()
-    target.requestFocusInWindow()
+  private fun updateGraphics() {
+    val windowMidpoint = with(target.bounds) { Point(x + width / 2, y + height / 2) }
+    val newDevice = PGraphicsEnvironment.devices.minByOrNull {
+      val deviceBounds = it.bounds
+      if(deviceBounds.contains(windowMidpoint)) 0 else {
+        min(min(abs(deviceBounds.x - windowMidpoint.x), abs(deviceBounds.x + deviceBounds.width - windowMidpoint.x)),
+            min(abs(deviceBounds.y - windowMidpoint.y), abs(deviceBounds.y + deviceBounds.height - windowMidpoint.y)))
+      }
+    } ?: return
+    graphics.device = newDevice
+  }
 
-    if (direction == Direction.E || direction == Direction.S || direction == Direction.SE) {
-      target.setSize(target.size.width + deltaX, target.size.height + deltaY)
-    }
-    else if (direction == Direction.SW) {
-      target.setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
-    }
-    else if (direction == Direction.NE) {
-      target.setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
+  fun move(deltaX: Int, deltaY: Int) {
+    if (isAgent) {
+      toFront()
+      target.requestFocusInWindow()
+      target.setLocation(target.x + deltaX, target.y + deltaY)
+      repaint()
     }
     else {
-      target.setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
+      // this doesn't change position of native peer, so doesn't work well for agent
+      setBounds(target.x + deltaX, target.y + deltaY, target.width, target.height)
     }
+  }
 
-    // We need to trigger layout recalculation manually.
-    target.revalidate()
-    repaint()
+  fun resize(deltaX: Int, deltaY: Int, direction: Direction) {
+    if (isAgent) {
+      toFront()
+      target.requestFocusInWindow()
+
+      if (direction == Direction.E || direction == Direction.S || direction == Direction.SE) {
+        target.setSize(target.size.width + deltaX, target.size.height + deltaY)
+      }
+      else if (direction == Direction.SW) {
+        target.setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
+      }
+      else if (direction == Direction.NE) {
+        target.setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
+      }
+      else {
+        target.setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
+      }
+
+      // We need to trigger layout recalculation manually.
+      target.revalidate()
+      repaint()
+    }
+    else {
+      // this doesn't change position of native peer, so doesn't work well for agent
+      if (direction == Direction.E || direction == Direction.S || direction == Direction.SE) {
+        setBounds(target.x, target.y, target.size.width + deltaX, target.size.height + deltaY)
+      }
+      else if (direction == Direction.SW) {
+        setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
+      }
+      else if (direction == Direction.NE) {
+        setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
+      }
+      else {
+        setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
+      }
+    }
   }
 
   fun close() {

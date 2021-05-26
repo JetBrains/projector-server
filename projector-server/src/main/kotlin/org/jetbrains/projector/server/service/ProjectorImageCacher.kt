@@ -62,7 +62,7 @@ object ProjectorImageCacher : ImageCacher {
                                ?: ImageId.Unknown(
                                  "$methodName received MultiResolutionImage with bad variant count (${image.resolutionVariants.size}): $image")
 
-    else -> ImageId.Unknown("$methodName received ${this::class.qualifiedName}: $this")
+    else -> ImageId.Unknown("$methodName received ${image::class.qualifiedName}: $image")
   }
 
   val newImages by SizeAware(

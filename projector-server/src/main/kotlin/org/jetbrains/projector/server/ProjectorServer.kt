@@ -31,7 +31,6 @@ import org.jetbrains.projector.awt.PClipboard
 import org.jetbrains.projector.awt.PWindow
 import org.jetbrains.projector.awt.font.PFontManager
 import org.jetbrains.projector.awt.image.PGraphics2D
-import org.jetbrains.projector.awt.image.PGraphicsDevice
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
 import org.jetbrains.projector.awt.image.PVolatileImage
 import org.jetbrains.projector.awt.peer.PComponentPeer
@@ -210,7 +209,7 @@ class ProjectorServer private constructor(
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownResizeEvent(id, size.toCommonIntSize()))
     }
     PanelUpdater.moveCallback = { id, point ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownMoveEvent(id, point.shift(PGraphicsDevice.clientShift)))
+      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownMoveEvent(id, point.shift(PGraphicsEnvironment.defaultDevice.clientShift)))
     }
     PanelUpdater.disposeCallback = { id ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownDisposeEvent(id))
@@ -273,7 +272,7 @@ class ProjectorServer private constructor(
           icons = window.icons?.map { it as ImageId },
           isShowing = window.target.isShowing,
           zOrder = i,
-          bounds = window.target.shiftBounds(PGraphicsDevice.clientShift),
+          bounds = window.target.shiftBounds(PGraphicsEnvironment.defaultDevice.clientShift),
           headerHeight = window.headerHeight,
           cursorType = window.cursor?.type?.toCursorType(),
           resizable = window.resizable,
@@ -325,7 +324,7 @@ class ProjectorServer private constructor(
       is ClientResizeEvent -> SwingUtilities.invokeLater { resize(message.size.width, message.size.height) }
 
       is ClientMouseEvent -> SwingUtilities.invokeLater {
-        val shiftedMessage = message.shift(PGraphicsDevice.clientShift)
+        val shiftedMessage = message.shift(PGraphicsEnvironment.defaultDevice.clientShift)
 
         PMouseInfoPeer.lastMouseCoords.setLocation(shiftedMessage.x, shiftedMessage.y)
 
@@ -341,7 +340,7 @@ class ProjectorServer private constructor(
       }
 
       is ClientWheelEvent -> SwingUtilities.invokeLater {
-        val shiftedMessage = message.shift(PGraphicsDevice.clientShift)
+        val shiftedMessage = message.shift(PGraphicsEnvironment.defaultDevice.clientShift)
         PMouseInfoPeer.lastMouseCoords.setLocation(shiftedMessage.x, shiftedMessage.y)
 
         val window = PWindow.getWindow(message.windowId)?.target
@@ -436,6 +435,12 @@ class ProjectorServer private constructor(
       is ClientWindowResizeEvent -> {
         SwingUtilities.invokeLater {
           PWindow.getWindow(message.windowId)?.apply { this.resize(message.deltaX, message.deltaY, message.direction.toDirection()) }
+        }
+      }
+
+      is ClientWindowSetBoundsEvent -> {
+        SwingUtilities.invokeLater {
+          PWindow.getWindow(message.windowId)?.apply { with(message.bounds) { this@apply.setBounds(x, y, width, height) } }
         }
       }
 
@@ -561,7 +566,9 @@ class ProjectorServer private constructor(
     )
 
     if (hasWriteAccess) {
-      with(toServerHandshakeEvent.initialSize) { resize(width, height) }
+      PGraphicsEnvironment.clientDoesWindowManagement = toServerHandshakeEvent.clientDoesWindowManagement
+      PGraphicsEnvironment.setupDisplays(toServerHandshakeEvent.displays.map { Rectangle(it.x, it.y, it.width, it.height) to it.scaleFactor })
+      with(toServerHandshakeEvent.displays[0]) { resize(width, height) }
     }
   }
 
@@ -667,6 +674,11 @@ class ProjectorServer private constructor(
     }
 
     private fun calculateMainWindowShift() {
+      if (PGraphicsEnvironment.clientDoesWindowManagement) {
+        PGraphicsEnvironment.defaultDevice.clientShift.setLocation(0, 0)
+        return
+      }
+
       getMainWindows().firstOrNull()?.target?.let { window ->
         synchronized(window.treeLock) {
           var x = 0.0
@@ -684,7 +696,7 @@ class ProjectorServer private constructor(
             y += it.y
           }
 
-          PGraphicsDevice.clientShift.setLocation(x, y)
+          PGraphicsEnvironment.defaultDevice.clientShift.setLocation(x, y)
         }
       }
     }
@@ -692,13 +704,17 @@ class ProjectorServer private constructor(
     private fun resize(width: Int, height: Int) {
       val ge = GraphicsEnvironment.getLocalGraphicsEnvironment()
       if (ge is PGraphicsEnvironment) {
-        ge.setSize(width, height)
+        ge.setDefaultDeviceSize(width, height)
       }
+
+      calculateMainWindowShift()  // trigger manual update of clientShift because it can be outdated at the moment
+
+      if (PGraphicsEnvironment.clientDoesWindowManagement) return
 
       getMainWindows().map(PWindow::target).let { mainWindows ->
         SwingUtilities.invokeLater {
           mainWindows.forEach {
-            val point = AwtPoint(PGraphicsDevice.clientShift)
+            val point = AwtPoint(PGraphicsEnvironment.defaultDevice.clientShift)
             var widthWithInsets = width
             var heightWithInsets = height
             if (it is Frame) {

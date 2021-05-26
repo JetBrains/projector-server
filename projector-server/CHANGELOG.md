@@ -1,3 +1,13 @@
+# 1.1.6
+
+## Changed
+
+- Performance: Make window redrawing rare if it takes long time
+
+## Fixed
+
+- Minor logging improvements
+
 # 1.1.5
 
 ## Fixed

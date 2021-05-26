@@ -29,24 +29,39 @@ import org.jetbrains.projector.awt.font.PFontManager
 import sun.awt.image.BufImgSurfaceData
 import sun.java2d.SunGraphics2D
 import sun.java2d.SunGraphicsEnvironment
-import java.awt.Color
-import java.awt.Font
-import java.awt.Graphics2D
-import java.awt.GraphicsDevice
+import java.awt.*
 import java.awt.image.BufferedImage
 import java.util.*
 
 class PGraphicsEnvironment : SunGraphicsEnvironment() {
 
+  companion object {
+    var clientDoesWindowManagement: Boolean = false
+    val devices = ArrayList<PGraphicsDevice>().apply { add(PGraphicsDevice("Screen0")) }
+
+    val defaultDevice: PGraphicsDevice
+      get() = devices[0]
+
+    fun setupDisplays(additionalDisplays: List<Pair<Rectangle, Double>>) {
+      devices.clear()
+      additionalDisplays.forEachIndexed { i, it ->
+        val element = PGraphicsDevice("Screen$i")
+        element.bounds.bounds = it.first
+        element.scaleFactor = it.second
+        devices.add(element)
+      }
+    }
+  }
+
   val xResolution: Double = 96.0
   val yResolution: Double = 96.0
 
   override fun getScreenDevices(): Array<GraphicsDevice> {
-    return arrayOf(defaultScreenDevice)
+    return devices.toTypedArray()
   }
 
   override fun getDefaultScreenDevice(): GraphicsDevice {
-    return PGraphicsDevice
+    return defaultDevice
   }
 
   override fun createGraphics(img: BufferedImage): Graphics2D {
@@ -66,13 +81,13 @@ class PGraphicsEnvironment : SunGraphicsEnvironment() {
     return PFontManager.getInstalledFontFamilyNames(requestedLocale)
   }
 
-  fun setSize(width: Int, height: Int) {
-    PGraphicsDevice.bounds.setSize(width, height)
+  fun setDefaultDeviceSize(width: Int, height: Int) {
+    defaultDevice.bounds.setSize(width, height)
   }
 
-  override fun getNumScreens(): Int = 1
+  override fun getNumScreens(): Int = devices.size
 
   override fun isDisplayLocal(): Boolean = false
 
-  override fun makeScreenDevice(p0: Int): GraphicsDevice = PGraphicsDevice
+  override fun makeScreenDevice(p0: Int): GraphicsDevice = devices[p0]
 }

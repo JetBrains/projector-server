@@ -72,7 +72,7 @@ internal object GraphicsInterceptor {
     paintToOffscreenInProgress = true
 
     val parentWindow = getParentWindow(comp)
-    val pWindow = pWindows.getOrPut(parentWindow.id()) { PWindow(parentWindow) }
+    val pWindow = pWindows.getOrPut(parentWindow.id()) { PWindow(parentWindow, isAgent = true) }
 
     currentQueue = queues.getOrPut(parentWindow.id()) {
       ProjectorDrawEventQueue.create(ServerDrawCommandsEvent.Target.Onscreen(pWindow.id))
