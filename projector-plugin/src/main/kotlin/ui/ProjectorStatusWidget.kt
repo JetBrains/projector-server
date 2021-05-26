@@ -114,17 +114,9 @@ class ProjectorStatusWidget(project: Project)
 
   companion object {
     private const val PROJECTOR_TOOLBAR_ACTION_GROUP = "projector.toolbar"
-
-    @JvmField
-    val RED_DOT = IconLoader.getIcon("/META-INF/redSign.svg", ProjectorStatusWidget::class.java)
-
-    @JvmField
-    val GREEN_DOT = IconLoader.getIcon("/META-INF/greenSign.svg", ProjectorStatusWidget::class.java)
-
-    @JvmField
-    val YELLOW_DOT = IconLoader.getIcon("/META-INF/yellowSign.svg", ProjectorStatusWidget::class.java)
-
-    @JvmField
-    val BLACK_DOT = IconLoader.getIcon("/META-INF/blackSign.svg", ProjectorStatusWidget::class.java)
+    private val RED_DOT: Icon by lazy { IconLoader.getIcon("/META-INF/redSign.svg", ProjectorStatusWidget::class.java) }
+    private val GREEN_DOT: Icon by lazy { IconLoader.getIcon("/META-INF/greenSign.svg", ProjectorStatusWidget::class.java) }
+    private val YELLOW_DOT: Icon by lazy { IconLoader.getIcon("/META-INF/yellowSign.svg", ProjectorStatusWidget::class.java) }
+    private val BLACK_DOT: Icon by lazy { IconLoader.getIcon("/META-INF/blackSign.svg", ProjectorStatusWidget::class.java) }
   }
 }
