@@ -21,10 +21,9 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-package ui
 
-import ProjectorService
-import ProjectorStateListener
+package org.jetbrains.projector.plugin.ui
+
 import com.intellij.ide.DataManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -35,11 +34,7 @@ import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget
 import com.intellij.util.Consumer
-import getProjectorActionGroup
-import isActivationNeeded
-import isProjectorAutoStarting
-import isProjectorDisabled
-import isProjectorRunning
+import org.jetbrains.projector.plugin.*
 import java.awt.Component
 import java.awt.event.MouseEvent
 import javax.swing.Icon

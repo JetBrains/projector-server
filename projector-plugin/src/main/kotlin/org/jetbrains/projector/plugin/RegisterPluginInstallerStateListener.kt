@@ -21,7 +21,9 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-import actions.ProjectorActionGroup
+
+package org.jetbrains.projector.plugin
+
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginStateListener
@@ -31,8 +33,9 @@ import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.WindowManager
-import ui.ProjectorStatusWidget
-import ui.displayNotification
+import org.jetbrains.projector.plugin.actions.ProjectorActionGroup
+import org.jetbrains.projector.plugin.ui.ProjectorStatusWidget
+import org.jetbrains.projector.plugin.ui.displayNotification
 
 
 class RegisterPluginInstallerStateListener : StartupActivity {

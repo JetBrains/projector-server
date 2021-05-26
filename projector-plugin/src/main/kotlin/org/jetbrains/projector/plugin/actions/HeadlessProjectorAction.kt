@@ -21,37 +21,19 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-package ui
+package org.jetbrains.projector.plugin.actions
 
-import java.awt.*
-import javax.swing.JPanel
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
+import org.jetbrains.projector.plugin.isHeadlessProjectorDetected
 
-class LinearPanelBuilder(private var panel: JPanel) {
-  private val constraints = GridBagConstraints()
-
-  init {
-    panel.componentOrientation = ComponentOrientation.LEFT_TO_RIGHT
-    panel.layout = GridBagLayout()
-    constraints.fill = GridBagConstraints.HORIZONTAL
-    constraints.gridx = 0
-    constraints.gridy = 0
+class HeadlessProjectorAction : DumbAwareAction() {
+  override fun actionPerformed(e: AnActionEvent) {}
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = isHeadlessProjectorDetected()
   }
 
-  fun addNextComponent(
-    c: Component, gridWidth: Int = 1, weightx: Double = 1.0,
-    leftGap: Int = 0, rightGap: Int = 0, topGap: Int = 0, bottomGap: Int = 0,
-  ): LinearPanelBuilder {
-    constraints.gridwidth = gridWidth
-    constraints.weightx = weightx
-    constraints.insets = Insets(topGap, leftGap, bottomGap, rightGap)
-    panel.add(c, constraints)
-    constraints.gridx += gridWidth
-    return this
-  }
-
-  fun startNextLine(): LinearPanelBuilder {
-    constraints.gridx = 0
-    constraints.gridy += 1
-    return this
+  companion object {
+    const val ID = "projector.headless"
   }
 }

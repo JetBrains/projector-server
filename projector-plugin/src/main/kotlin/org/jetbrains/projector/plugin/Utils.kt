@@ -22,6 +22,8 @@
  * if you need additional information or have any questions.
  */
 
+package org.jetbrains.projector.plugin
+
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName

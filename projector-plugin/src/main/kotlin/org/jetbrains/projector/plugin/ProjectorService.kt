@@ -22,6 +22,8 @@
  * if you need additional information or have any questions.
  */
 
+package org.jetbrains.projector.plugin
+
 import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerConfigurable
