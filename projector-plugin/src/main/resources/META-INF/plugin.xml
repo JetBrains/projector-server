@@ -31,7 +31,7 @@
   <description><![CDATA[
     <p>Share the IDE window using the <a href="https://github.com/JetBrains/projector-server">Projector server</a>.</p>
     <br/>
-    <p>How to use: after the plugin installation, please manually restart the IDE. New menu item <strong>Projector</strong> will appear next to the <strong>Help</strong> in the title bar.</p>
+    <p>How to use: after the plugin installation, please manually restart the IDE. New status bar widget <strong>Projector</strong> will appear near to the right end of the status bar.</p>
     <br/>
     <p>If you want simultaneous collaborative editing, please try <a href="https://www.jetbrains.com/help/idea/code-with-me.html">Code With Me</a> solution. Projector doesn't support that.</p>
   ]]></description>
