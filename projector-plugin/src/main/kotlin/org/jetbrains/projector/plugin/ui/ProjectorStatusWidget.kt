@@ -88,11 +88,11 @@ class ProjectorStatusWidget(project: Project)
 
   private fun updateIcon(): Icon {
     return when {
-      isActivationNeeded() -> RED_DOT
-      isProjectorRunning() -> GREEN_DOT
-      isProjectorAutoStarting() -> YELLOW_DOT
-      isProjectorDisabled() -> BLACK_DOT
-      else -> BLACK_DOT
+      isActivationNeeded() -> ACTIVATION_NEEDED_SIGN
+      isProjectorRunning() -> RUNNING_SIGN
+      isProjectorAutoStarting() -> STARTING_SIGN
+      isProjectorDisabled() -> DISABLED_SIGN
+      else -> DISABLED_SIGN
     }
   }
 
@@ -110,9 +110,12 @@ class ProjectorStatusWidget(project: Project)
 
   private companion object {
     private const val PROJECTOR_TOOLBAR_ACTION_GROUP = "projector.toolbar"
-    private val RED_DOT: Icon by lazy { IconLoader.getIcon("/META-INF/redSign.svg", ProjectorStatusWidget::class.java) }
-    private val GREEN_DOT: Icon by lazy { IconLoader.getIcon("/META-INF/greenSign.svg", ProjectorStatusWidget::class.java) }
-    private val YELLOW_DOT: Icon by lazy { IconLoader.getIcon("/META-INF/yellowSign.svg", ProjectorStatusWidget::class.java) }
-    private val BLACK_DOT: Icon by lazy { IconLoader.getIcon("/META-INF/blackSign.svg", ProjectorStatusWidget::class.java) }
+
+    private fun getIcon(path: String): Icon = IconLoader.getIcon(path, ProjectorStatusWidget::class.java)
+
+    private val ACTIVATION_NEEDED_SIGN: Icon by lazy { getIcon("/META-INF/activationNeeded.svg") }
+    private val RUNNING_SIGN: Icon by lazy { getIcon("/META-INF/runningSign.svg") }
+    private val STARTING_SIGN: Icon by lazy { getIcon("/META-INF/startingSign.svg") }
+    private val DISABLED_SIGN: Icon by lazy { getIcon("/META-INF/disabledSign.svg") }
   }
 }
