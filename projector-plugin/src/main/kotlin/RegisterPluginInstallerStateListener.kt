@@ -21,25 +21,71 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+import actions.ProjectorActionGroup
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginStateListener
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.wm.WindowManager
+import ui.ProjectorStatusWidget
+import ui.displayNotification
+
 
 class RegisterPluginInstallerStateListener : StartupActivity {
+  private val logger = Logger.getInstance(RegisterPluginInstallerStateListener::class.java)
+
   override fun runActivity(project: Project) {
     PluginInstaller.addStateListener(object : PluginStateListener {
       override fun install(descriptor: IdeaPluginDescriptor) {}
 
       override fun uninstall(descriptor: IdeaPluginDescriptor) {
         ProjectorService.autostart = false
-        if (ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_ENABLED) {
+
+        if (isProjectorRunning()) {
           ProjectorService.disable()
         }
       }
     })
 
+    installUI(project)
     ProjectorService.autostartIfRequired()
+  }
+
+  private fun installUI(project: Project) {
+    if (!installProjectorWidget(project)) {
+      installMenu(project)
+    }
+  }
+
+  private fun installMenu(project: Project) {
+    ProjectorActionGroup.isMenuRequired = true
+    displayNotification(project, "Warning", "Can't display status bar widget",
+                        "Use Projector menu to manage plugin")
+  }
+
+  private fun installProjectorWidget(project: Project): Boolean {
+    val statusBar = WindowManager.getInstance().getStatusBar(project) ?: return false
+
+    val method = try {
+      StatusBar::class.java.getMethod("addWidget", StatusBarWidget::class.java, String::class.java)
+    }
+    catch (e: NoSuchMethodException) {
+      logger.error("Toolbar widget is unsupported in this IDEA version: StatusBar has no addWidget method")
+      null
+    }
+
+    val ret = method != null
+
+    method?.let {
+      val widget = ProjectorStatusWidget(project)
+      it.invoke(statusBar, widget, StatusBar.Anchors.DEFAULT_ANCHOR)
+      widget.update()
+    }
+
+    return ret
   }
 }

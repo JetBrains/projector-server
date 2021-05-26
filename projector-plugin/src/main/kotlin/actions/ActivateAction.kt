@@ -21,18 +21,25 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+
+package actions
+
+import ProjectorService
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
+import isActivationNeeded
 
-class DisableAction : DumbAwareAction() {
+class ActivateAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    ProjectorService.autostart = false
-    ProjectorService.disable()
+    ProjectorService.activate()
   }
 
   override fun update(e: AnActionEvent) {
-    val state = ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_ENABLED
-    e.presentation.isEnabledAndVisible = state
+    e.presentation.isEnabledAndVisible = isActivationNeeded()
+  }
+
+  companion object {
+    const val ID = "projector.activate"
   }
 }

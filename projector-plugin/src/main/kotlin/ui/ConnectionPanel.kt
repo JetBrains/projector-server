@@ -21,7 +21,8 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-
+package ui
+import ProjectorService
 import com.intellij.ui.table.JBTable
 import org.jetbrains.projector.server.util.AsyncHostResolver
 import org.jetbrains.projector.server.util.Host

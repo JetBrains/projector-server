@@ -21,36 +21,42 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+
+package actions
+import ProjectorService
+import Session
+import ui.SessionDialog
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
+import isProjectorDisabled
 
-class SessionAction : DumbAwareAction() {
+class EnableAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    check(ProjectorService.isSessionRunning) {
-      "Projector session is not started"
-    }
-
     val project = PlatformDataKeys.PROJECT.getData(e.dataContext)
     val sessionDialog = SessionDialog(project)
     sessionDialog.pack()
     sessionDialog.show()
 
     if (sessionDialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
-      ProjectorService.currentSession.apply {
-        rwToken = sessionDialog.rwToken
-        roToken = sessionDialog.roToken
-        confirmConnection = sessionDialog.confirmConnection
-        autostart = sessionDialog.autostart
-      }
+      ProjectorService.enable(Session(sessionDialog.listenAddress,
+                                      sessionDialog.listenPort,
+                                      sessionDialog.rwToken,
+                                      sessionDialog.roToken,
+                                      sessionDialog.confirmConnection,
+                                      sessionDialog.autostart))
     }
+
+    sessionDialog.cancelResolverRequests()
   }
 
   override fun update(e: AnActionEvent) {
-    val state = ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_ENABLED
-    e.presentation.isEnabled = state
-    e.presentation.isVisible = state
+    e.presentation.isEnabledAndVisible = isProjectorDisabled()
+  }
+
+  companion object {
+    const val ID = "projector.enable"
   }
 }

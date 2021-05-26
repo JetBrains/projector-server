@@ -1,6 +1,3 @@
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAwareAction
-
 /*
  * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -24,10 +21,25 @@ import com.intellij.openapi.project.DumbAwareAction
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+package actions
 
-class HeadlessProjectorAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {}
+import ProjectorService
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.project.DumbAwareAction
+import isProjectorRunning
+
+class DisableAction : DumbAwareAction() {
+
+  override fun actionPerformed(e: AnActionEvent) {
+    ProjectorService.autostart = false
+    ProjectorService.disable()
+  }
+
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isHeadlessProjectorDetected()
+    e.presentation.isEnabledAndVisible = isProjectorRunning()
+  }
+
+  companion object {
+    const val ID = "projector.disable"
   }
 }

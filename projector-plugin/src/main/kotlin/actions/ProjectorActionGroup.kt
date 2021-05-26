@@ -21,18 +21,29 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+package actions
+
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.DumbAwareAction
+import getProjectorAction
 
-class WaitForStartAction : DumbAwareAction() {
-  override fun actionPerformed(e: AnActionEvent) {}
-  override fun update(e: AnActionEvent) {
-    val state =  !isHeadlessProjectorDetected()
-                 &&
-                 ProjectorService.autostart
-                 &&
-                 ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
+class ProjectorActionGroup : ActionGroup() {
+  override fun update(event: AnActionEvent) {
+    event.presentation.isEnabledAndVisible = isMenuRequired
+  }
 
-    e.presentation.isEnabledAndVisible = state
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions
+
+  companion object {
+    var isMenuRequired = false
+    private val actions = arrayOf(
+      getProjectorAction(EnableAction.ID),
+      getProjectorAction(DisableAction.ID),
+      getProjectorAction(SessionAction.ID),
+      getProjectorAction(ActivateAction.ID),
+      getProjectorAction(WaitForStartAction.ID),
+      getProjectorAction(HeadlessProjectorAction.ID)
+    )
   }
 }
