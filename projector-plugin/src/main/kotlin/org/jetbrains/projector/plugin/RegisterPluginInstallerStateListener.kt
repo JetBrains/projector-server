@@ -56,7 +56,6 @@ class RegisterPluginInstallerStateListener : StartupActivity {
     })
 
     installUI(project)
-    installMenu(project)
     ProjectorService.autostartIfRequired()
   }
 
