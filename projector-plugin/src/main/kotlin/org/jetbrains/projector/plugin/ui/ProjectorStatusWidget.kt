@@ -54,12 +54,13 @@ class ProjectorStatusWidget(project: Project)
 
   override fun getPopupStep(): ListPopup? {
     onClick()
+    stateChanged()
     return null
   }
 
   override fun getTooltipText(): String = updateTooltip()
 
-  override fun getClickConsumer() : Consumer<MouseEvent>? = null
+  override fun getClickConsumer(): Consumer<MouseEvent>? = null
 
   override fun getSelectedValue(): String = updateText()
 
