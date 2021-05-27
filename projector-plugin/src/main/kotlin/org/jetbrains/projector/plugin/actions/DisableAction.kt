@@ -31,7 +31,6 @@ import org.jetbrains.projector.plugin.isProjectorRunning
 class DisableAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
-    ProjectorService.autostart = false
     ProjectorService.disable()
   }
 

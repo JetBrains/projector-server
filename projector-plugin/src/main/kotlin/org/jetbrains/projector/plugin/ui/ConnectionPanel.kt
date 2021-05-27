@@ -24,6 +24,7 @@
 
 package org.jetbrains.projector.plugin.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.ui.table.JBTable
 import org.jetbrains.projector.plugin.ProjectorService
 import org.jetbrains.projector.server.util.AsyncHostResolver
@@ -36,24 +37,31 @@ import javax.swing.table.DefaultTableModel
 
 class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(), ResolvedHostSubscriber {
   private val title = JLabel("Current connections:")
-  private val disconnectButton = JButton("Disconnect Selected").apply {
+  private val disconnectButton = JButton("Disconnect Selected", AllIcons.Actions.Close).apply {
     addActionListener {
       val ip = clientTable.model.getValueAt(clientTable.selectedRow, 0).toString()
       ProjectorService.disconnectByIp(ip)
       update()
     }
   }
-  private val disconnectAllButton = JButton("Disconnect All").apply {
+  private val disconnectAllButton = JButton("Disconnect All", AllIcons.Actions.Close).apply {
     addActionListener {
       ProjectorService.disconnectAll()
       update()
     }
   }
-  private val updateButton = JButton("Update List").apply {
+  private val updateButton = JButton("Update List", AllIcons.Actions.ForceRefresh).apply {
     addActionListener {
       update()
     }
   }
+
+  private val stopButton = JButton("Stop Remote Access", AllIcons.Actions.Exit).apply {
+    addActionListener {
+      ProjectorService.disable()
+    }
+  }
+
   private val columnNames = arrayOf("Address", "Host Name")
   private val clientTable = JBTable().apply {
     preferredScrollableViewportSize = Dimension(100, 100)
@@ -66,7 +74,8 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(), Resol
     if (ProjectorService.isSessionRunning) {
       val buttonPanel = JPanel()
       LinearPanelBuilder(buttonPanel)
-        .addNextComponent(updateButton).addNextComponent(disconnectButton).addNextComponent(disconnectAllButton)
+        .addNextComponent(updateButton).addNextComponent(disconnectButton)
+        .addNextComponent(disconnectAllButton).addNextComponent(stopButton)
 
       LinearPanelBuilder(this).addNextComponent(title, topGap = 5, bottomGap = 5)
         .startNextLine().addNextComponent(JScrollPane(clientTable))

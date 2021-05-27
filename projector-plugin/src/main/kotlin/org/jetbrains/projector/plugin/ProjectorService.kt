@@ -169,6 +169,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   private fun disable() {
     if (confirmRestart("To disable Projector, restart is needed. Can I restart the IDE now?")) {
       stateChanged()
+      autostart = false
       restartIde()
     }
   }
