@@ -23,27 +23,33 @@
  */
 package org.jetbrains.projector.plugin.actions
 
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.AnActionEvent
-import org.jetbrains.projector.plugin.getProjectorAction
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import org.jetbrains.projector.plugin.getActionGroup
 
-class ProjectorActionGroup : ActionGroup() {
+class ProjectorActionGroup : DefaultActionGroup() {
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabledAndVisible = isMenuRequired
+    event.presentation.isEnabledAndVisible = showMenu
   }
 
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions
-
   companion object {
-    var isMenuRequired = false
-    private val actions = arrayOf(
-      getProjectorAction(EnableAction.ID),
-      getProjectorAction(DisableAction.ID),
-      getProjectorAction(SessionAction.ID),
-      getProjectorAction(ActivateAction.ID),
-      getProjectorAction(WaitForStartAction.ID),
-      getProjectorAction(HeadlessProjectorAction.ID)
-    )
+    var showMenu = false
+
+    fun show() {
+      showMenu = true
+      update()
+    }
+
+    fun update() {
+      val menu = getActionGroup("projector.menu")
+      val ctx = DataManager.getInstance().dataContextFromFocusAsync
+      val event = ctx.blockingGet(100)?.let {
+        AnActionEvent.createFromAnAction(menu, null, "", it)
+      }
+      if (event != null) {
+        menu.update(event)
+      }
+    }
   }
 }

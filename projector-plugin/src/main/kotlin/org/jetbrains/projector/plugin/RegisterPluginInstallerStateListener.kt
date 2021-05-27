@@ -46,6 +46,7 @@ class RegisterPluginInstallerStateListener : StartupActivity {
       override fun install(descriptor: IdeaPluginDescriptor) {}
 
       override fun uninstall(descriptor: IdeaPluginDescriptor) {
+        removeUI(project)
         ProjectorService.autostart = false
 
         if (isProjectorRunning()) {
@@ -55,6 +56,7 @@ class RegisterPluginInstallerStateListener : StartupActivity {
     })
 
     installUI(project)
+    installMenu(project)
     ProjectorService.autostartIfRequired()
   }
 
@@ -65,7 +67,7 @@ class RegisterPluginInstallerStateListener : StartupActivity {
   }
 
   private fun installMenu(project: Project) {
-    ProjectorActionGroup.isMenuRequired = true
+    ProjectorActionGroup.show()
     displayNotification(project, "Warning", "Can't display status bar widget",
                         "Use Projector menu to manage plugin")
   }
@@ -90,5 +92,24 @@ class RegisterPluginInstallerStateListener : StartupActivity {
     }
 
     return ret
+  }
+
+  private fun removeUI(project: Project) {
+    ProjectorActionGroup.showMenu = false
+    removeProjectorWidget(project)
+  }
+
+  private fun removeProjectorWidget(project: Project) {
+    val statusBar = WindowManager.getInstance().getStatusBar(project) ?: return
+
+    val method = try {
+      StatusBar::class.java.getMethod("removeWidget", String::class.java)
+    }
+    catch (e: NoSuchMethodException) {
+      logger.error("StatusBar has no removeWidget method")
+      null
+    }
+
+    method?.invoke(statusBar, ProjectorStatusWidget.ID)
   }
 }

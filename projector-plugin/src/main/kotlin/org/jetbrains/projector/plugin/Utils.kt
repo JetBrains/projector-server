@@ -90,7 +90,7 @@ fun getProjectorAction(actionId: String): AnAction {
   return action
 }
 
-fun getProjectorActionGroup(groupId: String): ActionGroup {
+fun getActionGroup(groupId: String): ActionGroup {
   return ActionManager.getInstance().getAction(groupId) as ActionGroup
 }
 

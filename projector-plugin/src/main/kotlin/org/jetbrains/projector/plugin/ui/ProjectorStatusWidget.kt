@@ -25,8 +25,9 @@
 package org.jetbrains.projector.plugin.ui
 
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.StatusBar
@@ -35,6 +36,7 @@ import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget
 import com.intellij.util.Consumer
 import org.jetbrains.projector.plugin.*
+import org.jetbrains.projector.plugin.actions.*
 import java.awt.Component
 import java.awt.event.MouseEvent
 import javax.swing.Icon
@@ -46,25 +48,18 @@ class ProjectorStatusWidget(project: Project)
     StatusBarWidget.Multiframe,
     ProjectorStateListener {
 
-  override fun ID(): String = ProjectorStatusWidget::class.java.name
+  override fun ID(): String = ID
 
   override fun copy(): StatusBarWidget = ProjectorStatusWidget(project)
 
-  override fun getPopupStep(): ListPopup {
-    val context = DataManager.getInstance().getDataContext(myStatusBar as Component)
-    val actionGroup = getProjectorActionGroup(PROJECTOR_TOOLBAR_ACTION_GROUP)
-
-    return JBPopupFactory.getInstance().createActionGroupPopup("Projector",
-                                                               actionGroup,
-                                                               context,
-                                                               false,
-                                                               null,
-                                                               5)
+  override fun getPopupStep(): ListPopup? {
+    onClick()
+    return null
   }
 
   override fun getTooltipText(): String = updateTooltip()
 
-  override fun getClickConsumer(): Consumer<MouseEvent>? = null
+  override fun getClickConsumer() : Consumer<MouseEvent>? = null
 
   override fun getSelectedValue(): String = updateText()
 
@@ -103,16 +98,33 @@ class ProjectorStatusWidget(project: Project)
       isActivationNeeded() -> "Activation is needed"
       isProjectorRunning() -> "Projector is running"
       isProjectorAutoStarting() -> "Projector is starting"
-      isProjectorDisabled() -> "Projector is disabled"
+      isProjectorDisabled() -> "Projector is down"
+      isHeadlessProjectorDetected() -> "Headless projector detected, plugin is disabled"
       else -> "Impossible state"
     }
   }
 
-  private companion object {
-    private const val PROJECTOR_TOOLBAR_ACTION_GROUP = "projector.toolbar"
+  private fun onClick() {
+    when {
+      isActivationNeeded() -> fireAction(ActivateAction.ID)
+      isProjectorRunning() -> fireAction(SessionAction.ID)
+      isProjectorAutoStarting() -> fireAction(WaitForStartAction.ID)
+      isProjectorDisabled() -> fireAction(EnableAction.ID)
+      isHeadlessProjectorDetected() -> fireAction(HeadlessProjectorAction.ID)
+    }
+  }
 
+  private fun fireAction(actionId: String) {
+    val am = ActionManager.getInstance()
+    val action = am.getAction(actionId)
+    val ctx = DataManager.getInstance().getDataContext(myStatusBar as Component)
+    val event = AnActionEvent.createFromAnAction(action, null, "", ctx)
+    action.actionPerformed(event)
+  }
+
+  companion object {
+    val ID : String by lazy { ProjectorStatusWidget::class.java.name }
     private fun getIcon(path: String): Icon = IconLoader.getIcon(path, ProjectorStatusWidget::class.java)
-
     private val ACTIVATION_NEEDED_SIGN: Icon by lazy { getIcon("/META-INF/activationNeeded.svg") }
     private val RUNNING_SIGN: Icon by lazy { getIcon("/META-INF/runningSign.svg") }
     private val STARTING_SIGN: Icon by lazy { getIcon("/META-INF/startingSign.svg") }

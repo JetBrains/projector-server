@@ -50,11 +50,8 @@
   </extensions>
 
   <actions>
-    <group id="projector.menu" class="org.jetbrains.projector.plugin.actions.ProjectorActionGroup"  text="Projector" description="Projector menu">
+    <group id="projector.menu" class="org.jetbrains.projector.plugin.actions.ProjectorActionGroup"  text="Projector" description="Projector menu" popup="true">
       <add-to-group group-id="MainMenu" anchor="last"/>
-    </group>
-
-    <group id="projector.toolbar" text="Projector" description="Projector toolbar" popup="true">
       <action id="projector.enable" class="org.jetbrains.projector.plugin.actions.EnableAction" text="Start Remote Access to IDE" description="Enable projector"/>
       <action id="projector.disable" class="org.jetbrains.projector.plugin.actions.DisableAction" text="Stop Remote Access to IDE" description="Disable projector"/>
       <action id="projector.session" class="org.jetbrains.projector.plugin.actions.SessionAction" text="Current Session" description="Current session parameters"/>
@@ -65,6 +62,5 @@
       <action id="projector.headless" class="org.jetbrains.projector.plugin.actions.HeadlessProjectorAction" text= "Headless Projector Detected. Plugin Is Disabled"
               description="Plugin is disabled"/>
     </group>
-
   </actions>
 </idea-plugin>
