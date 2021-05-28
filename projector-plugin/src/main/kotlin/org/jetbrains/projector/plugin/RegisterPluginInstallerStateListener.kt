@@ -74,6 +74,8 @@ class RegisterPluginInstallerStateListener : StartupActivity {
   private fun installProjectorWidget(project: Project): Boolean {
     val statusBar = WindowManager.getInstance().getStatusBar(project) ?: return false
 
+    if (statusBar.getWidget(ProjectorStatusWidget.ID) != null) return true // already installed
+
     val method = try {
       StatusBar::class.java.getMethod("addWidget", StatusBarWidget::class.java, String::class.java)
     }
