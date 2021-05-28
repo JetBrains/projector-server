@@ -54,7 +54,6 @@ class ProjectorStatusWidget(project: Project)
 
   override fun getPopupStep(): ListPopup? {
     onClick()
-    stateChanged()
     return null
   }
 
