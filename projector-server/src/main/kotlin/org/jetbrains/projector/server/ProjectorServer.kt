@@ -746,7 +746,7 @@ class ProjectorServer private constructor(
       logger.info { "${ProjectorServer::class.simpleName} is starting on host $host and port $port" }
 
       val serverBuilder = HttpWsServerBuilder(host, port)
-      serverBuilder.getMainWindow = {
+      serverBuilder.getMainWindows = {
         getMainWindows().map {
           MainWindow(
             title = it.title,
