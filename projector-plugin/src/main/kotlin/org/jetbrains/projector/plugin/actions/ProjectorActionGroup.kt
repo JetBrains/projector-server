@@ -34,11 +34,15 @@ class ProjectorActionGroup : DefaultActionGroup() {
   }
 
   companion object {
-    var showMenu = false
+    private var showMenu = false
 
     fun show() {
       showMenu = true
       update()
+    }
+
+    fun hide() {
+      showMenu = false
     }
 
     fun update() {
