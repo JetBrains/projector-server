@@ -160,11 +160,11 @@ class ProjectorServer private constructor(
           val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
           logger.info { "${clientSettings.address} disconnected, was connected for ${connectionTime.roundToLong()} s." }
         } ?: logger.info {
-          val address = connection.remoteSocketAddress?.address?.hostAddress
-          "Client from address $address is disconnected. This client hasn't clientSettings. " +
-          "This usually happens when the handshake stage didn't have time to be performed " +
-          "(so it seems the client has been connected for a very short time)"
-        }
+        val address = connection.remoteSocketAddress?.address?.hostAddress
+        "Client from address $address is disconnected. This client hasn't clientSettings. " +
+        "This usually happens when the handshake stage didn't have time to be performed " +
+        "(so it seems the client has been connected for a very short time)"
+      }
     }
 
     builder.onWsOpen = { connection ->
@@ -736,12 +736,12 @@ class ProjectorServer private constructor(
       val relayUrl = getProperty(RELAY_PROPERTY_NAME)
       val serverId = getProperty(SERVER_ID_PROPERTY_NAME)
 
-      val scheme = when (getProperty(RELAY_USE_WSS)?.toBoolean() ?: true) {
-        false -> "ws"
-        true -> "wss"
-      }
-
       if (relayUrl != null && serverId != null) {
+        val scheme = when (getProperty(RELAY_USE_WSS)?.toBoolean() ?: true) {
+          false -> "ws"
+          true -> "wss"
+        }
+
         logger.info { "${ProjectorServer::class.simpleName} connecting to relay $relayUrl with serverId $serverId" }
         builders.add(HttpWsClientBuilder("$scheme://$relayUrl", serverId))
       }
