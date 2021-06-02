@@ -411,15 +411,9 @@ class ProjectorServer private constructor(
       is ClientOpenLinkEvent -> PanelUpdater.openInExternalBrowser(message.link)
 
       is ClientSetKeymapEvent -> when {
-        isAgent -> {
-          logger.info { "Client keymap was ignored (agent mode)!" }
-        }
-        getProperty(ENABLE_AUTO_KEYMAP_SETTING)?.toBoolean() == false -> {
-          logger.info { "Client keymap was ignored (property specified)!" }
-        }
-        else -> {
-          KeymapSetter.setKeymap(message.keymap)
-        }
+        isAgent -> logger.info { "Client keymap was ignored (agent mode)!" }
+        getProperty(ENABLE_AUTO_KEYMAP_SETTING)?.toBoolean() == false -> logger.info { "Client keymap was ignored (property specified)!" }
+        else -> KeymapSetter.setKeymap(message.keymap)
       }
 
       is ClientWindowMoveEvent -> {
@@ -561,7 +555,8 @@ class ProjectorServer private constructor(
 
     if (hasWriteAccess) {
       PGraphicsEnvironment.clientDoesWindowManagement = toServerHandshakeEvent.clientDoesWindowManagement
-      PGraphicsEnvironment.setupDisplays(toServerHandshakeEvent.displays.map { Rectangle(it.x, it.y, it.width, it.height) to it.scaleFactor })
+      PGraphicsEnvironment.setupDisplays(
+        toServerHandshakeEvent.displays.map { Rectangle(it.x, it.y, it.width, it.height) to it.scaleFactor })
       with(toServerHandshakeEvent.displays[0]) { resize(width, height) }
     }
   }
