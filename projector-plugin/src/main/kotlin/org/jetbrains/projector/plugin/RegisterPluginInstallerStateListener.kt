@@ -80,7 +80,7 @@ class RegisterPluginInstallerStateListener : StartupActivity {
       StatusBar::class.java.getMethod("addWidget", StatusBarWidget::class.java, String::class.java)
     }
     catch (e: NoSuchMethodException) {
-      logger.error("Toolbar widget is unsupported in this IDEA version: StatusBar has no addWidget method")
+      logger.error("StatusBar widget is unsupported in this IDEA version: StatusBar has no addWidget method")
       null
     }
 
