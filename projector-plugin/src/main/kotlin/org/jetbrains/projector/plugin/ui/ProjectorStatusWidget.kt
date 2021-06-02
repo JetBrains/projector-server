@@ -98,7 +98,7 @@ class ProjectorStatusWidget(project: Project)
       isActivationNeeded() -> "Activation is needed"
       isProjectorRunning() -> "Projector is running"
       isProjectorAutoStarting() -> "Projector is starting"
-      isProjectorDisabled() -> "Projector is down"
+      isProjectorDisabled() -> "Projector is disabled"
       isHeadlessProjectorDetected() -> "Headless projector detected, plugin is disabled"
       else -> "Impossible state"
     }
