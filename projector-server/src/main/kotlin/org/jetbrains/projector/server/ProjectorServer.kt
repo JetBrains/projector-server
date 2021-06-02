@@ -159,7 +159,12 @@ class ProjectorServer private constructor(
         ?.let { clientSettings ->
           val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
           logger.info { "${clientSettings.address} disconnected, was connected for ${connectionTime.roundToLong()} s." }
-        } ?: logger.info { "Disconnected. This client hasn't clientSettings" }
+        } ?: logger.info {
+          val address = connection.remoteSocketAddress?.address?.hostAddress
+          "Client from address $address is disconnected. This client hasn't clientSettings. " +
+          "This usually happens when the handshake stage didn't have time to be performed " +
+          "(so it seems the client has been connected for a very short time)"
+        }
     }
 
     builder.onWsOpen = { connection ->
