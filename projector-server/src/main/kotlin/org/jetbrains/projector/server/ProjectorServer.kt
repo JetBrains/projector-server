@@ -736,9 +736,14 @@ class ProjectorServer private constructor(
       val relayUrl = getProperty(RELAY_PROPERTY_NAME)
       val serverId = getProperty(SERVER_ID_PROPERTY_NAME)
 
+      val scheme = when (getProperty(RELAY_USE_WSS)?.toBoolean() ?: true) {
+        false -> "ws"
+        true -> "wss"
+      }
+
       if (relayUrl != null && serverId != null) {
         logger.info { "${ProjectorServer::class.simpleName} connecting to relay $relayUrl with serverId $serverId" }
-        builders.add(HttpWsClientBuilder("wss://$relayUrl", serverId))
+        builders.add(HttpWsClientBuilder("$scheme://$relayUrl", serverId))
       }
 
       val host = getEnvHost()
@@ -794,6 +799,7 @@ class ProjectorServer private constructor(
     const val RO_TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RO_HANDSHAKE_TOKEN"
     private const val RELAY_PROPERTY_NAME = "projector.relayUrl"
     private const val SERVER_ID_PROPERTY_NAME = "projector.serverId"
+    private const val RELAY_USE_WSS = "projector.relay.use.wss"
 
     var ENABLE_BIG_COLLECTIONS_CHECKS = System.getProperty("org.jetbrains.projector.server.debug.collections.checks") == "true"
     private const val DEFAULT_BIG_COLLECTIONS_CHECKS_SIZE = 10_000
