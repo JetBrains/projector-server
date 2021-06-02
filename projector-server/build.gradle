@@ -74,6 +74,17 @@ if (project.rootProject.file('local.properties').canRead()) {
   localProperties.load(project.rootProject.file("local.properties").newDataInputStream())
 }
 
+// relay arguments
+def relayURL=localProperties['projector.relayUrl']
+def serverId=localProperties['projector.serverId']
+
+def relayArgs = []
+
+if (relayURL!=null && serverId != null) {
+  relayArgs = ["-Dprojector.relayUrl=$relayURL", "-Dprojector.serverId=$serverId"]
+}
+
+
 def serverTargetClasspath = localProperties['projectorLauncher.targetClassPath']
 def serverClassToLaunch = localProperties['projectorLauncher.classToLaunch']
 println("----------- Server launch config ---------------")
@@ -90,7 +101,7 @@ if (serverTargetClasspath != null && serverClassToLaunch != null) {
       "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
       "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
       "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-    ]
+    ] + relayArgs
   }
 }
 
@@ -102,15 +113,6 @@ if (ideaPath != null) {
   def ideaLib = "$ideaPath/lib"
   def ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar:$ideaLib/trove4j.jar"
   def jdkHome = System.getProperty('java.home')
-  def relayURL=localProperties['projector.relayUrl']
-  def serverId=localProperties['projector.serverId']
-
-  def relayArgs = []
-
-  if (relayURL!=null && serverId != null) {
-    relayArgs = ["-Dprojector.relayUrl=$relayURL", "-Dprojector.serverId=$serverId"]
-  }
-
   println(jdkHome)
 
   def ideaPathsSelector = "ProjectorIntelliJIdea"
