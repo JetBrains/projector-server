@@ -239,7 +239,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   }
 
   companion object {
-    private val instance: ProjectorService by lazy { ServiceManager.getService(ProjectorService::class.java)!! }
+    private val instance: ProjectorService by lazy { ApplicationManager.getApplication().getComponent(ProjectorService::class.java)!! }
 
     fun subscribe(l: ProjectorStateListener) = instance.subscribe(l)
 
