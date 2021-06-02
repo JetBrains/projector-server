@@ -96,7 +96,7 @@ class RegisterPluginInstallerStateListener : StartupActivity {
   }
 
   private fun removeUI(project: Project) {
-    ProjectorActionGroup.showMenu = false
+    ProjectorActionGroup.hide()
     removeProjectorWidget(project)
   }
 
