@@ -30,10 +30,10 @@ import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.util.PathUtil
 import org.jetbrains.projector.awt.PToolkit
 import org.w3c.dom.Node
 import java.awt.Toolkit
@@ -47,6 +47,8 @@ import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
 
 fun productName(): String = ApplicationInfo.getInstance().versionName
+
+fun getPathToPluginDir() = File(PathUtil.getJarPathForClass(ProjectorService::class.java)).parentFile.toString()
 
 fun isHeadlessProjectorDetected() = Toolkit.getDefaultToolkit()::class.toString() == PToolkit::class.toString()
 
@@ -82,12 +84,6 @@ fun isProjectorDisabled(): Boolean {
          !ProjectorService.autostart
          &&
          ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
-}
-
-fun getProjectorAction(actionId: String): AnAction {
-  val action = ActionManager.getInstance().getAction(actionId)
-  requireNotNull(action) { "Unknown action: $actionId" }
-  return action
 }
 
 fun getActionGroup(groupId: String): ActionGroup {
