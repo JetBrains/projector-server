@@ -70,6 +70,7 @@ class ProjectorStatusWidget(project: Project)
   override fun install(statusBar: StatusBar) {
     super.install(statusBar)
     ProjectorService.subscribe(this)
+    update()
   }
 
   override fun dispose() {
@@ -77,7 +78,9 @@ class ProjectorStatusWidget(project: Project)
     super.dispose()
   }
 
-  fun update() = myStatusBar.updateWidget(ID())
+  fun update() {
+    myStatusBar?.updateWidget(ID())
+  }
 
   override fun stateChanged() = update()
 

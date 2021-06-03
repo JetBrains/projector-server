@@ -28,6 +28,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginStateListener
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.wm.StatusBar
@@ -38,7 +39,7 @@ import org.jetbrains.projector.plugin.ui.ProjectorStatusWidget
 import org.jetbrains.projector.plugin.ui.displayNotification
 
 
-class RegisterPluginInstallerStateListener : StartupActivity {
+class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
   private val logger = Logger.getInstance(RegisterPluginInstallerStateListener::class.java)
 
   override fun runActivity(project: Project) {
