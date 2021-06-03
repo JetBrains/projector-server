@@ -32,7 +32,6 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.PathUtil
 import org.jetbrains.projector.agent.AgentLauncher
 import org.jetbrains.projector.server.ProjectorServer
 import java.io.File
@@ -220,8 +219,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   }
 
   private fun attachDynamicAgent() {
-    val path = File(PathUtil.getJarPathForClass(ProjectorService::class.java)).parentFile
-    val agentJar = "$path/projector-agent-1.0-SNAPSHOT.jar"  // todo: need to support version change
+    val agentJar = "${getPathToPluginDir()}/projector-agent-1.0-SNAPSHOT.jar"  // todo: need to support version change
     AgentLauncher.attachAgent(agentJar)
   }
 
