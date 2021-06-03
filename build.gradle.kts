@@ -34,7 +34,7 @@ val targetJvm: String by project
 
 subprojects {
   group = "org.jetbrains"
-  version = "1.0-SNAPSHOT"
+  //version = "1.0-SNAPSHOT"
 
   repositories {
     jcenter()

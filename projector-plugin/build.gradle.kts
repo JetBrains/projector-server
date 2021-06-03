@@ -27,7 +27,6 @@ plugins {
   id("org.jetbrains.intellij")
 }
 
-version = "1.4.2"
 
 val projectorClientVersion: String by project
 
@@ -35,6 +34,7 @@ dependencies {
   implementation("com.github.JetBrains.projector-client:projector-server-core:$projectorClientVersion")
   implementation(project(":projector-agent"))
 }
+
 
 intellij {
   version = "2019.3"
