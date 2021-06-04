@@ -21,12 +21,7 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-
-import org.gradle.internal.impldep.org.eclipse.jgit.util.FileUtils.createNewFile
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile
-import javax.inject.Inject
 import java.io.File
-import java.nio.file.Path
 import java.nio.file.Paths
 
 plugins {
