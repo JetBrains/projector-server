@@ -22,6 +22,13 @@
  * if you need additional information or have any questions.
  */
 
+import org.gradle.internal.impldep.org.eclipse.jgit.util.FileUtils.createNewFile
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile
+import javax.inject.Inject
+import java.io.File
+import java.nio.file.Path
+import java.nio.file.Paths
+
 plugins {
   kotlin("jvm")
   id("org.jetbrains.intellij")
@@ -35,8 +42,6 @@ dependencies {
   implementation(project(":projector-agent"))
 }
 
-val agentVersion = project(":projector-agent").version
-
 intellij {
   version = "2019.3"
   updateSinceUntilBuild = false
@@ -44,4 +49,33 @@ intellij {
 
 (tasks["runIde"] as JavaExec).apply {
   jvmArgs = jvmArgs.orEmpty() + listOf("-Djdk.attach.allowAttachSelf=true", "-Dswing.bufferPerWindow=false")
+}
+
+abstract class GenerateVersionsFile: DefaultTask() {
+  private val filePath = "src/main/resources/META-INF/versions.txt"
+  @get:Input
+  abstract val agentVersion: Property<String>
+
+  @TaskAction
+  fun generateVersions() {
+    val fullPath = Paths.get(project.buildFile.parent, filePath)
+    val f = File(fullPath.toString())
+    f.printWriter().use {
+      it.println(getContent())
+    }
+  }
+
+  private fun getContent(): String {
+    val versions = listOf("agentVersion=${agentVersion.get()}")
+    return versions.joinToString("\n")
+  }
+}
+
+tasks.register<GenerateVersionsFile>("versions")
+{
+  agentVersion.set(project(":projector-agent").version.toString())
+}
+
+tasks.processResources {
+  dependsOn(tasks["versions"])
 }
