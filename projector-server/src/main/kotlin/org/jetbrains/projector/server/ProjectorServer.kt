@@ -797,9 +797,9 @@ class ProjectorServer private constructor(
     private const val DEFAULT_PORT = 8887
     const val TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HANDSHAKE_TOKEN"
     const val RO_TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RO_HANDSHAKE_TOKEN"
-    private const val RELAY_PROPERTY_NAME = "projector.relayUrl"
-    private const val SERVER_ID_PROPERTY_NAME = "projector.serverId"
-    private const val RELAY_USE_WSS = "projector.relay.use.wss"
+    private const val RELAY_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_RELAY_URL"
+    private const val SERVER_ID_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_ID"
+    private const val RELAY_USE_WSS = "ORG_JETBRAINS_PROJECTOR_RELAY_USE_WSS"
 
     var ENABLE_BIG_COLLECTIONS_CHECKS = System.getProperty("org.jetbrains.projector.server.debug.collections.checks") == "true"
     private const val DEFAULT_BIG_COLLECTIONS_CHECKS_SIZE = 10_000
