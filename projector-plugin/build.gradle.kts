@@ -35,6 +35,7 @@ dependencies {
   implementation(project(":projector-agent"))
 }
 
+val agentVersion = project(":projector-agent").version
 
 intellij {
   version = "2019.3"
