@@ -219,7 +219,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   }
 
   private fun attachDynamicAgent() {
-    val agentJar = "${getPathToPluginDir()}/projector-agent-1.0-SNAPSHOT.jar"  // todo: need to support version change
+    val agentJar = "${getPathToPluginDir()}/projector-agent-${getAgentVersion()}.jar"
     AgentLauncher.attachAgent(agentJar)
   }
 

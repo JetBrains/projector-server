@@ -40,6 +40,7 @@ import java.awt.Toolkit
 import java.nio.file.Paths
 import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Document
+import java.io.BufferedReader
 import java.io.File
 import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
@@ -49,6 +50,32 @@ import javax.xml.transform.stream.StreamResult
 fun productName(): String = ApplicationInfo.getInstance().versionName
 
 fun getPathToPluginDir() = File(PathUtil.getJarPathForClass(ProjectorService::class.java)).parentFile.toString()
+
+private const val VERSIONS_FILE_PATH = "/META-INF/versions.txt"
+private const val AGENT_VERSION = "agentVersion"
+
+fun getAgentVersion(): String {
+  val content = loadVersionsContent()
+  val map = parseVersions(content)
+  val result = map[AGENT_VERSION]
+  require(result != null) { "Can't get agent version" }
+
+  return result
+}
+
+private fun loadVersionsContent() = ProjectorService::class.java
+  .getResourceAsStream(VERSIONS_FILE_PATH)
+  .bufferedReader()
+  .use(BufferedReader::readText)
+
+private fun parseVersions(content: String): Map<String, String> {
+  return content.split("\n")
+    .filter { it.isNotEmpty() }
+    .map { it.split("=") }
+    .filter { it.size == 2 }
+    .map{ Pair(it.first() ,it[1])}
+    .toMap()
+}
 
 fun isHeadlessProjectorDetected() = Toolkit.getDefaultToolkit()::class.toString() == PToolkit::class.toString()
 
