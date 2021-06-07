@@ -70,7 +70,7 @@ private fun parseVersions(content: String): Map<String, String> {
     .filter { it.isNotEmpty() }
     .map { it.split("=") }
     .filter { it.size == 2 }
-    .map{ Pair(it.first() ,it[1])}
+    .map { (name, version) -> name to version }
     .toMap()
 }
 
