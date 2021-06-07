@@ -58,7 +58,7 @@ fun getAgentVersion(): String {
   val content = loadVersionsContent()
   val map = parseVersions(content)
   val result = map[AGENT_VERSION]
-  require(result != null) { "Can't get agent version" }
+  require(result != null) { "Can't get agent version from $VERSIONS_FILE_PATH: $map" }
 
   return result
 }
