@@ -54,7 +54,7 @@ abstract class GenerateVersionsFile: DefaultTask() {
   @TaskAction
   fun generateVersions() {
     val fullPath = Paths.get(project.buildFile.parent, filePath)
-    val f = File(fullPath.toString())
+    val f = fullPath.toFile()
     f.printWriter().use {
       it.println(getContent())
     }
