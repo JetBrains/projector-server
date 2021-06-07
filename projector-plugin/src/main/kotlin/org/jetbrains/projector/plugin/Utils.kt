@@ -63,10 +63,7 @@ fun getAgentVersion(): String {
   return result
 }
 
-private fun loadVersionsContent() = ProjectorService::class.java
-  .getResourceAsStream(VERSIONS_FILE_PATH)
-  .bufferedReader()
-  .use(BufferedReader::readText)
+private fun loadVersionsContent() = ProjectorService::class.java.getResource(VERSIONS_FILE_PATH).readText()
 
 private fun parseVersions(content: String): Map<String, String> {
   return content.split("\n")
