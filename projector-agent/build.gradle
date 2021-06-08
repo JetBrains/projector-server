@@ -13,6 +13,7 @@ publishing {
 
 def agentClassName = "org.jetbrains.projector.agent.MainAgent"
 def launcherClassName = "org.jetbrains.projector.agent.AgentLauncher"
+version = project(":projector-plugin").version
 
 kotlin {
   explicitApi()
