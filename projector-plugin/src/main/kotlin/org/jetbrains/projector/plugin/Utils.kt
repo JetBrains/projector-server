@@ -51,7 +51,7 @@ fun productName(): String = ApplicationInfo.getInstance().versionName
 
 fun getPathToPluginDir() = File(PathUtil.getJarPathForClass(ProjectorService::class.java)).parentFile.toString()
 
-private const val VERSIONS_FILE_PATH = "/META-INF/versions.txt"
+private const val VERSIONS_FILE_PATH = "/META-INF/pluginVersions.txt"
 private const val AGENT_VERSION = "agentVersion"
 
 fun getAgentVersion(): String {

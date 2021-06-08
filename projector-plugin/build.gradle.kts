@@ -47,7 +47,7 @@ intellij {
 }
 
 abstract class GenerateVersionsFile: DefaultTask() {
-  private val filePath = "src/main/resources/META-INF/versions.txt"
+  private val filePath = "src/main/resources/META-INF/pluginVersions.txt"
   @get:Input
   abstract val agentVersion: Property<String>
 
