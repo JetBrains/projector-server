@@ -66,11 +66,10 @@ abstract class GenerateVersionsFile: DefaultTask() {
   }
 }
 
-tasks.register<GenerateVersionsFile>("versions")
-{
+val versions = task<GenerateVersionsFile>("versions") {
   agentVersion.set(project(":projector-agent").version.toString())
 }
 
 tasks.processResources {
-  dependsOn(tasks["versions"])
+  dependsOn(versions)
 }
