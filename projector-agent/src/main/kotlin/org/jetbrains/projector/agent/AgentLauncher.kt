@@ -105,19 +105,22 @@ public object AgentLauncher {
   }
 
   @JvmStatic
+  @Suppress("deprecation")
   public fun addClientsObserver(observer: Observer) {
     if (addClientsObserverMethod == null) {
-      addClientsObserverMethod = getHandlerClass().getMethod("addClientsObserver", Object::class.java)
+      addClientsObserverMethod = getHandlerClass().getMethod("addClientsObserver", Observer::class.java)
     }
 
     addClientsObserverMethod?.invoke(null, observer)
   }
 
   @JvmStatic
+  @Suppress("deprecation")
   public fun removeClientsObserver(observer: Observer) {
     if (removeClientsObserverMethod == null) {
-      removeClientsObserverMethod = getHandlerClass().getMethod("removeClientsObserver", Object::class.java)
+      removeClientsObserverMethod = getHandlerClass().getMethod("removeClientsObserver", Observer::class.java)
     }
+
     removeClientsObserverMethod?.invoke(null, observer)
   }
 
