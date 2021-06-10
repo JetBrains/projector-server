@@ -39,14 +39,19 @@ import org.jetbrains.projector.plugin.*
 import org.jetbrains.projector.plugin.actions.*
 import java.awt.Component
 import java.awt.event.MouseEvent
+import java.util.*
 import javax.swing.Icon
+import javax.swing.SwingUtilities
 
-
+@Suppress("deprecation")
 class ProjectorStatusWidget(project: Project)
   : EditorBasedWidget(project),
     StatusBarWidget.MultipleTextValuesPresentation,
     StatusBarWidget.Multiframe,
-    ProjectorStateListener {
+    ProjectorStateListener,
+    Observer {
+
+  private var clients = 0
 
   override fun ID(): String = ID
 
@@ -75,6 +80,7 @@ class ProjectorStatusWidget(project: Project)
 
   override fun dispose() {
     ProjectorService.unsubscribe(this)
+    ProjectorService.removeClientsObserver(this)
     super.dispose()
   }
 
@@ -82,7 +88,13 @@ class ProjectorStatusWidget(project: Project)
     myStatusBar?.updateWidget(ID())
   }
 
-  override fun stateChanged() = update()
+  override fun stateChanged() {
+    if (isProjectorRunning()) {
+      ProjectorService.addClientsObserver(this)
+    }
+
+    update()
+  }
 
   private fun updateIcon(): Icon {
     return when {
@@ -94,12 +106,18 @@ class ProjectorStatusWidget(project: Project)
     }
   }
 
-  private fun updateText() = "Projector"
+  private fun updateText(): String {
+    if (isProjectorRunning()) {
+      return "Projector ($clients)"
+    }
+
+    return "Projector"
+  }
 
   private fun updateTooltip(): String {
     return when {
       isActivationNeeded() -> "Activation is needed"
-      isProjectorRunning() -> "Projector is running"
+      isProjectorRunning() -> "Projector is running. Connected clients: $clients"
       isProjectorAutoStarting() -> "Projector is starting"
       isProjectorDisabled() -> "Projector is disabled"
       isHeadlessProjectorDetected() -> "Headless projector detected, plugin is disabled"
@@ -125,12 +143,25 @@ class ProjectorStatusWidget(project: Project)
     action.actionPerformed(event)
   }
 
+  @Suppress("unused")
+  private fun clientObserver(newValue: Int) {
+    clients = newValue
+    SwingUtilities.invokeLater { update() }
+  }
+
   companion object {
-    val ID : String by lazy { ProjectorStatusWidget::class.java.name }
+    val ID: String by lazy { ProjectorStatusWidget::class.java.name }
     private fun getIcon(path: String): Icon = IconLoader.getIcon(path, ProjectorStatusWidget::class.java)
     private val ACTIVATION_NEEDED_SIGN: Icon by lazy { getIcon("/META-INF/activationNeeded.svg") }
     private val RUNNING_SIGN: Icon by lazy { getIcon("/META-INF/runningSign.svg") }
     private val STARTING_SIGN: Icon by lazy { getIcon("/META-INF/startingSign.svg") }
     private val DISABLED_SIGN: Icon by lazy { getIcon("/META-INF/disabledSign.svg") }
+  }
+
+  override fun update(p0: Observable?, p1: Any?) {
+    if (p1 != null) {
+      clients = p1 as Int
+      SwingUtilities.invokeLater { update() }
+    }
   }
 }

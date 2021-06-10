@@ -36,6 +36,7 @@ import org.jetbrains.projector.agent.AgentLauncher
 import org.jetbrains.projector.server.ProjectorServer
 import java.io.File
 import java.nio.file.Path
+import java.util.*
 import java.util.function.Function
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
@@ -241,6 +242,12 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     fun getClientList(): Array<Array<String?>> = AgentLauncher.getClientList()
     fun disconnectAll() = AgentLauncher.disconnectAll()
     fun disconnectByIp(ip: String) = AgentLauncher.disconnectByIp(ip)
+
+    @Suppress("deprecation")
+    fun addClientsObserver(observer: Observer) = AgentLauncher.addClientsObserver(observer)
+
+    @Suppress("deprecation")
+    fun removeClientsObserver(observer: Observer) = AgentLauncher.removeClientsObserver(observer)
 
     fun autostartIfRequired() {
       if (!isHeadlessProjectorDetected() && !isProjectorRunning()) {
