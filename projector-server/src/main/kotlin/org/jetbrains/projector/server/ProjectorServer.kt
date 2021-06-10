@@ -76,10 +76,13 @@ import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.awt.peer.ComponentPeer
 import java.net.InetAddress
+import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
 import javax.swing.SwingUtilities
+import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
 import kotlin.math.roundToLong
+import kotlin.properties.Delegates
 import java.awt.Point as AwtPoint
 
 class ProjectorServer private constructor(
@@ -155,6 +158,7 @@ class ProjectorServer private constructor(
 
     builder.onWsClose = { connection ->
       // todo: we need more informative message, add parameters to this method inside the superclass
+      clientsCount = maxOf(0, clientsCount - 1)
       connection.getAttachment<ClientSettings>()
         ?.let { clientSettings ->
           val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
@@ -168,6 +172,7 @@ class ProjectorServer private constructor(
     }
 
     builder.onWsOpen = { connection ->
+      clientsCount += 1
       val address = connection.remoteSocketAddress?.address?.hostAddress
       connection.setAttachment(ConnectedClientSettings(connectionMillis = System.currentTimeMillis(), address = address))
       logger.info { "$address connected." }
@@ -179,6 +184,28 @@ class ProjectorServer private constructor(
   }
 
   private val httpWsTransport = builder.build()
+
+
+  @Suppress("deprecation")
+  private val clientsObservers: MutableList<Observer> = Collections.synchronizedList(ArrayList<Observer>())
+
+
+  @Suppress("deprecation")
+  fun addClientsObserver(obj: Object) {
+    val observer = obj as Observer
+    clientsObservers.add(observer)
+  }
+
+
+  @Suppress("deprecation")
+  fun removeClientsObserver(obj: Object) {
+    val observer = obj as Observer
+    clientsObservers.remove(observer)
+  }
+
+  private var clientsCount: Int by Delegates.observable(0) { _, _, newValue ->
+    clientsObservers.forEach { it.update(null, newValue) }
+  }
 
   val wasStarted: Boolean by httpWsTransport::wasStarted
 

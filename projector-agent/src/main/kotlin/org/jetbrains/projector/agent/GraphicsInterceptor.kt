@@ -123,6 +123,14 @@ internal object GraphicsInterceptor {
 
   @Suppress("unused")
   @JvmStatic
+  fun addClientsObserver(obj: Object) = server.addClientsObserver(obj)
+
+  @Suppress("unused")
+  @JvmStatic
+  fun removeClientsObserver(obj: Object) = server.removeClientsObserver(obj)
+
+  @Suppress("unused")
+  @JvmStatic
   fun endPaintToOffscreen() {
     currentQueue?.commands?.add(commands) ?: logger.debug { "currentQueue == null" }
     commands = mutableListOf()

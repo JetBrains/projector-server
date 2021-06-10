@@ -27,12 +27,14 @@ import com.sun.tools.attach.VirtualMachine
 import org.jetbrains.projector.agent.GraphicsTransformer.Companion.DRAW_HANDLER_PACKAGE
 import java.lang.management.ManagementFactory
 import java.lang.reflect.Method
+import java.util.*
 
 public object AgentLauncher {
-
   private var getClientListMethod: Method? = null
   private var disconnectAllMethod: Method? = null
   private var disconnectByIpMethod: Method? = null
+  private var addClientsObserverMethod: Method? = null
+  private var removeClientsObserverMethod: Method? = null
 
   private fun checkProperty(name: String, expected: String) {
     val actual = System.getProperty(name)
@@ -100,6 +102,23 @@ public object AgentLauncher {
       disconnectByIpMethod = getHandlerClass().getMethod("disconnectByIp", String::class.java)
     }
     disconnectByIpMethod?.invoke(null, ip)
+  }
+
+  @JvmStatic
+  public fun addClientsObserver(observer: Observer) {
+    if (addClientsObserverMethod == null) {
+      addClientsObserverMethod = getHandlerClass().getMethod("addClientsObserver", Object::class.java)
+    }
+
+    addClientsObserverMethod?.invoke(null, observer)
+  }
+
+  @JvmStatic
+  public fun removeClientsObserver(observer: Observer) {
+    if (removeClientsObserverMethod == null) {
+      removeClientsObserverMethod = getHandlerClass().getMethod("removeClientsObserver", Object::class.java)
+    }
+    removeClientsObserverMethod?.invoke(null, observer)
   }
 
   @JvmStatic
