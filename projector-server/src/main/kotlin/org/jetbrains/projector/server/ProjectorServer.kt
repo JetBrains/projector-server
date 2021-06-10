@@ -185,23 +185,14 @@ class ProjectorServer private constructor(
 
   private val httpWsTransport = builder.build()
 
-
   @Suppress("deprecation")
   private val clientsObservers: MutableList<Observer> = Collections.synchronizedList(ArrayList<Observer>())
 
+  @Suppress("deprecation")
+  fun addClientsObserver(observer: Observer) = clientsObservers.add(observer)
 
   @Suppress("deprecation")
-  fun addClientsObserver(obj: Object) {
-    val observer = obj as Observer
-    clientsObservers.add(observer)
-  }
-
-
-  @Suppress("deprecation")
-  fun removeClientsObserver(obj: Object) {
-    val observer = obj as Observer
-    clientsObservers.remove(observer)
-  }
+  fun removeClientsObserver(observer: Observer) = clientsObservers.remove(observer)
 
   private var clientsCount: Int by Delegates.observable(0) { _, _, newValue ->
     clientsObservers.forEach { it.update(null, newValue) }

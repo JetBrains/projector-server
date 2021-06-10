@@ -38,7 +38,9 @@ import sun.awt.NullComponentPeer
 import sun.java2d.SunGraphics2D
 import java.awt.*
 import java.awt.peer.ComponentPeer
+import java.util.*
 import javax.swing.JComponent
+import kotlin.collections.HashSet
 
 internal object GraphicsInterceptor {
   private var commands = mutableListOf<ServerWindowEvent>()
@@ -121,13 +123,13 @@ internal object GraphicsInterceptor {
     server.disconnectByIp(ip)
   }
 
-  @Suppress("unused")
+  @Suppress("unused", "deprecation")
   @JvmStatic
-  fun addClientsObserver(obj: Object) = server.addClientsObserver(obj)
+  fun addClientsObserver(obj: Observer) = server.addClientsObserver(obj)
 
-  @Suppress("unused")
+  @Suppress("unused", "deprecation")
   @JvmStatic
-  fun removeClientsObserver(obj: Object) = server.removeClientsObserver(obj)
+  fun removeClientsObserver(obj: Observer) = server.removeClientsObserver(obj)
 
   @Suppress("unused")
   @JvmStatic
