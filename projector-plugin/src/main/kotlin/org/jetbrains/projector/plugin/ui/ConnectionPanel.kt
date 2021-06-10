@@ -31,11 +31,14 @@ import org.jetbrains.projector.server.util.AsyncHostResolver
 import org.jetbrains.projector.server.util.Host
 import org.jetbrains.projector.server.util.ResolvedHostSubscriber
 import java.awt.Dimension
+import java.util.*
 import javax.swing.*
 import javax.swing.table.DefaultTableModel
 
-
-class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(), ResolvedHostSubscriber {
+@Suppress("deprecation")
+class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
+                                                                 ResolvedHostSubscriber,
+                                                                 Observer {
   private val title = JLabel("Current connections:")
   private val disconnectButton = JButton("Disconnect Selected", AllIcons.Actions.Close).apply {
     addActionListener {
@@ -58,6 +61,7 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(), Resol
 
   private val stopButton = JButton("Stop Remote Access", AllIcons.Actions.Exit).apply {
     addActionListener {
+      ProjectorService.removeClientsObserver(this@ConnectionPanel)
       ProjectorService.disable()
     }
   }
@@ -80,6 +84,8 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(), Resol
       LinearPanelBuilder(this).addNextComponent(title, topGap = 5, bottomGap = 5)
         .startNextLine().addNextComponent(JScrollPane(clientTable))
         .startNextLine().addNextComponent(buttonPanel, topGap = 5)
+
+      ProjectorService.addClientsObserver(this)
 
       update()
     }
@@ -117,5 +123,9 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(), Resol
         clientTable.model.setValueAt(host.name, i, 1)
       }
     }
+  }
+
+  override fun update(p0: Observable?, p1: Any?) {
+    update()
   }
 }
