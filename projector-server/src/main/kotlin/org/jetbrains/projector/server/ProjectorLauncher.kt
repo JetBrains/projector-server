@@ -67,7 +67,8 @@ object ProjectorLauncher {
     ProjectorFontProvider.isAgent = false
   }
 
-  private fun runProjectorServer(): Boolean {
+  @JvmStatic
+  fun runProjectorServer(): Boolean {
     System.setProperty(ProjectorServer.ENABLE_PROPERTY_NAME, true.toString())
 
     assert(ProjectorServer.isEnabled) { "Can't start the ${ProjectorServer::class.simpleName} because it's disabled..." }
