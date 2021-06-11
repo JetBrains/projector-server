@@ -38,18 +38,20 @@ import com.intellij.util.Consumer
 import org.jetbrains.projector.plugin.*
 import org.jetbrains.projector.plugin.actions.*
 import java.awt.Component
+import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 import java.util.*
 import javax.swing.Icon
 import javax.swing.SwingUtilities
 
-@Suppress("deprecation")
 class ProjectorStatusWidget(project: Project)
   : EditorBasedWidget(project),
     StatusBarWidget.MultipleTextValuesPresentation,
     StatusBarWidget.Multiframe,
     ProjectorStateListener,
-    Observer {
+    PropertyChangeListener {
 
   private var clients = 0
 
@@ -143,10 +145,11 @@ class ProjectorStatusWidget(project: Project)
     action.actionPerformed(event)
   }
 
-  @Suppress("unused")
-  private fun clientObserver(newValue: Int) {
-    clients = newValue
-    SwingUtilities.invokeLater { update() }
+  override fun propertyChange(event: PropertyChangeEvent?) {
+    event?.let {
+      clients = event.newValue as Int
+      SwingUtilities.invokeLater { update() }
+    }
   }
 
   companion object {
@@ -156,12 +159,5 @@ class ProjectorStatusWidget(project: Project)
     private val RUNNING_SIGN: Icon by lazy { getIcon("/META-INF/runningSign.svg") }
     private val STARTING_SIGN: Icon by lazy { getIcon("/META-INF/startingSign.svg") }
     private val DISABLED_SIGN: Icon by lazy { getIcon("/META-INF/disabledSign.svg") }
-  }
-
-  override fun update(unused: Observable?, clientsCount: Any?) {
-    clientsCount?.let {
-      clients = clientsCount as Int
-      SwingUtilities.invokeLater { update() }
-    }
   }
 }
