@@ -30,9 +30,10 @@ plugins {
 
 
 val projectorClientVersion: String by project
+val projectorClientGroup: String by project
 
 dependencies {
-  implementation("com.github.JetBrains.projector-client:projector-server-core:$projectorClientVersion")
+  implementation("$projectorClientGroup:projector-server-core:$projectorClientVersion")
   implementation(project(":projector-agent"))
 }
 
