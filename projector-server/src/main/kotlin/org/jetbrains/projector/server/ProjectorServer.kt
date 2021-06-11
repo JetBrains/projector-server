@@ -131,11 +131,6 @@ class ProjectorServer private constructor(
 
         is SetUpClientSettings -> {
           // this means that the client has loaded fonts and is ready to draw
-
-          clientsCountLock.withLock {
-            clientsCount += 1
-          }
-
           connection.setAttachment(ReadyClientSettings(
             clientSettings.connectionMillis,
             clientSettings.address,
@@ -166,16 +161,11 @@ class ProjectorServer private constructor(
 
     builder.onWsClose = { connection ->
       // todo: we need more informative message, add parameters to this method inside the superclass
-
+      updateClientCount()
       connection.getAttachment<ClientSettings>()
         ?.let { clientSettings ->
           val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
           logger.info { "${clientSettings.address} disconnected, was connected for ${connectionTime.roundToLong()} s." }
-
-          clientsCountLock.withLock {
-            clientsCount = maxOf(0, clientsCount - 1)
-          }
-
         } ?: logger.info {
         val address = connection.remoteSocketAddress?.address?.hostAddress
         "Client from address $address is disconnected. This client hasn't clientSettings. " +
@@ -206,6 +196,15 @@ class ProjectorServer private constructor(
     clientsObservers.forEach { listener ->
       listener.propertyChange(PropertyChangeEvent(this, "clientsCount", null, newValue))
     }
+  }
+
+  private fun updateClientCount() {
+    var count = 0
+    httpWsTransport.forEachOpenedConnection {
+      ++count
+    }
+
+    clientsCountLock.withLock { clientsCount = count }
   }
 
   val wasStarted: Boolean by httpWsTransport::wasStarted
@@ -592,6 +591,8 @@ class ProjectorServer private constructor(
         toServerHandshakeEvent.displays.map { Rectangle(it.x, it.y, it.width, it.height) to it.scaleFactor })
       with(toServerHandshakeEvent.displays[0]) { resize(width, height) }
     }
+
+    updateClientCount()
   }
 
   private fun sendPictures(dataToSend: List<ServerEvent>) {
