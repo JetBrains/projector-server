@@ -35,6 +35,8 @@ pluginManagement {
 
 rootProject.name = "projector-server"
 
+val projectorClientGroup: String by settings
+
 val localProperties = Properties().apply {
   try {
     load(File(rootDir, "local.properties").inputStream())
@@ -47,9 +49,9 @@ val localProperties = Properties().apply {
 if (localProperties["useLocalProjectorClient"] == "true") {
   includeBuild("../projector-client") {
     dependencySubstitution {
-      substitute(module("com.github.JetBrains.projector-client:projector-common")).with(project(":projector-common"))
-      substitute(module("com.github.JetBrains.projector-client:projector-server-core")).with(project(":projector-server-core"))
-      substitute(module("com.github.JetBrains.projector-client:projector-util-logging")).with(project(":projector-util-logging"))
+      substitute(module("$projectorClientGroup:projector-common")).with(project(":projector-common"))
+      substitute(module("$projectorClientGroup:projector-server-core")).with(project(":projector-server-core"))
+      substitute(module("$projectorClientGroup:projector-util-logging")).with(project(":projector-util-logging"))
     }
   }
 }

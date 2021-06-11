@@ -36,9 +36,10 @@ publishing {
 
 val kotlinVersion: String by project
 val projectorClientVersion: String by project
+val projectorClientGroup: String by project
 version = project(":projector-server").version
 
 dependencies {
-  implementation("com.github.JetBrains.projector-client:projector-util-logging:$projectorClientVersion")
+  implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
   testImplementation(kotlin("test", kotlinVersion))
 }
