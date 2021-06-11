@@ -25,6 +25,7 @@ package org.jetbrains.projector.agent
 
 import com.sun.tools.attach.VirtualMachine
 import org.jetbrains.projector.agent.GraphicsTransformer.Companion.DRAW_HANDLER_PACKAGE
+import java.beans.PropertyChangeListener
 import java.lang.management.ManagementFactory
 import java.lang.reflect.Method
 import java.util.*
@@ -105,23 +106,21 @@ public object AgentLauncher {
   }
 
   @JvmStatic
-  @Suppress("deprecation")
-  public fun addClientsObserver(observer: Observer) {
+  public fun addClientsObserver(listener: PropertyChangeListener) {
     if (addClientsObserverMethod == null) {
-      addClientsObserverMethod = getHandlerClass().getMethod("addClientsObserver", Observer::class.java)
+      addClientsObserverMethod = getHandlerClass().getMethod("addClientsObserver", PropertyChangeListener::class.java)
     }
 
-    addClientsObserverMethod?.invoke(null, observer)
+    addClientsObserverMethod?.invoke(null, listener)
   }
 
   @JvmStatic
-  @Suppress("deprecation")
-  public fun removeClientsObserver(observer: Observer) {
+  public fun removeClientsObserver(listener: PropertyChangeListener) {
     if (removeClientsObserverMethod == null) {
-      removeClientsObserverMethod = getHandlerClass().getMethod("removeClientsObserver", Observer::class.java)
+      removeClientsObserverMethod = getHandlerClass().getMethod("removeClientsObserver", PropertyChangeListener::class.java)
     }
 
-    removeClientsObserverMethod?.invoke(null, observer)
+    removeClientsObserverMethod?.invoke(null, listener)
   }
 
   @JvmStatic

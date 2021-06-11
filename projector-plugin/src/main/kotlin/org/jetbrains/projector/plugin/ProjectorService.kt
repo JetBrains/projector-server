@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.projector.agent.AgentLauncher
 import org.jetbrains.projector.server.ProjectorServer
+import java.beans.PropertyChangeListener
 import java.io.File
 import java.nio.file.Path
 import java.util.*
@@ -242,12 +243,8 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     fun getClientList(): Array<Array<String?>> = AgentLauncher.getClientList()
     fun disconnectAll() = AgentLauncher.disconnectAll()
     fun disconnectByIp(ip: String) = AgentLauncher.disconnectByIp(ip)
-
-    @Suppress("deprecation")
-    fun addClientsObserver(observer: Observer) = AgentLauncher.addClientsObserver(observer)
-
-    @Suppress("deprecation")
-    fun removeClientsObserver(observer: Observer) = AgentLauncher.removeClientsObserver(observer)
+    fun addClientsObserver(listener: PropertyChangeListener) = AgentLauncher.addClientsObserver(listener)
+    fun removeClientsObserver(listener: PropertyChangeListener) = AgentLauncher.removeClientsObserver(listener)
 
     fun autostartIfRequired() {
       if (!isHeadlessProjectorDetected() && !isProjectorRunning()) {

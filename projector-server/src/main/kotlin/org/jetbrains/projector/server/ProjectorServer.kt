@@ -75,6 +75,8 @@ import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
 import java.awt.peer.ComponentPeer
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -195,18 +197,15 @@ class ProjectorServer private constructor(
 
   private val httpWsTransport = builder.build()
 
-  @Suppress("deprecation")
-  private val clientsObservers: MutableList<Observer> = Collections.synchronizedList(ArrayList<Observer>())
-
-  @Suppress("deprecation")
-  fun addClientsObserver(observer: Observer) = clientsObservers.add(observer)
-
-  @Suppress("deprecation")
-  fun removeClientsObserver(observer: Observer) = clientsObservers.remove(observer)
+  private val clientsObservers: MutableList<PropertyChangeListener> = Collections.synchronizedList(ArrayList<PropertyChangeListener>())
+  fun addClientsObserver(listener: PropertyChangeListener) = clientsObservers.add(listener)
+  fun removeClientsObserver(listener: PropertyChangeListener) = clientsObservers.remove(listener)
 
   private val clientsCountLock = ReentrantLock()
   private var clientsCount: Int by Delegates.observable(0) { _, _, newValue ->
-    clientsObservers.forEach { it.update(null, newValue) }
+    clientsObservers.forEach { listener ->
+      listener.propertyChange(PropertyChangeEvent(this, "clientsCount", null, newValue))
+    }
   }
 
   val wasStarted: Boolean by httpWsTransport::wasStarted

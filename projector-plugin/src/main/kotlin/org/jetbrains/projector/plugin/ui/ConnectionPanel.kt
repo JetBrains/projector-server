@@ -31,14 +31,15 @@ import org.jetbrains.projector.server.util.AsyncHostResolver
 import org.jetbrains.projector.server.util.Host
 import org.jetbrains.projector.server.util.ResolvedHostSubscriber
 import java.awt.Dimension
+import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 import java.util.*
 import javax.swing.*
 import javax.swing.table.DefaultTableModel
 
-@Suppress("deprecation")
 class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
                                                                  ResolvedHostSubscriber,
-                                                                 Observer {
+                                                                 PropertyChangeListener {
   private val title = JLabel("Current connections:")
   private val disconnectButton = JButton("Disconnect Selected", AllIcons.Actions.Close).apply {
     addActionListener {
@@ -125,7 +126,7 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
     }
   }
 
-  override fun update(p0: Observable?, p1: Any?) {
+  override fun propertyChange(event: PropertyChangeEvent?) {
     update()
   }
 }

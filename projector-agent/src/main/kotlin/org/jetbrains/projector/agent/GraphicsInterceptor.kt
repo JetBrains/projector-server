@@ -38,6 +38,7 @@ import sun.awt.NullComponentPeer
 import sun.java2d.SunGraphics2D
 import java.awt.*
 import java.awt.peer.ComponentPeer
+import java.beans.PropertyChangeListener
 import java.util.*
 import javax.swing.JComponent
 import kotlin.collections.HashSet
@@ -123,13 +124,13 @@ internal object GraphicsInterceptor {
     server.disconnectByIp(ip)
   }
 
-  @Suppress("unused", "deprecation")
+  @Suppress("unused")
   @JvmStatic
-  fun addClientsObserver(obj: Observer) = server.addClientsObserver(obj)
+  fun addClientsObserver(listener: PropertyChangeListener) = server.addClientsObserver(listener)
 
-  @Suppress("unused", "deprecation")
+  @Suppress("unused")
   @JvmStatic
-  fun removeClientsObserver(obj: Observer) = server.removeClientsObserver(obj)
+  fun removeClientsObserver(listener: PropertyChangeListener) = server.removeClientsObserver(listener)
 
   @Suppress("unused")
   @JvmStatic
