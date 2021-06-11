@@ -158,9 +158,9 @@ class ProjectorStatusWidget(project: Project)
     private val DISABLED_SIGN: Icon by lazy { getIcon("/META-INF/disabledSign.svg") }
   }
 
-  override fun update(p0: Observable?, p1: Any?) {
-    if (p1 != null) {
-      clients = p1 as Int
+  override fun update(unused: Observable?, clientsCount: Any?) {
+    clientsCount?.let {
+      clients = clientsCount as Int
       SwingUtilities.invokeLater { update() }
     }
   }
