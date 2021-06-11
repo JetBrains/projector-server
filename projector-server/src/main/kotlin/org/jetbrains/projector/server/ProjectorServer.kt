@@ -161,7 +161,7 @@ class ProjectorServer private constructor(
 
     builder.onWsClose = { connection ->
       // todo: we need more informative message, add parameters to this method inside the superclass
-      updateClientCount()
+      updateClientsCount()
       connection.getAttachment<ClientSettings>()
         ?.let { clientSettings ->
           val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
@@ -198,7 +198,7 @@ class ProjectorServer private constructor(
     }
   }
 
-  private fun updateClientCount() {
+  private fun updateClientsCount() {
     var count = 0
     httpWsTransport.forEachOpenedConnection {
       ++count
@@ -592,7 +592,7 @@ class ProjectorServer private constructor(
       with(toServerHandshakeEvent.displays[0]) { resize(width, height) }
     }
 
-    updateClientCount()
+    updateClientsCount()
   }
 
   private fun sendPictures(dataToSend: List<ServerEvent>) {
