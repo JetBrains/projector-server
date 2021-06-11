@@ -78,9 +78,11 @@ import java.awt.peer.ComponentPeer
 import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.locks.ReentrantLock
 import javax.swing.SwingUtilities
 import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
+import kotlin.concurrent.withLock
 import kotlin.math.roundToLong
 import kotlin.properties.Delegates
 import java.awt.Point as AwtPoint
@@ -158,7 +160,9 @@ class ProjectorServer private constructor(
 
     builder.onWsClose = { connection ->
       // todo: we need more informative message, add parameters to this method inside the superclass
-      clientsCount = maxOf(0, clientsCount - 1)
+      clientsCountLock.withLock {
+        clientsCount = maxOf(0, clientsCount - 1)
+      }
       connection.getAttachment<ClientSettings>()
         ?.let { clientSettings ->
           val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
@@ -172,7 +176,9 @@ class ProjectorServer private constructor(
     }
 
     builder.onWsOpen = { connection ->
-      clientsCount += 1
+      clientsCountLock.withLock {
+        clientsCount += 1
+      }
       val address = connection.remoteSocketAddress?.address?.hostAddress
       connection.setAttachment(ConnectedClientSettings(connectionMillis = System.currentTimeMillis(), address = address))
       logger.info { "$address connected." }
@@ -194,6 +200,7 @@ class ProjectorServer private constructor(
   @Suppress("deprecation")
   fun removeClientsObserver(observer: Observer) = clientsObservers.remove(observer)
 
+  private val clientsCountLock = ReentrantLock()
   private var clientsCount: Int by Delegates.observable(0) { _, _, newValue ->
     clientsObservers.forEach { it.update(null, newValue) }
   }
