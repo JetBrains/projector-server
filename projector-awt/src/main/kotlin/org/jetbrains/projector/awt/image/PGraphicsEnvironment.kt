@@ -25,6 +25,7 @@
 
 package org.jetbrains.projector.awt.image
 
+import org.jetbrains.projector.awt.PWindow
 import org.jetbrains.projector.awt.font.PFontManager
 import sun.awt.image.BufImgSurfaceData
 import sun.java2d.SunGraphics2D
@@ -39,6 +40,9 @@ class PGraphicsEnvironment : SunGraphicsEnvironment() {
     var clientDoesWindowManagement: Boolean = false
     val devices = ArrayList<PGraphicsDevice>().apply { add(PGraphicsDevice("Screen0")) }
 
+    // this is questionable from garbage collection point of view, but given that normally at most two instances of PGE should be created, it's not that bad
+    private val instances = ArrayList<PGraphicsEnvironment>()
+
     val defaultDevice: PGraphicsDevice
       get() = devices[0]
 
@@ -50,7 +54,17 @@ class PGraphicsEnvironment : SunGraphicsEnvironment() {
         element.scaleFactor = it.second
         devices.add(element)
       }
+      fireDisplaysChanged()
     }
+
+    private fun fireDisplaysChanged() {
+      instances.forEach { it.displayChanged() }
+      PWindow.windows.forEach { it.updateGraphics() }
+    }
+  }
+
+  init {
+    instances.add(this)
   }
 
   val xResolution: Double = 96.0
@@ -83,6 +97,7 @@ class PGraphicsEnvironment : SunGraphicsEnvironment() {
 
   fun setDefaultDeviceSize(width: Int, height: Int) {
     defaultDevice.bounds.setSize(width, height)
+    fireDisplaysChanged()
   }
 
   override fun getNumScreens(): Int = devices.size

@@ -354,6 +354,10 @@ class ProjectorServer private constructor(
     Do exhaustive when (message) {
       is ClientResizeEvent -> SwingUtilities.invokeLater { resize(message.size.width, message.size.height) }
 
+      is ClientDisplaySetChangeEvent -> SwingUtilities.invokeLater {
+        PGraphicsEnvironment.setupDisplays(message.newDisplays.map { Rectangle(it.x, it.y, it.width, it.height) to it.scaleFactor })
+      }
+
       is ClientMouseEvent -> SwingUtilities.invokeLater {
         val shiftedMessage = message.shift(PGraphicsEnvironment.defaultDevice.clientShift)
 
