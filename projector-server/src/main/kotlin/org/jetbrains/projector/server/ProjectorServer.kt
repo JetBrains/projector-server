@@ -130,6 +130,10 @@ class ProjectorServer private constructor(
         is SetUpClientSettings -> {
           // this means that the client has loaded fonts and is ready to draw
 
+          clientsCountLock.withLock {
+            clientsCount += 1
+          }
+
           connection.setAttachment(ReadyClientSettings(
             clientSettings.connectionMillis,
             clientSettings.address,
@@ -160,13 +164,16 @@ class ProjectorServer private constructor(
 
     builder.onWsClose = { connection ->
       // todo: we need more informative message, add parameters to this method inside the superclass
-      clientsCountLock.withLock {
-        clientsCount = maxOf(0, clientsCount - 1)
-      }
+
       connection.getAttachment<ClientSettings>()
         ?.let { clientSettings ->
           val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
           logger.info { "${clientSettings.address} disconnected, was connected for ${connectionTime.roundToLong()} s." }
+
+          clientsCountLock.withLock {
+            clientsCount = maxOf(0, clientsCount - 1)
+          }
+
         } ?: logger.info {
         val address = connection.remoteSocketAddress?.address?.hostAddress
         "Client from address $address is disconnected. This client hasn't clientSettings. " +
@@ -176,9 +183,6 @@ class ProjectorServer private constructor(
     }
 
     builder.onWsOpen = { connection ->
-      clientsCountLock.withLock {
-        clientsCount += 1
-      }
       val address = connection.remoteSocketAddress?.address?.hostAddress
       connection.setAttachment(ConnectedClientSettings(connectionMillis = System.currentTimeMillis(), address = address))
       logger.info { "$address connected." }
