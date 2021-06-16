@@ -33,7 +33,6 @@ import org.jetbrains.projector.server.util.ResolvedHostSubscriber
 import java.awt.Dimension
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
-import java.util.*
 import javax.swing.*
 import javax.swing.table.DefaultTableModel
 
@@ -60,10 +59,22 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
     }
   }
 
-  private val stopButton = JButton("Stop Remote Access", AllIcons.Actions.Exit).apply {
+  private val toggleAccessButton = JButton("Stop Remote Access", AllIcons.Actions.Exit).apply {
     addActionListener {
       ProjectorService.removeClientsObserver(this@ConnectionPanel)
-      ProjectorService.disable()
+      toggleAccess()
+    }
+  }
+
+  private fun toggleAccess() {
+    if (toggleAccessButton.icon == AllIcons.Actions.Exit) {
+      toggleAccessButton.text = "Start Remote Access"
+      toggleAccessButton.icon = AllIcons.Actions.Menu_open
+      ProjectorService.stopServer()
+    } else {
+      toggleAccessButton.text = "Stop Remote Access"
+      toggleAccessButton.icon = AllIcons.Actions.Exit
+      ProjectorService.startServer()
     }
   }
 
@@ -80,7 +91,7 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
       val buttonPanel = JPanel()
       LinearPanelBuilder(buttonPanel)
         .addNextComponent(updateButton).addNextComponent(disconnectButton)
-        .addNextComponent(disconnectAllButton).addNextComponent(stopButton)
+        .addNextComponent(disconnectAllButton).addNextComponent(toggleAccessButton)
 
       LinearPanelBuilder(this).addNextComponent(title, topGap = 5, bottomGap = 5)
         .startNextLine().addNextComponent(JScrollPane(clientTable))

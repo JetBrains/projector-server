@@ -58,10 +58,7 @@ import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshakeEncoder
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshakeDecoder
 import org.jetbrains.projector.server.core.util.*
-import org.jetbrains.projector.server.core.websocket.HttpWsClientBuilder
-import org.jetbrains.projector.server.core.websocket.HttpWsServerBuilder
-import org.jetbrains.projector.server.core.websocket.MultiTransportBuilder
-import org.jetbrains.projector.server.core.websocket.TransportBuilder
+import org.jetbrains.projector.server.core.websocket.*
 import org.jetbrains.projector.server.idea.CaretInfoUpdater
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
@@ -90,35 +87,14 @@ import kotlin.properties.Delegates
 import java.awt.Point as AwtPoint
 
 class ProjectorServer private constructor(
-  builder: TransportBuilder,
+  private val builder: TransportBuilder,
   private val laterInvokator: LaterInvokator,
   private val isAgent: Boolean,
 ) {
 
   init {
     builder.onStart = {
-      updateThread = thread(isDaemon = true) {
-        // TODO: remove this thread: encapsulate the logic in an extracted class and maybe even don't use threads but coroutines' channels
-        logger.debug { "Daemon thread starts" }
-        while (!Thread.currentThread().isInterrupted) {
-          try {
-            val dataToSend = createDataToSend()  // creating data even if there are no clients to avoid memory leaks
 
-            sendPictures(dataToSend)
-
-            Thread.sleep(10)
-          }
-          catch (ex: InterruptedException) {
-            Thread.currentThread().interrupt()
-          }
-          catch (t: Throwable) {
-            logger.error(t) { "Unhandled in daemon thread has happened" }
-          }
-        }
-        logger.debug { "Daemon thread finishes" }
-      }
-
-      caretInfoUpdater.start()
     }
 
     builder.onWsMessageByteBuffer = { _, message ->
@@ -185,7 +161,7 @@ class ProjectorServer private constructor(
     }
   }
 
-  private val httpWsTransport = builder.build()
+  private var httpWsTransport = builder.build()
 
   private val clientsObservers: MutableList<PropertyChangeListener> = Collections.synchronizedList(ArrayList<PropertyChangeListener>())
   fun addClientsObserver(listener: PropertyChangeListener) = clientsObservers.add(listener)
@@ -261,6 +237,27 @@ class ProjectorServer private constructor(
     PDesktopPeer.browseUriCallback = { link ->
       markdownQueue.add(ServerMarkdownEvent.ServerMarkdownBrowseUriEvent(link))
     }
+  }
+
+  private fun createUpdateThread(): Thread = thread(isDaemon = true) {
+    // TODO: remove this thread: encapsulate the logic in an extracted class and maybe even don't use threads but coroutines' channels
+    logger.debug { "Daemon thread starts" }
+    while (!Thread.currentThread().isInterrupted) {
+      try {
+        val dataToSend = createDataToSend()  // creating data even if there are no clients to avoid memory leaks
+
+        sendPictures(dataToSend)
+
+        Thread.sleep(10)
+      }
+      catch (ex: InterruptedException) {
+        Thread.currentThread().interrupt()
+      }
+      catch (t: Throwable) {
+        logger.error(t) { "Unhandled in daemon thread has happened" }
+      }
+    }
+    logger.debug { "Daemon thread finishes" }
   }
 
   @OptIn(ExperimentalStdlibApi::class)
@@ -636,18 +633,22 @@ class ProjectorServer private constructor(
   }
 
   fun start() {
+    updateThread = createUpdateThread()
+    caretInfoUpdater.start()
+    httpWsTransport = builder.build()
+
     httpWsTransport.start()
   }
 
   @JvmOverloads
   fun stop(timeout: Int = 0) {
     httpWsTransport.stop(timeout)
+    caretInfoUpdater.stop()
 
     if (::updateThread.isInitialized) {
       updateThread.interrupt()
     }
 
-    caretInfoUpdater.stop()
   }
 
   fun getClientList(): Array<Array<String?>> {

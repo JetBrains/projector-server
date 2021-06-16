@@ -36,6 +36,8 @@ public object AgentLauncher {
   private var disconnectByIpMethod: Method? = null
   private var addClientsObserverMethod: Method? = null
   private var removeClientsObserverMethod: Method? = null
+  private var stopServerMethod: Method? = null
+  private var startServerMethod: Method? = null
 
   private fun checkProperty(name: String, expected: String) {
     val actual = System.getProperty(name)
@@ -122,6 +124,21 @@ public object AgentLauncher {
 
     removeClientsObserverMethod?.invoke(null, listener)
   }
+
+  public fun startServer() {
+    if (startServerMethod == null) {
+      startServerMethod = getHandlerClass().getMethod("startServer")
+    }
+    startServerMethod?.invoke(null)
+  }
+
+  public fun stopServer(timeout: Int) {
+    if (stopServerMethod == null) {
+      stopServerMethod = getHandlerClass().getMethod("stopServer", Int::class.java)
+    }
+    stopServerMethod?.invoke(null, timeout)
+  }
+
 
   @JvmStatic
   public fun main(args: Array<String>) {
