@@ -104,6 +104,7 @@ class ProjectorStatusWidget(project: Project)
       isProjectorRunning() -> RUNNING_SIGN
       isProjectorAutoStarting() -> STARTING_SIGN
       isProjectorDisabled() -> DISABLED_SIGN
+      isProjectorStopped() -> STOPPED_SIGN
       else -> DISABLED_SIGN
     }
   }
@@ -123,6 +124,7 @@ class ProjectorStatusWidget(project: Project)
       isProjectorAutoStarting() -> "Projector is starting"
       isProjectorDisabled() -> "Projector is disabled"
       isHeadlessProjectorDetected() -> "Headless projector detected, plugin is disabled"
+      isProjectorStopped() -> "Projector is stopped"
       else -> "Impossible state"
     }
   }
@@ -134,6 +136,7 @@ class ProjectorStatusWidget(project: Project)
       isProjectorAutoStarting() -> fireAction(WaitForStartAction.ID)
       isProjectorDisabled() -> fireAction(EnableAction.ID)
       isHeadlessProjectorDetected() -> fireAction(HeadlessProjectorAction.ID)
+      isProjectorStopped() -> fireAction(SessionAction.ID)
     }
   }
 
@@ -159,5 +162,6 @@ class ProjectorStatusWidget(project: Project)
     private val RUNNING_SIGN: Icon by lazy { getIcon("/META-INF/runningSign.svg") }
     private val STARTING_SIGN: Icon by lazy { getIcon("/META-INF/startingSign.svg") }
     private val DISABLED_SIGN: Icon by lazy { getIcon("/META-INF/disabledSign.svg") }
+    private val STOPPED_SIGN: Icon by lazy { getIcon("/META-INF/stoppedSign.svg") }
   }
 }

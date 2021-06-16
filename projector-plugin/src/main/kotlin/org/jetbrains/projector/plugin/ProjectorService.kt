@@ -25,19 +25,15 @@
 package org.jetbrains.projector.plugin
 
 import com.intellij.diagnostic.VMOptions
-import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.projector.agent.AgentLauncher
 import org.jetbrains.projector.server.ProjectorServer
 import java.beans.PropertyChangeListener
 import java.io.File
 import java.nio.file.Path
-import java.util.function.Function
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 
@@ -46,6 +42,7 @@ enum class EnabledState {
   NO_VM_OPTIONS_AND_DISABLED,
   HAS_VM_OPTIONS_AND_DISABLED,
   HAS_VM_OPTIONS_AND_ENABLED,
+  STOPPED,
 }
 
 class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
@@ -164,15 +161,18 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   }
 
   private fun disable() {
-    if (confirmRestart("To disable Projector, restart is needed. Can I restart the IDE now?")) {
-      stateChanged()
-      autostart = false
-      restartIde()
-    }
+    AgentLauncher.stopServer(0)
+    enabled = EnabledState.STOPPED
+    stateChanged()
   }
 
   private fun enable() {
-    attachDynamicAgent()
+    if (enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED) {
+      attachDynamicAgent()
+    }
+    else {
+      AgentLauncher.startServer()
+    }
     enabled = EnabledState.HAS_VM_OPTIONS_AND_ENABLED
     stateChanged()
   }
@@ -209,21 +209,6 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     return Pair(s, writeFile)
   }
 
-  private fun confirmRestart(messageString: String): Boolean {
-    val title = "Restart is needed..."
-    val message = Function<String, String> { messageString }
-    return PluginManagerConfigurable.showRestartDialog(title, message) == Messages.YES
-  }
-
-  private fun restartIde() {
-    (ApplicationManager.getApplication() as ApplicationEx).restart(true)
-  }
-
-  private fun attachDynamicAgent() {
-    val agentJar = "${getPathToPluginDir()}/projector-agent-${getAgentVersion()}.jar"
-    AgentLauncher.attachAgent(agentJar)
-  }
-
   companion object {
     private val instance: ProjectorService by lazy { ApplicationManager.getApplication().getComponent(ProjectorService::class.java)!! }
 
@@ -231,22 +216,20 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
 
     fun unsubscribe(l: ProjectorStateListener) = instance.unsubscribe(l)
 
-    fun enable(session: Session) {
-      currentSession = session
+    fun enable(session: Session?) {
+      if (session != null)
+        currentSession = session
+
       instance.enable()
     }
 
     fun disable() = instance.disable()
     fun activate() = instance.activate()
-
     fun getClientList(): Array<Array<String?>> = AgentLauncher.getClientList()
     fun disconnectAll() = AgentLauncher.disconnectAll()
     fun disconnectByIp(ip: String) = AgentLauncher.disconnectByIp(ip)
     fun addClientsObserver(listener: PropertyChangeListener) = AgentLauncher.addClientsObserver(listener)
     fun removeClientsObserver(listener: PropertyChangeListener) = AgentLauncher.removeClientsObserver(listener)
-    fun startServer() = AgentLauncher.startServer()
-    fun stopServer(timeout: Int = 0) = AgentLauncher.stopServer(timeout)
-
     fun autostartIfRequired() {
       if (!isHeadlessProjectorDetected() && !isProjectorRunning()) {
         with(ProjectorService) {

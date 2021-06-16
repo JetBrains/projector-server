@@ -27,6 +27,7 @@ package org.jetbrains.projector.plugin.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ui.table.JBTable
 import org.jetbrains.projector.plugin.ProjectorService
+import org.jetbrains.projector.plugin.isProjectorStopped
 import org.jetbrains.projector.server.util.AsyncHostResolver
 import org.jetbrains.projector.server.util.Host
 import org.jetbrains.projector.server.util.ResolvedHostSubscriber
@@ -59,23 +60,27 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
     }
   }
 
-  private val toggleAccessButton = JButton("Stop Remote Access", AllIcons.Actions.Exit).apply {
+  private val toggleAccessButton = JButton(getToggleButtonText(), getToggleButtonIcon()).apply {
     addActionListener {
       ProjectorService.removeClientsObserver(this@ConnectionPanel)
       toggleAccess()
     }
   }
 
+  private fun getToggleButtonText() = if (isProjectorStopped()) "Start Remote Access" else "Stop Remote Access"
+
+  private fun getToggleButtonIcon() = if (isProjectorStopped()) AllIcons.Actions.Menu_open else AllIcons.Actions.Exit
+
   private fun toggleAccess() {
-    if (toggleAccessButton.icon == AllIcons.Actions.Exit) {
-      toggleAccessButton.text = "Start Remote Access"
-      toggleAccessButton.icon = AllIcons.Actions.Menu_open
-      ProjectorService.stopServer()
-    } else {
-      toggleAccessButton.text = "Stop Remote Access"
-      toggleAccessButton.icon = AllIcons.Actions.Exit
-      ProjectorService.startServer()
+    if (isProjectorStopped()) {
+      ProjectorService.enable(null)
     }
+    else {
+      ProjectorService.disable()
+    }
+
+    toggleAccessButton.text = getToggleButtonText()
+    toggleAccessButton.icon = getToggleButtonIcon()
   }
 
   private val columnNames = arrayOf("Address", "Host Name")
