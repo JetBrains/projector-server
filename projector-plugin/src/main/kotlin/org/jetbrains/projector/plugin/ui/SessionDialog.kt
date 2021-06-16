@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
 import org.jetbrains.projector.plugin.ProjectorService
+import org.jetbrains.projector.plugin.isProjectorStopped
 import org.jetbrains.projector.plugin.productName
 import org.jetbrains.projector.server.ProjectorServer
 import org.jetbrains.projector.server.util.AsyncHostResolver
@@ -71,7 +72,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
   init {
 
-    if (ProjectorService.isSessionRunning) {
+    if (ProjectorService.isSessionRunning && !isProjectorStopped()) {
       title = "Current Session"
       description.text = "<html>The current session has already started.<br>Do you want to change settings?"
       myOKAction.putValue(Action.NAME, "Save")

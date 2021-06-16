@@ -91,8 +91,9 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
   }
 
   init {
-    isVisible = ProjectorService.isSessionRunning
-    if (ProjectorService.isSessionRunning) {
+    isVisible = ProjectorService.isSessionRunning && !isProjectorStopped()
+
+    if (isVisible) {
       val buttonPanel = JPanel()
       LinearPanelBuilder(buttonPanel)
         .addNextComponent(updateButton).addNextComponent(disconnectButton)

@@ -136,7 +136,7 @@ class ProjectorStatusWidget(project: Project)
       isProjectorAutoStarting() -> fireAction(WaitForStartAction.ID)
       isProjectorDisabled() -> fireAction(EnableAction.ID)
       isHeadlessProjectorDetected() -> fireAction(HeadlessProjectorAction.ID)
-      isProjectorStopped() -> fireAction(SessionAction.ID)
+      isProjectorStopped() -> fireAction(EnableAction.ID)
     }
   }
 

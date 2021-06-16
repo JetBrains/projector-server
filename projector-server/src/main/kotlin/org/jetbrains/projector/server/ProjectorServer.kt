@@ -87,12 +87,68 @@ import kotlin.properties.Delegates
 import java.awt.Point as AwtPoint
 
 class ProjectorServer private constructor(
-  private val builder: TransportBuilder,
   private val laterInvokator: LaterInvokator,
   private val isAgent: Boolean,
 ) {
+  private var httpWsTransport = initTransport()
+  val wasStarted: Boolean by httpWsTransport::wasStarted
+
+  private lateinit var updateThread: Thread
+
+  private val caretInfoQueue = ConcurrentLinkedQueue<ServerCaretInfoChangedEvent.CaretInfoChange>()
+
+  private val caretInfoUpdater = CaretInfoUpdater { caretInfo ->
+    caretInfoQueue.add(caretInfo)
+  }
+
+  private val markdownQueue = ConcurrentLinkedQueue<ServerMarkdownEvent>()
+
+  private var windowColorsEvent: ServerWindowColorsEvent? = null
+
+  private val ideaColors = IdeColors { colors ->
+    windowColorsEvent = ServerWindowColorsEvent(colors)
+  }
 
   init {
+    PanelUpdater.showCallback = { id, show ->
+      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownShowEvent(id, show))
+    }
+    PanelUpdater.resizeCallback = { id, size ->
+      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownResizeEvent(id, size.toCommonIntSize()))
+    }
+    PanelUpdater.moveCallback = { id, point ->
+      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownMoveEvent(id, point.shift(PGraphicsEnvironment.defaultDevice.clientShift)))
+    }
+    PanelUpdater.disposeCallback = { id ->
+      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownDisposeEvent(id))
+    }
+    PanelUpdater.placeToWindowCallback = { id, rootComponent ->
+      rootComponent?.let {
+        val peer = AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(it)
+
+        if (peer !is PComponentPeer) {
+          return@let
+        }
+
+        markdownQueue.add(ServerMarkdownEvent.ServerMarkdownPlaceToWindowEvent(id, peer.pWindow.id))
+      }
+    }
+    PanelUpdater.setHtmlCallback = { id, html ->
+      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownSetHtmlEvent(id, html))
+    }
+    PanelUpdater.setCssCallback = { id, css ->
+      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownSetCssEvent(id, css))
+    }
+    PanelUpdater.scrollCallback = { id, offset ->
+      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownScrollEvent(id, offset))
+    }
+    PDesktopPeer.browseUriCallback = { link ->
+      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownBrowseUriEvent(link))
+    }
+  }
+
+  private fun initTransport(): HttpWsTransport {
+    val builder = createTransportBuilder()
     builder.onStart = {
 
     }
@@ -159,9 +215,9 @@ class ProjectorServer private constructor(
     builder.onError = { _, e ->
       logger.error(e) { "onError" }
     }
-  }
 
-  private var httpWsTransport = builder.build()
+    return builder.build()
+  }
 
   private val clientsObservers: MutableList<PropertyChangeListener> = Collections.synchronizedList(ArrayList<PropertyChangeListener>())
   fun addClientsObserver(listener: PropertyChangeListener) = clientsObservers.add(listener)
@@ -181,62 +237,6 @@ class ProjectorServer private constructor(
     }
 
     clientsCountLock.withLock { clientsCount = count }
-  }
-
-  val wasStarted: Boolean by httpWsTransport::wasStarted
-
-  private lateinit var updateThread: Thread
-
-  private val caretInfoQueue = ConcurrentLinkedQueue<ServerCaretInfoChangedEvent.CaretInfoChange>()
-
-  private val caretInfoUpdater = CaretInfoUpdater { caretInfo ->
-    caretInfoQueue.add(caretInfo)
-  }
-
-  private val markdownQueue = ConcurrentLinkedQueue<ServerMarkdownEvent>()
-
-  private var windowColorsEvent: ServerWindowColorsEvent? = null
-
-  private val ideaColors = IdeColors { colors ->
-    windowColorsEvent = ServerWindowColorsEvent(colors)
-  }
-
-  init {
-    PanelUpdater.showCallback = { id, show ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownShowEvent(id, show))
-    }
-    PanelUpdater.resizeCallback = { id, size ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownResizeEvent(id, size.toCommonIntSize()))
-    }
-    PanelUpdater.moveCallback = { id, point ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownMoveEvent(id, point.shift(PGraphicsEnvironment.defaultDevice.clientShift)))
-    }
-    PanelUpdater.disposeCallback = { id ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownDisposeEvent(id))
-    }
-    PanelUpdater.placeToWindowCallback = { id, rootComponent ->
-      rootComponent?.let {
-        val peer = AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(it)
-
-        if (peer !is PComponentPeer) {
-          return@let
-        }
-
-        markdownQueue.add(ServerMarkdownEvent.ServerMarkdownPlaceToWindowEvent(id, peer.pWindow.id))
-      }
-    }
-    PanelUpdater.setHtmlCallback = { id, html ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownSetHtmlEvent(id, html))
-    }
-    PanelUpdater.setCssCallback = { id, css ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownSetCssEvent(id, css))
-    }
-    PanelUpdater.scrollCallback = { id, offset ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownScrollEvent(id, offset))
-    }
-    PDesktopPeer.browseUriCallback = { link ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownBrowseUriEvent(link))
-    }
   }
 
   private fun createUpdateThread(): Thread = thread(isDaemon = true) {
@@ -625,18 +625,15 @@ class ProjectorServer private constructor(
 
     if (hasDifferentWindowEvents) {
       previousWindowEvents = set
-
-      return true
     }
 
-    return false
+    return hasDifferentWindowEvents
   }
 
   fun start() {
     updateThread = createUpdateThread()
     caretInfoUpdater.start()
-    httpWsTransport = builder.build()
-
+    httpWsTransport = initTransport()
     httpWsTransport.start()
   }
 
@@ -648,7 +645,6 @@ class ProjectorServer private constructor(
     if (::updateThread.isInitialized) {
       updateThread.interrupt()
     }
-
   }
 
   fun getClientList(): Array<Array<String?>> {
@@ -794,7 +790,6 @@ class ProjectorServer private constructor(
       }
 
       builders.add(serverBuilder)
-
       return MultiTransportBuilder(builders)
     }
 
@@ -816,7 +811,7 @@ class ProjectorServer private constructor(
         logger.info { "Currently collections will log size if it exceeds $BIG_COLLECTIONS_CHECKS_START_SIZE" }
       }
 
-      return ProjectorServer(createTransportBuilder(), LaterInvokator.defaultLaterInvokator, isAgent).also {
+      return ProjectorServer(LaterInvokator.defaultLaterInvokator, isAgent).also {
         it.start()
       }
     }
