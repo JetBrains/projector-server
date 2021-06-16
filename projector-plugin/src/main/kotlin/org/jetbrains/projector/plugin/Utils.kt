@@ -28,19 +28,24 @@ import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
+import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.ui.Messages
 import com.intellij.util.PathUtil
+import org.jetbrains.projector.agent.AgentLauncher
 import org.jetbrains.projector.awt.PToolkit
 import org.w3c.dom.Node
 import java.awt.Toolkit
 import java.nio.file.Paths
 import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Document
-import java.io.BufferedReader
+import java.util.function.Function
 import java.io.File
 import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
@@ -63,15 +68,13 @@ fun getAgentVersion(): String {
   return result
 }
 
-private fun loadVersionsContent() = ProjectorService::class.java.getResource(VERSIONS_FILE_PATH).readText()
+private fun loadVersionsContent() = ProjectorService::class.java.getResource(VERSIONS_FILE_PATH)!!.readText()
 
 private fun parseVersions(content: String): Map<String, String> {
   return content.split("\n")
     .filter { it.isNotEmpty() }
     .map { it.split("=") }
-    .filter { it.size == 2 }
-    .map { (name, version) -> name to version }
-    .toMap()
+    .filter { it.size == 2 }.associate { (name, version) -> name to version }
 }
 
 fun isHeadlessProjectorDetected() = Toolkit.getDefaultToolkit()::class.toString() == PToolkit::class.toString()
@@ -109,6 +112,25 @@ fun isProjectorDisabled(): Boolean {
          &&
          ProjectorService.enabled == EnabledState.HAS_VM_OPTIONS_AND_DISABLED
 }
+
+fun isProjectorStopped() = ProjectorService.enabled == EnabledState.STOPPED
+
+
+fun confirmRestart(messageString: String): Boolean {
+  val title = "Restart is needed..."
+  val message = Function<String, String> { messageString }
+  return PluginManagerConfigurable.showRestartDialog(title, message) == Messages.YES
+}
+
+fun restartIde() {
+  (ApplicationManager.getApplication() as ApplicationEx).restart(true)
+}
+
+fun attachDynamicAgent() {
+  val agentJar = "${getPathToPluginDir()}/projector-agent-${getAgentVersion()}.jar"
+  AgentLauncher.attachAgent(agentJar)
+}
+
 
 fun getActionGroup(groupId: String): ActionGroup {
   return ActionManager.getInstance().getAction(groupId) as ActionGroup
