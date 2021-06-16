@@ -124,6 +124,20 @@ internal object GraphicsInterceptor {
     server.disconnectByIp(ip)
   }
 
+
+  @Suppress("unused")
+  @JvmStatic
+  fun startServer() {
+    server.start()
+  }
+
+  @Suppress("unused")
+  @JvmStatic
+  fun stopServer(timeout: Int) {
+    server.stop(timeout)
+  }
+
+
   @Suppress("unused")
   @JvmStatic
   fun addClientsObserver(listener: PropertyChangeListener) = server.addClientsObserver(listener)
