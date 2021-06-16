@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import org.jetbrains.projector.plugin.ProjectorService
 import org.jetbrains.projector.plugin.Session
 import org.jetbrains.projector.plugin.isProjectorDisabled
+import org.jetbrains.projector.plugin.isProjectorStopped
 import org.jetbrains.projector.plugin.ui.SessionDialog
 
 class EnableAction : DumbAwareAction() {
@@ -54,7 +55,7 @@ class EnableAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isProjectorDisabled()
+    e.presentation.isEnabledAndVisible = isProjectorDisabled() || isProjectorStopped()
   }
 
   companion object {

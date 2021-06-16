@@ -56,7 +56,7 @@ class SessionAction : DumbAwareAction() {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabledAndVisible = isProjectorRunning() || isProjectorStopped()
+    e.presentation.isEnabledAndVisible = isProjectorRunning()
   }
 
   companion object {

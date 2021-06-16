@@ -24,14 +24,28 @@
 
 package org.jetbrains.projector.plugin
 
+import com.intellij.openapi.project.Project
+
 class Session(
-  val host: String,
-  val port: String,
+  host: String,
+  port: String,
   rwToken: String?,
   roToken: String?,
   confirmConnection: Boolean,
   autostart: Boolean,
 ) {
+  var host
+    get() = ProjectorService.host
+    set(value) {
+      ProjectorService.host = value
+    }
+
+  var port
+    get() = ProjectorService.port
+    set(value) {
+      ProjectorService.port = value
+    }
+
   var rwToken
     get() = ProjectorService.rwToken
     set(value) {
