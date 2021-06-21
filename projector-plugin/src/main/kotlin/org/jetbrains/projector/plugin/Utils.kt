@@ -74,7 +74,8 @@ private fun parseVersions(content: String): Map<String, String> {
   return content.split("\n")
     .filter { it.isNotEmpty() }
     .map { it.split("=") }
-    .filter { it.size == 2 }.associate { (name, version) -> name to version }
+    .filter { it.size == 2 }
+    .associate { (name, version) -> name to version }
 }
 
 fun isHeadlessProjectorDetected() = Toolkit.getDefaultToolkit()::class.toString() == PToolkit::class.toString()
