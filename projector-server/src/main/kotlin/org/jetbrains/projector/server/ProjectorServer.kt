@@ -644,6 +644,8 @@ class ProjectorServer private constructor(
     }
   }
 
+  fun isStopped() = ::updateThread.isInitialized && updateThread.state == Thread.State.TERMINATED
+
   fun getClientList(): Array<Array<String?>> {
     val s = arrayListOf<Array<String?>>()
     httpWsTransport.forEachOpenedConnection {
