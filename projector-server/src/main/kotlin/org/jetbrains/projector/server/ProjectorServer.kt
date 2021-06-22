@@ -149,9 +149,6 @@ class ProjectorServer private constructor(
 
   private fun initTransport(): HttpWsTransport {
     val builder = createTransportBuilder()
-    builder.onStart = {
-
-    }
 
     builder.onWsMessageByteBuffer = { _, message ->
       throw RuntimeException("Unsupported message type: $message")
