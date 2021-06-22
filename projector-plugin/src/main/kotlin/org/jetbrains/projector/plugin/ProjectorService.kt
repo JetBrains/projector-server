@@ -171,6 +171,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       attachDynamicAgent()
     }
     else {
+      check(enabled == EnabledState.STOPPED) { "Bad state: $enabled" }
       AgentLauncher.startServer()
     }
     enabled = EnabledState.HAS_VM_OPTIONS_AND_ENABLED
