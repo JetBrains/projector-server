@@ -62,7 +62,6 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
 
   private val toggleAccessButton = JButton(getToggleButtonText(), getToggleButtonIcon()).apply {
     addActionListener {
-      ProjectorService.removeClientsObserver(this@ConnectionPanel)
       toggleAccess()
     }
   }
@@ -77,6 +76,7 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
     }
     else {
       ProjectorService.disable()
+      update()
     }
 
     toggleAccessButton.text = getToggleButtonText()
