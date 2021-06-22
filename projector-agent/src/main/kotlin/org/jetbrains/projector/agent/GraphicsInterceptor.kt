@@ -72,6 +72,10 @@ internal object GraphicsInterceptor {
             "UNUSED_PARAMETER")  // Integer is needed because this function is used via reflection
   @JvmStatic
   fun beginPaintToOffscreen(comp: JComponent, x: Integer, y: Integer, w: Integer, h: Integer) {
+    if (server.isStopped()) {
+      return
+    }
+
     paintToOffscreenInProgress = true
 
     val parentWindow = getParentWindow(comp)
@@ -149,6 +153,9 @@ internal object GraphicsInterceptor {
   @Suppress("unused")
   @JvmStatic
   fun endPaintToOffscreen() {
+    if (server.isStopped()) {
+      return
+    }
     currentQueue?.commands?.add(commands) ?: logger.debug { "currentQueue == null" }
     commands = mutableListOf()
     paintToOffscreenInProgress = false
