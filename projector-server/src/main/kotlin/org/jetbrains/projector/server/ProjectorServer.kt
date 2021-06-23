@@ -74,6 +74,7 @@ import java.awt.datatransfer.UnsupportedFlavorException
 import java.awt.peer.ComponentPeer
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
+import java.lang.Thread.sleep
 import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -90,8 +91,16 @@ class ProjectorServer private constructor(
   private val laterInvokator: LaterInvokator,
   private val isAgent: Boolean,
 ) {
-  private var httpWsTransport = initTransport()
-  val wasStarted: Boolean by httpWsTransport::wasStarted
+  private lateinit var httpWsTransport: HttpWsTransport
+
+  val wasStarted : Boolean
+    get() {
+      while (!::httpWsTransport.isInitialized) {
+        sleep(10)
+      }
+
+      return httpWsTransport.wasStarted
+    }
 
   private lateinit var updateThread: Thread
 
@@ -241,11 +250,12 @@ class ProjectorServer private constructor(
     logger.debug { "Daemon thread starts" }
     while (!Thread.currentThread().isInterrupted) {
       try {
-        val dataToSend = createDataToSend()  // creating data even if there are no clients to avoid memory leaks
+        if (::httpWsTransport.isInitialized) {
+          val dataToSend = createDataToSend()  // creating data even if there are no clients to avoid memory leaks
+          sendPictures(dataToSend)
+        }
 
-        sendPictures(dataToSend)
-
-        Thread.sleep(10)
+        sleep(10)
       }
       catch (ex: InterruptedException) {
         Thread.currentThread().interrupt()
