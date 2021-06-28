@@ -229,8 +229,8 @@ internal class GraphicsTransformer : ClassFileTransformer {
   companion object {
     private val logger = Logger<GraphicsTransformer>()
 
-    val DRAW_HANDLER_PACKAGE = GraphicsInterceptor::class.qualifiedName
-    private val DRAW_HANDLER_CLASS_LOADING = "Class clazz = ClassLoader.getSystemClassLoader().loadClass(\"$DRAW_HANDLER_PACKAGE\");"
+    val DRAW_HANDLER_CLASS = GraphicsInterceptor::class.qualifiedName!!
+    private val DRAW_HANDLER_CLASS_LOADING = "Class clazz = ClassLoader.getSystemClassLoader().loadClass(\"$DRAW_HANDLER_CLASS\");"
     private const val JAVASSIST_ARGS = "${'$'}args"
     private const val JAVASSIST_THIS = "${'$'}0"
   }
