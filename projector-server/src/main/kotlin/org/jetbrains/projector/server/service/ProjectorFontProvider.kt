@@ -43,6 +43,12 @@ object ProjectorFontProvider : FontProvider {
   private val cjkRegularFile by lazy { createFontFile(CJK_R_NAME, CJK_R_PATH) }
   private val cjkRegularFont by lazy { loadPhysicalFont(cjkRegularFile) }
 
+  // for some reason, default font doesn't support arrows (↑↓), so need to fallback to another font:
+  // https://github.com/googlefonts/noto-fonts/issues/837
+  // falling back to Noto Sans Symbols works too but increases font height for some reason
+  private val symbolsRegularFile by lazy { createFontFile(SYMBOLS_R_NAME, MONO_R_PATH) }
+  private val symbolsRegularFont by lazy { loadPhysicalFont(symbolsRegularFile) }
+
   private val defaultRegularFile by lazy { createFontFile(DEFAULT_R_NAME, DEFAULT_R_PATH) }
   private val defaultRegularFont by lazy { loadPhysicalFont(defaultRegularFile) }
   private val defaultRegularComposite by lazy { createCompositeFont(DEFAULT_R_NAME, "plain", defaultRegularFile) }
@@ -111,6 +117,7 @@ object ProjectorFontProvider : FontProvider {
         else -> monoRegularFont
       }
       CJK_R_NAME -> return cjkRegularFont
+      SYMBOLS_R_NAME -> return symbolsRegularFont
     }
 
     fun headlessOrAgent(headless: Font2D, agent: Font2D): Font2D = when (isAgent) {
@@ -163,8 +170,8 @@ object ProjectorFontProvider : FontProvider {
   private fun createCompositeFont(fontName: String, style: String, tempFile: File): CompositeFont {
     return CompositeFont(
       "$fontName.$style",
-      arrayOf(tempFile.absolutePath, cjkRegularFile.absolutePath),
-      arrayOf(fontName, CJK_R_NAME),
+      arrayOf(tempFile.absolutePath, symbolsRegularFile.absolutePath, cjkRegularFile.absolutePath),
+      arrayOf(fontName, SYMBOLS_R_NAME, CJK_R_NAME),
       2,
       null,
       null,
@@ -201,6 +208,8 @@ object ProjectorFontProvider : FontProvider {
 
   private const val CJK_R_NAME = "CJK-R"
   private const val CJK_R_PATH = "/fonts/CJK-R.otf"
+
+  private const val SYMBOLS_R_NAME = "Symbols-R"
 
   private const val DEFAULT_FONT_NAME = DEFAULT_R_NAME
   private const val DEFAULT_FONT_PATH = DEFAULT_R_PATH
