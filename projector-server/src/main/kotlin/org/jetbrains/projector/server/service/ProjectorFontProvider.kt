@@ -125,25 +125,17 @@ object ProjectorFontProvider : FontProvider {
       true -> agent
     }
 
-    if (isMonospacedFont(name)) {
-      return when (style) {
+    return when (isMonospacedFont(name)) {
+      true -> when (style) {
         Font.BOLD or Font.ITALIC -> headlessOrAgent(monoBoldItalicComposite, monoBoldItalicFont)
-
         Font.BOLD -> headlessOrAgent(monoBoldComposite, monoBoldFont)
-
         Font.ITALIC -> headlessOrAgent(monoRegularItalicComposite, monoRegularItalicFont)
-
         else -> headlessOrAgent(monoRegularComposite, monoRegularFont)
       }
-    }
-    else {
-      return when (style) {
+      false -> when (style) {
         Font.BOLD or Font.ITALIC -> headlessOrAgent(defaultBoldItalicComposite, defaultBoldItalicFont)
-
         Font.BOLD -> headlessOrAgent(defaultBoldComposite, defaultBoldFont)
-
         Font.ITALIC -> headlessOrAgent(defaultRegularItalicComposite, defaultRegularItalicFont)
-
         else -> headlessOrAgent(defaultRegularComposite, defaultRegularFont)
       }
     }
