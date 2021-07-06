@@ -161,7 +161,7 @@ class ProjectorServer private constructor(
     }
 
     builder.onWsMessageString = { connection, message ->
-      when (val clientSettings = connection.getAttachment<ClientSettings>()!!) {
+      Do exhaustive when (val clientSettings = connection.getAttachment<ClientSettings>()!!) {
         is ConnectedClientSettings -> checkHandshakeVersion(connection, clientSettings, message)
 
         is SupportedHandshakeClientSettings -> setUpClient(connection, clientSettings, message)
@@ -192,6 +192,10 @@ class ProjectorServer private constructor(
           }
 
           events.forEach { processMessage(clientSettings, it) }
+        }
+
+        is ClosedClientSettings -> {
+          // ignoring closed client
         }
       }
     }
@@ -479,6 +483,13 @@ class ProjectorServer private constructor(
         "client - $handshakeVersion (#$handshakeVersionId)"
       val protocolErrorCode = 1002  // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#properties
       conn.close(protocolErrorCode, reason)
+      conn.setAttachment(
+        ClosedClientSettings(
+          connectionMillis = connectedClientSettings.connectionMillis,
+          address = connectedClientSettings.address,
+          reason = reason,
+        )
+      )
 
       return
     }
