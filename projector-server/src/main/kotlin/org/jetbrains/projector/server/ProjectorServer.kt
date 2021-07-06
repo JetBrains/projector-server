@@ -481,15 +481,7 @@ class ProjectorServer private constructor(
       val reason =
         "Incompatible handshake versions: server - $HANDSHAKE_VERSION (#${handshakeVersionList.indexOf(HANDSHAKE_VERSION)}), " +
         "client - $handshakeVersion (#$handshakeVersionId)"
-      val protocolErrorCode = 1002  // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#properties
-      conn.close(protocolErrorCode, reason)
-      conn.setAttachment(
-        ClosedClientSettings(
-          connectionMillis = connectedClientSettings.connectionMillis,
-          address = connectedClientSettings.address,
-          reason = reason,
-        )
-      )
+      disconnectUser(conn, reason)
 
       return
     }
@@ -702,14 +694,14 @@ class ProjectorServer private constructor(
 
   fun disconnectAll() {
     httpWsTransport.forEachOpenedConnection {
-      it.close()
+      disconnectUser(it, "The host has disconnected all the clients.")
     }
   }
 
   fun disconnectByIp(ip: String) {
     httpWsTransport.forEachOpenedConnection {
       if (it.remoteSocketAddress?.address?.hostAddress == ip) {
-        it.close()
+        disconnectUser(it, "The host has disconnected the address: $ip.")
       }
     }
   }
@@ -721,6 +713,21 @@ class ProjectorServer private constructor(
     @JvmStatic
     val isEnabled: Boolean
       get() = System.getProperty(ENABLE_PROPERTY_NAME)?.toBoolean() ?: false
+
+    private fun disconnectUser(conn: WebSocket, reason: String) {
+      val normalClosureCode = 1000  // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#properties
+      conn.close(normalClosureCode, reason)
+
+      val clientSettings = conn.getAttachment<ClientSettings>()!!
+      logger.info { "Disconnecting user ${clientSettings.address}. Reason: $reason" }
+      conn.setAttachment(
+        ClosedClientSettings(
+          connectionMillis = clientSettings.connectionMillis,
+          address = clientSettings.address,
+          reason = reason,
+        )
+      )
+    }
 
     private fun getMainWindows(): List<PWindow> {
       val ideWindows = PWindow.windows.filter { it.windowType == WindowType.IDEA_WINDOW }
