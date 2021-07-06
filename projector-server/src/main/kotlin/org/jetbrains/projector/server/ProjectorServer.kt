@@ -39,10 +39,7 @@ import org.jetbrains.projector.awt.peer.PMouseInfoPeer
 import org.jetbrains.projector.common.misc.Do
 import org.jetbrains.projector.common.protocol.data.ImageData
 import org.jetbrains.projector.common.protocol.data.ImageId
-import org.jetbrains.projector.common.protocol.handshake.COMMON_VERSION
-import org.jetbrains.projector.common.protocol.handshake.ToClientHandshakeFailureEvent
-import org.jetbrains.projector.common.protocol.handshake.ToClientHandshakeSuccessEvent
-import org.jetbrains.projector.common.protocol.handshake.commonVersionList
+import org.jetbrains.projector.common.protocol.handshake.*
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.common.protocol.toServer.*
 import org.jetbrains.projector.server.core.*
@@ -165,7 +162,9 @@ class ProjectorServer private constructor(
 
     builder.onWsMessageString = { connection, message ->
       when (val clientSettings = connection.getAttachment<ClientSettings>()!!) {
-        is ConnectedClientSettings -> setUpClient(connection, clientSettings, message)
+        is ConnectedClientSettings -> checkHandshakeVersion(connection, clientSettings, message)
+
+        is SupportedHandshakeClientSettings -> setUpClient(connection, clientSettings, message)
 
         is SetUpClientSettings -> {
           // this means that the client has loaded fonts and is ready to draw
@@ -472,7 +471,27 @@ class ProjectorServer private constructor(
     }
   }
 
-  private fun setUpClient(conn: WebSocket, connectedClientSettings: ConnectedClientSettings, message: String) {
+  private fun checkHandshakeVersion(conn: WebSocket, connectedClientSettings: ConnectedClientSettings, message: String) {
+    val (handshakeVersion, handshakeVersionId) = message.split(";")
+    if (handshakeVersion != "$HANDSHAKE_VERSION") {
+      val reason =
+        "Incompatible handshake versions: server - $HANDSHAKE_VERSION (#${handshakeVersionList.indexOf(HANDSHAKE_VERSION)}), " +
+        "client - $handshakeVersion (#$handshakeVersionId)"
+      val protocolErrorCode = 1002  // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#properties
+      conn.close(protocolErrorCode, reason)
+
+      return
+    }
+
+    conn.setAttachment(
+      SupportedHandshakeClientSettings(
+        connectionMillis = connectedClientSettings.connectionMillis,
+        address = connectedClientSettings.address,
+      )
+    )
+  }
+
+  private fun setUpClient(conn: WebSocket, supportedHandshakeClientSettings: SupportedHandshakeClientSettings, message: String) {
     fun sendHandshakeFailureEvent(reason: String) {
       val failureEvent = ToClientHandshakeFailureEvent(reason)
 
@@ -577,8 +596,8 @@ class ProjectorServer private constructor(
 
     conn.setAttachment(
       SetUpClientSettings(
-        connectionMillis = connectedClientSettings.connectionMillis,
-        address = connectedClientSettings.address,
+        connectionMillis = supportedHandshakeClientSettings.connectionMillis,
+        address = supportedHandshakeClientSettings.address,
         setUpClientData = SetUpClientData(
           hasWriteAccess = hasWriteAccess,
           toClientMessageEncoder = toClientEncoder,
