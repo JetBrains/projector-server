@@ -75,13 +75,13 @@ if (project.rootProject.file('local.properties').canRead()) {
 }
 
 // relay arguments
-def relayURL=localProperties["ORG_JETBRAINS_PROJECTOR_RELAY_URL"]
-def serverId=localProperties["ORG_JETBRAINS_PROJECTOR_SERVER_ID"]
+def relayURL=localProperties["ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL"]
+def serverId=localProperties["ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID"]
 
 def relayArgs = []
 
 if (relayURL!=null && serverId != null) {
-  relayArgs = ["-DORG_JETBRAINS_PROJECTOR_RELAY_URL=$relayURL", "-DORG_JETBRAINS_PROJECTOR_SERVER_ID=$serverId"]
+  relayArgs = ["-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL=$relayURL", "-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID=$serverId"]
 }
 
 
