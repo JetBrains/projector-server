@@ -863,7 +863,9 @@ class ProjectorServer private constructor(
     }
 
     const val ENABLE_PROPERTY_NAME = "org.jetbrains.projector.server.enable"
+    const val HOST_PROPERTY_NAME_OLD = "org.jetbrains.projector.server.host"
     const val HOST_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HOST"
+    const val PORT_PROPERTY_NAME_OLD = "org.jetbrains.projector.server.port"
     const val PORT_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_PORT"
     private const val DEFAULT_PORT = 8887
     const val TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HANDSHAKE_TOKEN"
@@ -882,10 +884,10 @@ class ProjectorServer private constructor(
     const val ENABLE_CONNECTION_CONFIRMATION = "ORG_JETBRAINS_PROJECTOR_SERVER_CONNECTION_CONFIRMATION"
 
     private fun getEnvHost(): InetAddress {
-      val host = getProperty(HOST_PROPERTY_NAME)
+      val host = getProperty(HOST_PROPERTY_NAME) ?: getProperty(HOST_PROPERTY_NAME_OLD)
       return if (host != null) InetAddress.getByName(host) else getWildcardHostAddress()
     }
 
-    fun getEnvPort() = getProperty(PORT_PROPERTY_NAME)?.toIntOrNull() ?: DEFAULT_PORT
+    fun getEnvPort() = (getProperty(PORT_PROPERTY_NAME) ?: getProperty(PORT_PROPERTY_NAME_OLD))?.toIntOrNull() ?: DEFAULT_PORT
   }
 }
