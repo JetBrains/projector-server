@@ -2,9 +2,24 @@
 
 Notable changes to this project are documented in this file.
 
+# 1.5.0
+
+## Changed
+
+- PRJ-172 Projector menu is now moved to the bottom of the screen to widgets, showing status icon and connected client count.
+- PJR-524 Some refactoring movements.
+
+## Added
+
+- PRJ-204 Allow stopping Projector server without restarts.
+
+## Updated
+
+- Projector Server v1.2.0.
+
 # 1.4.2
 
-# Updated
+## Updated
 
 - Projector Server v1.1.6.
 

@@ -1,3 +1,31 @@
+# 1.2.0
+
+## Added
+
+- PRJ-35 Support version probing in the handshake
+- PRJ-543 Specify the reason for disconnection
+- Symbol glyphs
+- PRJ-373 PRJ-551 Connection via relay
+- PRJ-330 PRJ-354 PRJ-514 Add input method compatible with IME and Dead Keys and make it default
+- PRJ-413 Support web client inside iframe
+- Support opening links to localhost
+- PRJ-241 PRJ-386 Support automatic URL path usage and its manual specification, support running behind a reverse proxy
+- PRJ-541 PRJ-542 Show CloseEvent details on disconnection
+
+## Fixed
+
+- PRJ-513 Fix parsing html representation of markdown documents
+- Prevent "overscrolling" of web page for macos
+- PRJ-528 Fix redundant click sent for IME and mobile input methods
+- PRJ-544 Support connection end during handshake
+
+## Changed
+
+- Env vars names for server set up are more consistent now
+- PRJ-61 Internal HiDPI support (not implemented in web client yet)
+- Async rendering algorithm is now more performant
+- Protocol is changed, so this release introduces incompatible changes
+
 # 1.1.6
 
 ## Changed
