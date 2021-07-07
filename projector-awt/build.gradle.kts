@@ -41,5 +41,4 @@ version = project(":projector-server").version
 dependencies {
   implementation("com.github.JetBrains.projector-client:projector-util-logging:$projectorClientVersion")
   testImplementation(kotlin("test", kotlinVersion))
-  testImplementation(kotlin("test-junit", kotlinVersion))
 }

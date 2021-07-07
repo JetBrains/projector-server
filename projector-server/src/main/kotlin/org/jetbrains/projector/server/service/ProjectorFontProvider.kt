@@ -142,7 +142,7 @@ object ProjectorFontProvider : FontProvider {
   }
 
   private fun isMonospacedFont(name: String): Boolean {
-    return "mono" in name.toLowerCase() || name.toLowerCase() == "menlo"
+    return "mono" in name.lowercase() || name.lowercase() == "menlo"
   }
 
   private fun createFontFile(fontName: String, fontPath: String): File {

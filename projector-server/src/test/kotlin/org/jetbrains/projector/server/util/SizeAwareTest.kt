@@ -23,9 +23,9 @@
  */
 package org.jetbrains.projector.server.util
 
-import com.nhaarman.mockitokotlin2.*
 import org.jetbrains.projector.server.core.util.SizeAware
 import org.jetbrains.projector.util.logging.Logger
+import org.mockito.kotlin.*
 import kotlin.test.Test
 
 class SizeAwareTest {

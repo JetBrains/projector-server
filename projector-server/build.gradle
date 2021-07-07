@@ -53,11 +53,8 @@ dependencies {
   implementation("com.github.JetBrains.projector-client:projector-util-logging:$projectorClientVersion")
   api project(":projector-awt")
 
-  testImplementation "com.nhaarman.mockitokotlin2:mockito-kotlin:$mockitoKotlinVersion"
-
-  // todo: remove this dependencies: they should be exported from projector-common but now it seems not working
+  testImplementation "org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion"
   testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
-  testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion"
 }
 
 jar {

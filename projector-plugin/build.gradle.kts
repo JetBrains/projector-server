@@ -21,7 +21,6 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-import java.io.File
 import java.nio.file.Paths
 
 plugins {
@@ -38,8 +37,8 @@ dependencies {
 }
 
 intellij {
-  version = "2019.3"
-  updateSinceUntilBuild = false
+  version.set("2019.3")
+  updateSinceUntilBuild.set(false)
 }
 
 (tasks["runIde"] as JavaExec).apply {

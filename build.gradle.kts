@@ -36,7 +36,7 @@ subprojects {
   group = "org.jetbrains"
 
   repositories {
-    jcenter()
+    mavenCentral()
     maven("https://jitpack.io")
   }
 
