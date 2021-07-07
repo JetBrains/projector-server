@@ -1,3 +1,9 @@
+# 1.2.1
+
+## Fixed
+
+- Support set up the server using the old properties
+
 # 1.2.0
 
 ## Added
