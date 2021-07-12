@@ -16,4 +16,4 @@ jobs:
         with:
           java-version: '11'
       - run: ./gradlew clean
-      - run: ./gradlew check build
+      - run: ./gradlew check
