@@ -25,17 +25,36 @@
 package org.jetbrains.projector.plugin.ui
 
 import com.intellij.notification.NotificationDisplayType
-
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 
 
-private val PROJECTOR_GROUP = NotificationGroup("projector.notifications.group",
-                                                NotificationDisplayType.STICKY_BALLOON,
-                                                true)
+private fun getNotificationGroup(): NotificationGroup? {
+  val cls = NotificationGroup::class.java
+
+  val constr = try {
+    cls.getConstructor(String::class.java, NotificationDisplayType::class.java, Boolean::class.java)
+  }
+  catch (e: NoSuchMethodException) {
+    return null
+  }
+  catch (e: SecurityException) {
+    return null
+  }
+
+  return try {
+    constr.newInstance("projector.notification.group", NotificationDisplayType.STICKY_BALLOON, true) as NotificationGroup
+  }
+  catch (e: ReflectiveOperationException) {
+    null
+  }
+  catch (e: RuntimeException) {
+    null
+  }
+}
 
 fun displayNotification(project: Project, title: String, subtitle: String, content: String) {
-  val msg = PROJECTOR_GROUP.createNotification(title, subtitle, content, NotificationType.INFORMATION)
-  msg.notify(project)
+  val msg = getNotificationGroup()?.createNotification(title, subtitle, content, NotificationType.INFORMATION)
+  msg?.notify(project)
 }
