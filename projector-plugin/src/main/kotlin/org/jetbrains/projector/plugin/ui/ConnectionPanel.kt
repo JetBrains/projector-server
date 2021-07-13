@@ -26,6 +26,7 @@ package org.jetbrains.projector.plugin.ui
 
 import com.intellij.icons.AllIcons
 import com.intellij.ui.table.JBTable
+import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.projector.plugin.ProjectorService
 import org.jetbrains.projector.plugin.isProjectorStopped
 import org.jetbrains.projector.server.util.AsyncHostResolver
@@ -68,7 +69,23 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
 
   private fun getToggleButtonText() = if (isProjectorStopped()) "Start Remote Access" else "Stop Remote Access"
 
-  private fun getToggleButtonIcon() = if (isProjectorStopped()) AllIcons.Actions.Menu_open else AllIcons.Actions.Exit
+  private fun getToggleButtonIcon() = if (isProjectorStopped()) getMenuOpenIcon() else AllIcons.Actions.Exit
+
+  private fun getMenuOpenIcon(): Icon {
+    val field = try {
+      AllIcons.Actions::class.java.getField("Menu_open")
+    }
+                catch (e: NoSuchFieldException) {
+                  try {
+                    AllIcons.Actions::class.java.getField("MenuOpen")
+                  }
+                  catch (e: NoSuchFieldException) {
+                    null
+                  }
+                } ?: return EmptyIcon.ICON_16
+
+    return field.get(null) as Icon
+  }
 
   private fun toggleAccess() {
     if (isProjectorStopped()) {
