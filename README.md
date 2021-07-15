@@ -1,5 +1,6 @@
 # projector-server
 [![JetBrains incubator project](https://jb.gg/badges/incubator.svg)](https://confluence.jetbrains.com/display/ALL/JetBrains+on+GitHub)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FJetBrains%2Fprojector-server.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FJetBrains%2Fprojector-server?ref=badge_shield)
 [![Tests status badge](https://github.com/JetBrains/projector-server/workflows/Tests/badge.svg)](https://github.com/JetBrains/projector-server/actions)
 
 Server-side library for running Swing applications remotely.
@@ -107,3 +108,6 @@ To set the port which will be used by Projector Server for WebSocket, use the `-
 
 ## License
 [GPLv2+CPE](LICENSE.txt).
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FJetBrains%2Fprojector-server.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FJetBrains%2Fprojector-server?ref=badge_large)
