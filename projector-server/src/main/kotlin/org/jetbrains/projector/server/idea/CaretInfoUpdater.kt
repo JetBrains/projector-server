@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.impl.view.EditorView
 import org.jetbrains.projector.awt.PWindow
 import org.jetbrains.projector.awt.peer.PComponentPeer
 import org.jetbrains.projector.common.protocol.data.CommonRectangle
@@ -39,28 +38,16 @@ import org.jetbrains.projector.common.protocol.toClient.ServerCaretInfoChangedEv
 import org.jetbrains.projector.common.protocol.toClient.data.idea.CaretInfo
 import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
 import org.jetbrains.projector.server.util.FontCacher
-import org.jetbrains.projector.util.loading.unprotect
 import org.jetbrains.projector.util.logging.Logger
 import sun.awt.AWTAccessor
 import java.awt.Component
 import java.awt.peer.ComponentPeer
-import java.lang.reflect.Field
 import java.util.concurrent.TimeoutException
 import kotlin.concurrent.thread
 
 class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEvent.CaretInfoChange) -> Unit) {
 
   private lateinit var thread: Thread
-
-  private val editorImplClass by lazy {
-    EditorImpl::class.java
-  }
-
-  private val myViewField by lazy {
-    editorImplClass
-      .getDeclaredField("myView")
-      .apply(Field::unprotect)
-  }
 
   private val myDataManager by lazy { DataManager.getInstance() }
 
@@ -90,7 +77,6 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
     return dataContext.getData(CommonDataKeys.EDITOR) as? EditorImpl
   }
 
-  // TODO Remove remaining reflection bits once we get rid of nominalLineHeight and plainSpaceWidth
   private fun loadCaretInfo(): ServerCaretInfoChangedEvent.CaretInfoChange {
     val editorFont = EditorUtil.getEditorFont()
 
@@ -100,10 +86,11 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
     if (!focusedEditorComponent.isShowing) return ServerCaretInfoChangedEvent.CaretInfoChange.NoCarets
 
     val componentLocation = focusedEditorComponent.locationOnScreen
+    val scrollPane = focusedEditor.scrollPane
+    val visibleEditorRect = scrollPane.viewport.viewRect
 
-    val focusedEditorView = myViewField.get(focusedEditor) as EditorView
-    val nominalLineHeight = focusedEditorView.nominalLineHeight
-    val plainSpaceWidth = focusedEditorView.plainSpaceWidth
+    val lineHeight = focusedEditor.lineHeight
+    val lineDescent = focusedEditor.descent
 
     var rootComponent: Component? = focusedEditorComponent
     var editorPWindow: PWindow? = null
@@ -139,19 +126,24 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
           CaretInfo(point)
         }
 
+        val scrollBarWidth = if (visibleEditorRect.height < focusedEditorComponent.height) // check scrollbar should be visible
+          scrollPane.verticalScrollBar?.width ?: 0
+        else 0
+
         ServerCaretInfoChangedEvent.CaretInfoChange.Carets(
           points,
           fontId = FontCacher.getId(editorFont),
           fontSize = editorFont.size,
-          nominalLineHeight = nominalLineHeight,
-          plainSpaceWidth = plainSpaceWidth,
           editorWindowId = editorPWindow.id,
           editorMetrics = CommonRectangle(
-            x = componentLocation.getX(),
-            y = componentLocation.getY(),
-            width = focusedEditorComponent.width.toDouble(),
-            height = focusedEditorComponent.height.toDouble()
-          )
+            x = componentLocation.getX() - rootComponentLocation.x + visibleEditorRect.x,
+            y = componentLocation.getY() - rootComponentLocation.y + visibleEditorRect.y,
+            width = visibleEditorRect.width.toDouble(),
+            height = visibleEditorRect.height.toDouble()
+          ),
+          lineHeight = lineHeight,
+          lineDescent = lineDescent,
+          scrollBarWidth = scrollBarWidth,
         )
       }
     }
