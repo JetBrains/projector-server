@@ -1,0 +1,20 @@
+name: Update copyright year in license files
+
+on:
+  schedule:
+    - cron: "0 3 1 1 *"
+
+jobs:
+  update-license-year:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions:checkout@v2
+        with:
+          fetch-dept: 0
+      - uses: FantasticFiasco/action-update-license-year@v2
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}
+          path: |
+            ./**/*.kt
+            ./**/*.kts
+            ./*.kts
