@@ -53,6 +53,10 @@ interface ResolvedHostSubscriber {
   fun resolved(host: Host)
 }
 
+private fun ipString2Bytes(src: String): ByteArray {
+  return src.split(".").map { it.toInt() }.map { it.toByte() }.toByteArray()
+}
+
 class AsyncHostResolver {
   class Request(val client: ResolvedHostSubscriber, val ip: InetAddress)
 
@@ -61,8 +65,9 @@ class AsyncHostResolver {
 
   fun cancelPendingRequests() = queue.clear()
 
-  fun resolve (client: ResolvedHostSubscriber, address: String): Host {
-    val ip = InetAddress.getByName(address)
+  fun resolve(client: ResolvedHostSubscriber, address: String): Host {
+    val addr = ipString2Bytes(address)
+    val ip = InetAddress.getByAddress(null, addr)
     return resolve(client, ip)
   }
 
@@ -98,7 +103,7 @@ class AsyncHostResolver {
 
           res?.let { name ->
             address2Name[req.ip] = name
-            SwingUtilities.invokeLater{ req.client.resolved(Host(req.ip, name))}
+            SwingUtilities.invokeLater { req.client.resolved(Host(req.ip, name)) }
           }
         }
       }
