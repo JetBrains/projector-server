@@ -39,7 +39,6 @@ import sun.java2d.SunGraphics2D
 import java.awt.*
 import java.awt.peer.ComponentPeer
 import java.beans.PropertyChangeListener
-import java.util.*
 import javax.swing.JComponent
 import kotlin.collections.HashSet
 
@@ -189,6 +188,10 @@ internal object GraphicsInterceptor {
   @Suppress("unused")
   @JvmStatic
   fun handleGraphics2D(methodName: String, args: Array<Any?>, g: Graphics) {
+    if (server.isStopped()) {
+      return
+    }
+
     if (checkForImageDrawing(g.id())) {
       return
     }
