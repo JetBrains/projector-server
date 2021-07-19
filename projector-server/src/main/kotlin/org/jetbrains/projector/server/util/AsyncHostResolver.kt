@@ -1,4 +1,4 @@
-package org.jetbrains.projector.server.util/*
+/*
  * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -21,6 +21,8 @@ package org.jetbrains.projector.server.util/*
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+
+package org.jetbrains.projector.server.util
 
 import java.util.*
 import kotlin.collections.ArrayList
