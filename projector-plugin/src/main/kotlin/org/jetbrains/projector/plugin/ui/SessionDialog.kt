@@ -248,6 +248,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         selectedItem = hosts.find { it.address == selectedHost }
       }
 
+      maximumRowCount = 15
+
       addActionListener { onChange?.invoke() }
     }
 
