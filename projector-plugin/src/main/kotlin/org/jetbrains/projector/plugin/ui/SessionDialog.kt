@@ -248,7 +248,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         selectedItem = hosts.find { it.address == selectedHost }
       }
 
-      maximumRowCount = 15
+      maximumRowCount = MAX_HOSTS_ROW_COUNT
 
       addActionListener { onChange?.invoke() }
     }
@@ -330,6 +330,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   companion object {
     private val ALL_HOSTS = Host("0.0.0.0", "all addresses")
     private val dockerVendor = byteArrayOf(0x02.toByte(), 0x42.toByte())
+    private const val MAX_HOSTS_ROW_COUNT = 15
 
     private const val RANDOM_PASSWORD_LEN = 11
 
