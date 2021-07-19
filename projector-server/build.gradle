@@ -66,6 +66,7 @@ dependencies {
 
   testImplementation "org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion"
   testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
+  testImplementation("com.jetbrains.intellij.platform:core:$intellijPlatformVersion")
 }
 
 jar {
@@ -88,6 +89,8 @@ def relayURL=localProperties["ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL"]
 def serverId=localProperties["ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID"]
 
 def relayArgs = []
+
+println("url=$relayURL; id=$serverId")
 
 if (relayURL!=null && serverId != null) {
   relayArgs = ["-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL=$relayURL", "-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID=$serverId"]
