@@ -6,7 +6,19 @@ plugins {
 publishing {
   publications {
     maven(MavenPublication) {
+      groupId = "org.jetbrains.projector"
+      artifactId = "projector-agent"
+      version = "-SNAPSHOT"
       from components.java
+    }
+  }
+  repositories {
+    maven {
+      url "https://packages.jetbrains.team/maven/p/prj/projector-server"
+      credentials {
+        username = usernameProp
+        password = passwordProp
+      }
     }
   }
 }
