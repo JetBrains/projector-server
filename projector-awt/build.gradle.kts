@@ -26,10 +26,25 @@ plugins {
   `maven-publish`
 }
 
+val usernameProp: String by project
+val passwordProp: String by project
+
 publishing {
   publications {
     create<MavenPublication>("maven") {
+      groupId = "org.jetbrains.projector"
+      artifactId = "projector-awt"
+      version = "-SNAPSHOT"
       from(components["java"])
+    }
+  }
+  repositories {
+    maven {
+      url = uri("https://packages.jetbrains.team/maven/p/prj/projector-server")
+      credentials {
+        username = usernameProp
+        password = passwordProp
+      }
     }
   }
 }
