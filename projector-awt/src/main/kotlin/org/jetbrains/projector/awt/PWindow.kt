@@ -137,17 +137,20 @@ class PWindow(val target: Component, val isAgent: Boolean) {
   }
 
   internal fun updateGraphics() {
-    val windowMidpoint = with(target.bounds) { Point(x + width / 2, y + height / 2) }
-    val newDevice = PGraphicsEnvironment.devices.minByOrNull {
-      val deviceBounds = it.bounds
-      if(deviceBounds.contains(windowMidpoint)) 0 else {
-        min(min(abs(deviceBounds.x - windowMidpoint.x), abs(deviceBounds.x + deviceBounds.width - windowMidpoint.x)),
-            min(abs(deviceBounds.y - windowMidpoint.y), abs(deviceBounds.y + deviceBounds.height - windowMidpoint.y)))
-      }
-    } ?: return
-    graphics.device = newDevice
-    graphics.transform = newDevice.configuration.defaultTransform
-    AWTAccessor.getComponentAccessor().setGraphicsConfiguration(target, newDevice.configuration)
+    if (!isAgent) {
+      val windowMidpoint = with(target.bounds) { Point(x + width / 2, y + height / 2) }
+      val newDevice = PGraphicsEnvironment.devices.minByOrNull {
+        val deviceBounds = it.bounds
+        if (deviceBounds.contains(windowMidpoint)) 0
+        else {
+          min(min(abs(deviceBounds.x - windowMidpoint.x), abs(deviceBounds.x + deviceBounds.width - windowMidpoint.x)),
+              min(abs(deviceBounds.y - windowMidpoint.y), abs(deviceBounds.y + deviceBounds.height - windowMidpoint.y)))
+        }
+      } ?: return
+      graphics.device = newDevice
+      graphics.transform = newDevice.configuration.defaultTransform
+      AWTAccessor.getComponentAccessor().setGraphicsConfiguration(target, newDevice.configuration)
+    }
   }
 
   fun move(deltaX: Int, deltaY: Int) {
