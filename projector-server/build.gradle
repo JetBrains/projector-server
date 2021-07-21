@@ -37,7 +37,19 @@ application {
 publishing {
   publications {
     maven(MavenPublication) {
+      groupId = "org.jetbrains"
+      artifactId = "projector-server-projector-server-ci-test"
+      version = "1.0-SNAPSHOT"
       from components.java
+    }
+  }
+  repositories {
+    maven {
+      url "https://packages.jetbrains.team/maven/p/prj/test-maven-repo"
+      credentials {
+        username = usernameProp
+        password = passwordProp
+      }
     }
   }
 }
