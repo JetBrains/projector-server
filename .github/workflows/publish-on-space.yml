@@ -17,4 +17,4 @@ jobs:
         run: |
           echo ${{ secrets.SPACE_NAME }} >> gradle.properties
           echo ${{ secrets.SPACE_TOKEN }} >> gradle.properties
-          ./gradlew :projector-server:publish
+          ./gradlew publish
