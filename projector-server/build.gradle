@@ -38,14 +38,14 @@ publishing {
   publications {
     maven(MavenPublication) {
       groupId = "org.jetbrains.projector"
-      artifactId = "projector-server-ci-test"
+      artifactId = "projector-server"
       version = "-SNAPSHOT"
       from components.java
     }
   }
   repositories {
     maven {
-      url "https://packages.jetbrains.team/maven/p/prj/test-maven-repo"
+      url "https://packages.jetbrains.team/maven/p/prj/projector-server"
       credentials {
         username = usernameProp
         password = passwordProp
