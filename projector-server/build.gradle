@@ -37,9 +37,9 @@ application {
 publishing {
   publications {
     maven(MavenPublication) {
-      groupId = "org.jetbrains"
-      artifactId = "projector-server-projector-server-bot"
-      version = "1.0-SNAPSHOT"
+      groupId = "org.jetbrains.projector"
+      artifactId = "projector-server-ci-test"
+      version = "-SNAPSHOT"
       from components.java
     }
   }
