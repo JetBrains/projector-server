@@ -346,7 +346,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .asSequence()
       .filterNotNull()
       .filterNot {
-        it.displayName != null && it.displayName.startsWith("docker")
+        it.name != null && it.name.startsWith("docker")
       } // drop docker: we don't use hardware address, because on Win getHardwareAddress can take a lot of time
       .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
       .filterNot { it.address is Inet6Address } // drop IP v 6
