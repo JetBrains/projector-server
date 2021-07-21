@@ -1,23 +1,20 @@
 name: Publish on Space
 
-on:
-  push:
-    tags:
-      - "p"
+on: [push, pull_request]
+
 jobs:
   publish:
     name: kek
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: action/checout@v2
+        uses: actions/checkout@v2
       - name: SetUp Java
-        uses: action/setup-java@v1
+        uses: actions/setup-java@v1
         with:
           java-version: '11'
       - name: Add properties and publish
         run: |
           echo ${{ secrets.SPACE_NAME }} >> gradle.properties
           echo ${{ secrets.SPACE_TOKEN }} >> gradle.properties
-          ./gdadlew :projector-server:publish
-
+          ./gradlew :projector-server:publish
