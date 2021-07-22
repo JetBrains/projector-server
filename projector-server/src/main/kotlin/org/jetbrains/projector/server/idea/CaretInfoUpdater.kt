@@ -41,6 +41,7 @@ import java.awt.Font
 import java.awt.geom.Point2D
 import java.awt.peer.ComponentPeer
 import java.lang.reflect.Field
+import javax.swing.JScrollPane
 import javax.swing.text.JTextComponent
 import kotlin.concurrent.thread
 
@@ -70,6 +71,12 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
   private val myEditorComponentField by lazy {
     editorImplClass
       .getDeclaredField("myEditorComponent")
+      .apply(Field::unprotect)
+  }
+
+  private val myScrollPaneField by lazy {
+    editorImplClass
+      .getDeclaredField("myScrollPane")
       .apply(Field::unprotect)
   }
 
@@ -116,6 +123,14 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
     editorViewClass.getDeclaredMethod("getPlainSpaceWidth")
   }
 
+  private val getLineHeightMethod by lazy {
+    editorViewClass.getDeclaredMethod("getLineHeight")
+  }
+
+  private val getLineDescentMethod by lazy {
+    editorViewClass.getDeclaredMethod("getDescent")
+  }
+
   private var errorOccurred = false
 
   private var lastCaretInfo: ServerCaretInfoChangedEvent.CaretInfoChange = ServerCaretInfoChangedEvent.CaretInfoChange.NoCarets
@@ -145,10 +160,14 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
               val focusedEditor = myEditorField.get(focusedCaretBlinkingCommand)
               val focusedEditorComponent = myEditorComponentField.get(focusedEditor) as JTextComponent
               val componentLocation = focusedEditorComponent.locationOnScreen
+              val scrollPane = myScrollPaneField.get(focusedEditor) as JScrollPane
+              val visibleEditorRect = scrollPane.viewport.viewRect
 
               val focusedEditorView = myViewField.get(focusedEditor)
               val nominalLineHeight = getNominalLineHeightMethod.invoke(focusedEditorView) as Int
               val plainSpaceWidth = getPlainSpaceWidthMethod.invoke(focusedEditorView) as Float
+              val lineHeight = getLineHeightMethod.invoke(focusedEditorView) as Int
+              val lineDescent = getLineDescentMethod.invoke(focusedEditorView) as Int
 
               var rootComponent: Component? = focusedEditorComponent
               var editorPWindow: PWindow? = null
@@ -185,6 +204,10 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
                       )
                     }
 
+                  val scrollBarWidth = if (visibleEditorRect.height < focusedEditorComponent.height) // check scrollbar should be visible
+                    scrollPane.verticalScrollBar?.width ?: 0
+                  else 0
+
                   ServerCaretInfoChangedEvent.CaretInfoChange.Carets(
                     points,
                     fontId = FontCacher.getId(editorFont),
@@ -193,11 +216,14 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
                     plainSpaceWidth = plainSpaceWidth,
                     editorWindowId = editorPWindow.id,
                     editorMetrics = CommonRectangle(
-                      x = componentLocation.getX(),
-                      y = componentLocation.getY(),
-                      width = focusedEditorComponent.width.toDouble(),
-                      height = focusedEditorComponent.height.toDouble()
-                    )
+                      x = componentLocation.getX() - rootComponentLocation.x + visibleEditorRect.x,
+                      y = componentLocation.getY() - rootComponentLocation.y + visibleEditorRect.y,
+                      width = visibleEditorRect.width.toDouble(),
+                      height = visibleEditorRect.height.toDouble()
+                    ),
+                    lineHeight = lineHeight,
+                    lineDescent = lineDescent,
+                    scrollBarWidth = scrollBarWidth,
                   )
                 }
               }
