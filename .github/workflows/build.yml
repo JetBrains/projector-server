@@ -1,13 +1,18 @@
 name: Builds
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    types: [ assigned, opened, synchronize, reopened ]
+    branches: [ master ]
 
 jobs:
   build-server:
     runs-on: ${{matrix.os}}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macOS-latest]
+        os: [ ubuntu-latest, windows-latest, macOS-latest ]
 
     steps:
       - uses: actions/checkout@v2
