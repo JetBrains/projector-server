@@ -131,6 +131,74 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
     onCaretInfoChanged(lastCaretInfo)
   }
 
+  private fun loadCaretInfo(): ServerCaretInfoChangedEvent.CaretInfoChange {
+    val editorFont = getEditorFontMethod.invoke(null) as Font
+
+    val focusedCaretBlinkingCommand = ourCaretBlinkingCommandField.get(null)
+    val focusedEditor = myEditorField.get(focusedCaretBlinkingCommand)
+    val focusedEditorComponent = myEditorComponentField.get(focusedEditor) as JTextComponent
+
+    if (!focusedEditorComponent.isShowing) return ServerCaretInfoChangedEvent.CaretInfoChange.NoCarets
+
+    val componentLocation = focusedEditorComponent.locationOnScreen
+
+    val focusedEditorView = myViewField.get(focusedEditor)
+    val nominalLineHeight = getNominalLineHeightMethod.invoke(focusedEditorView) as Int
+    val plainSpaceWidth = getPlainSpaceWidthMethod.invoke(focusedEditorView) as Float
+
+    var rootComponent: Component? = focusedEditorComponent
+    var editorPWindow: PWindow? = null
+
+    while (rootComponent != null) {
+      val peer = AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(rootComponent)
+
+      if (peer is PComponentPeer) {
+        editorPWindow = peer.pWindow
+        break
+      }
+
+      rootComponent = rootComponent.parent
+    }
+
+    return when (editorPWindow) {
+      null -> ServerCaretInfoChangedEvent.CaretInfoChange.NoCarets
+
+      else -> {
+        val rootComponentLocation = rootComponent!!.locationOnScreen
+
+        val focusedCaretCursor = myCaretCursorField.get(focusedEditor)
+        val focusedLocations = myLocationsField.get(focusedCaretCursor) as Array<*>
+        val points = focusedLocations
+          .filterNotNull()
+          .map(myPointField::get)
+          .map { it as Point2D }
+          .map {
+            CaretInfo(
+              Point(
+                x = componentLocation.x - rootComponentLocation.x + it.x,
+                y = componentLocation.y - rootComponentLocation.y + it.y
+              )
+            )
+          }
+
+        ServerCaretInfoChangedEvent.CaretInfoChange.Carets(
+          points,
+          fontId = FontCacher.getId(editorFont),
+          fontSize = editorFont.size,
+          nominalLineHeight = nominalLineHeight,
+          plainSpaceWidth = plainSpaceWidth,
+          editorWindowId = editorPWindow.id,
+          editorMetrics = CommonRectangle(
+            x = componentLocation.getX(),
+            y = componentLocation.getY(),
+            width = focusedEditorComponent.width.toDouble(),
+            height = focusedEditorComponent.height.toDouble()
+          )
+        )
+      }
+    }
+  }
+
   fun start() {
     invokeWhenIdeaIsInitialized("search for editors") { ideaClassLoader ->
       this.ideaClassLoader = ideaClassLoader
@@ -139,69 +207,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
         while (!Thread.currentThread().isInterrupted) {
           try {
             try {
-              val editorFont = getEditorFontMethod.invoke(null) as Font
-
-              val focusedCaretBlinkingCommand = ourCaretBlinkingCommandField.get(null)
-              val focusedEditor = myEditorField.get(focusedCaretBlinkingCommand)
-              val focusedEditorComponent = myEditorComponentField.get(focusedEditor) as JTextComponent
-              val componentLocation = focusedEditorComponent.locationOnScreen
-
-              val focusedEditorView = myViewField.get(focusedEditor)
-              val nominalLineHeight = getNominalLineHeightMethod.invoke(focusedEditorView) as Int
-              val plainSpaceWidth = getPlainSpaceWidthMethod.invoke(focusedEditorView) as Float
-
-              var rootComponent: Component? = focusedEditorComponent
-              var editorPWindow: PWindow? = null
-
-              while (rootComponent != null) {
-                val peer = AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(rootComponent)
-
-                if (peer is PComponentPeer) {
-                  editorPWindow = peer.pWindow
-                  break
-                }
-
-                rootComponent = rootComponent.parent
-              }
-
-              val newCaretInfo = when (editorPWindow) {
-                null -> ServerCaretInfoChangedEvent.CaretInfoChange.NoCarets
-
-                else -> {
-                  val rootComponentLocation = rootComponent!!.locationOnScreen
-
-                  val focusedCaretCursor = myCaretCursorField.get(focusedEditor)
-                  val focusedLocations = myLocationsField.get(focusedCaretCursor) as Array<*>
-                  val points = focusedLocations
-                    .filterNotNull()
-                    .map(myPointField::get)
-                    .map { it as Point2D }
-                    .map {
-                      CaretInfo(
-                        Point(
-                          x = componentLocation.x - rootComponentLocation.x + it.x,
-                          y = componentLocation.y - rootComponentLocation.y + it.y
-                        )
-                      )
-                    }
-
-                  ServerCaretInfoChangedEvent.CaretInfoChange.Carets(
-                    points,
-                    fontId = FontCacher.getId(editorFont),
-                    fontSize = editorFont.size,
-                    nominalLineHeight = nominalLineHeight,
-                    plainSpaceWidth = plainSpaceWidth,
-                    editorWindowId = editorPWindow.id,
-                    editorMetrics = CommonRectangle(
-                      x = componentLocation.getX(),
-                      y = componentLocation.getY(),
-                      width = focusedEditorComponent.width.toDouble(),
-                      height = focusedEditorComponent.height.toDouble()
-                    )
-                  )
-                }
-              }
-
+              val newCaretInfo = loadCaretInfo()
               updateCaretInfoIfNeeded(newCaretInfo)
             }
             catch (npe: NullPointerException) {
