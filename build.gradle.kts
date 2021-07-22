@@ -37,7 +37,7 @@ subprojects {
 
   repositories {
     mavenCentral()
-    maven("https://jitpack.io")
+    maven { setUrl("https://packages.jetbrains.team/maven/p/prj/projector-client") }
   }
 
   tasks.withType<JavaCompile> {

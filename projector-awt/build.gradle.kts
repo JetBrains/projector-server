@@ -26,6 +26,8 @@ plugins {
   `maven-publish`
 }
 
+repositories { maven { url = uri("https://packages.jetbrains.team/maven/p/prj/projector-client") } }
+
 val usernameProp: String by project
 val passwordProp: String by project
 
