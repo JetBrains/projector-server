@@ -331,7 +331,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
   companion object {
     private val ALL_HOSTS = Host("0.0.0.0", "all addresses")
-    private val ALL_INTERFACES = NetworkInterface.getNetworkInterfaces()
+    private val ADDRESSES = NetworkInterface.getNetworkInterfaces()
       .asSequence()
       .filterNotNull()
       .filterNot {
@@ -353,6 +353,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         .joinToString("")
     }
 
-    private fun getHostList(toHost: (ip: InetAddress) -> Host) : List<Host> = ALL_INTERFACES.map { toHost(it.address) }
+    private fun getHostList(toHost: (ip: InetAddress) -> Host) : List<Host> = ADDRESSES.map { toHost(it.address) }
   }
 }
