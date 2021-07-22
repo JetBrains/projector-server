@@ -151,7 +151,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     when {
       host == ALL_HOSTS -> {
-        urlHostsList.setTooltip(null)
+        urlHostsList.tooltip = null
         val oldValue = urlHostsList.selected
         val hostList = getHostList { ip -> resolver.resolve(urlHostsList, ip) }
         urlHostsList.setItems(hostList)
@@ -159,15 +159,15 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         urlHostsList.isEnabled = hostList.size > 1
       }
       host != null -> {
+        urlHostsList.tooltip = "nothing to select from"
         urlHostsList.setItems(listOf(host))
         urlHostsList.selected = host
-        urlHostsList.setTooltip("nothing to select from")
         urlHostsList.isEnabled = false
         resolver.resolve(myHostsList, host.address)
         resolver.resolve(urlHostsList, host.address)
       }
       else -> {
-        urlHostsList.setTooltip(null)
+        urlHostsList.tooltip = null
         urlHostsList.isEnabled = true
         urlHostsList.clear()
       }
@@ -282,9 +282,11 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       hosts.isEnabled = enabled
     }
 
-    fun setTooltip(text: String?) {
-      hosts.toolTipText = text
-    }
+    var tooltip: String?
+      get() = hosts.toolTipText
+      set(value) {
+        hosts.toolTipText = value
+      }
 
     override fun resolved(host: Host) {
       val oldSelection = hosts.selectedIndex
@@ -329,9 +331,18 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
   companion object {
     private val ALL_HOSTS = Host("0.0.0.0", "all addresses")
+    private val ALL_INTERFACES = NetworkInterface.getNetworkInterfaces()
+      .asSequence()
+      .filterNotNull()
+      .filterNot {
+        it.hardwareAddress != null && it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor)
+      } // drop docker
+      .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
+      .filterNot { it.address is Inet6Address } // drop IP v 6
+      .toList()
+
     private val dockerVendor = byteArrayOf(0x02.toByte(), 0x42.toByte())
     private const val MAX_HOSTS_ROW_COUNT = 15
-
     private const val RANDOM_PASSWORD_LEN = 11
 
     private fun generatePassword(): String {
@@ -342,15 +353,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         .joinToString("")
     }
 
-    private fun getHostList(toHost: (ip: InetAddress) -> Host) = NetworkInterface.getNetworkInterfaces()
-      .asSequence()
-      .filterNotNull()
-      .filterNot {
-        it.name != null && it.name.startsWith("docker")
-      } // drop docker: we don't use hardware address, because on Win getHardwareAddress can take a lot of time
-      .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
-      .filterNot { it.address is Inet6Address } // drop IP v 6
-      .map { toHost(it.address) }
-      .toList()
+    private fun getHostList(toHost: (ip: InetAddress) -> Host) : List<Host> = ALL_INTERFACES.map { toHost(it.address) }
   }
 }
