@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.utils.loadPropertyFromResources
+import java.net.URL
+import java.util.zip.ZipFile
 import kotlin.streams.toList
-import java.net.*
-import java.util.zip.*
 
 /*
  * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
@@ -102,7 +102,7 @@ if (serverTargetClasspath != null && serverClassToLaunch != null) {
   (tasks["runServer"] as JavaExec).apply {
     group = "projector"
     classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, serverTargetClasspath)
-    jvmArgs = jvmArgs.orEmpty() + listOf(
+    jvmArgs = listOf(
       "-Dorg.jetbrains.projector.server.classToLaunch=$serverClassToLaunch",
       "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
       "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
@@ -126,7 +126,7 @@ if (ideaPath != null) {
     group = "projector"
     main = "org.jetbrains.projector.server.ProjectorLauncher"
     classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, ideaClassPath, "$jdkHome/../lib/tools.jar")
-    jvmArgs = jvmArgs.orEmpty() + listOf(
+    jvmArgs = listOf(
       "-Dorg.jetbrains.projector.server.classToLaunch=com.intellij.idea.Main",
       "-Didea.paths.selector=$ideaPathsSelector",
       "-Didea.jre.check=true",
@@ -146,78 +146,84 @@ if (ideaPath != null) {
   }
 }
 
-fun downloadFontsInZip(name: String, zipUrl: String, originalToDest: Map<String, String>) {
-  val fontsPath = "src/main/resources/fonts"
-  val requiredFonts = originalToDest.values.stream().map { "$fontsPath/$it" }.toList()
+inline fun <reified T : Task> Project.getOrCreateTask(taskName: String, noinline body: T.() -> Unit): TaskProvider<T> =
+  if (tasks.names.contains(taskName)) tasks.named(taskName, T::class.java).apply { configure(body) }
+  else tasks.register(taskName, T::class.java, body)
 
-  println("Checking $name fonts: $requiredFonts")
+fun Project.downloadFontsInZip(
+  taskName: String = "downloadFont",
+  name: String,
+  zipUrl: String,
+  originalToDest: Map<String, String>,
+): TaskProvider<Task> {
+  return getOrCreateTask(taskName) {
+    doFirst {
+      val fontsPath = "src/main/resources/fonts"
+      val requiredFonts = originalToDest.values.stream().map { "$fontsPath/$it" }.toList()
 
-  if (requiredFonts.stream().allMatch { project.file(it).exists() }) {
-    println("$name fonts already exist, skipping download.")
-  }
-  else {
-    println("Some $name fonts are missing, downloading... If some fonts exist, they will be overwritten.")
-    project.file(fontsPath).mkdirs()
+      println("Checking $name fonts: $requiredFonts")
 
-    val tempFile = File.createTempFile("${name}-fonts", "zip")
-    URL(zipUrl).openStream().copyTo(tempFile.outputStream())
+      if (requiredFonts.stream().allMatch { project.file(it).exists() }) {
+        println("$name fonts already exist, skipping download.")
+      }
+      else {
+        println("Some $name fonts are missing, downloading... If some fonts exist, they will be overwritten.")
+        project.file(fontsPath).mkdirs()
 
-    originalToDest.forEach { (srcPath, dest) ->
-      val destFile = project.file("$fontsPath/$dest")
+        val tempFile = File.createTempFile("${name}-fonts", "zip")
+        URL(zipUrl).openStream().copyTo(tempFile.outputStream())
 
-      destFile.delete()
-      destFile.createNewFile()
+        originalToDest.forEach { (srcPath, dest) ->
+          val destFile = project.file("$fontsPath/$dest")
 
-      ZipFile(tempFile).let {
-        it.getInputStream(it.getEntry(srcPath))
+          destFile.delete()
+          destFile.createNewFile()
+
+          ZipFile(tempFile).let {
+            it.getInputStream(it.getEntry(srcPath))
+          }
+        }
+
+        tempFile.delete()
+
+        println("Download complete")
       }
     }
-
-    tempFile.delete()
-
-    println("Download complete")
   }
 }
 
-val downloadCjkFonts = task("downloadCjkFonts") {
-  doLast {
-    downloadFontsInZip(
-      "CJK",
-      "https://noto-website-2.storage.googleapis.com/pkgs/NotoSansCJKjp-hinted.zip",
-      mapOf("NotoSansCJKjp-Regular.otf" to "CJK-R.otf")
-    )
-  }
-}
 
-val downloadDefaultFonts = task("downloadDefaultFonts") {
-  doLast {
-    downloadFontsInZip(
-      "default",
-      "https://noto-website-2.storage.googleapis.com/pkgs/NotoSans-hinted.zip",
-      mapOf(
-        "NotoSans-Regular.ttf" to "Default-R.ttf",
-        "NotoSans-Italic.ttf" to "Default-RI.ttf",
-        "NotoSans-Bold.ttf" to "Default-B.ttf",
-        "NotoSans-BoldItalic.ttf" to "Default-BI.ttf",
-      )
-    )
-  }
-}
+val downloadCjkFonts = downloadFontsInZip(
+  "downloadCjkFonts",
+  "CJK",
+  "https://noto-website-2.storage.googleapis.com/pkgs/NotoSansCJKjp-hinted.zip",
+  mapOf("NotoSansCJKjp-Regular.otf" to "CJK-R.otf")
+)
 
-val downloadMonoFonts = task("downloadMonoFonts") {
-  doLast {
-    downloadFontsInZip(
-      "mono",
-      "https://download.jetbrains.com/fonts/JetBrainsMono-1.0.3.zip",
-      mapOf(
-        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Regular.ttf" to "Mono-R.ttf",
-        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Italic.ttf" to "Mono-RI.ttf",
-        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Bold.ttf" to "Mono-B.ttf",
-        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Bold-Italic.ttf" to "Mono-BI.ttf",
-      )
-    )
-  }
-}
+val downloadDefaultFonts = downloadFontsInZip(
+  "downloadDefaultFonts",
+  "default",
+  "https://noto-website-2.storage.googleapis.com/pkgs/NotoSans-hinted.zip",
+  mapOf(
+    "NotoSans-Regular.ttf" to "Default-R.ttf",
+    "NotoSans-Italic.ttf" to "Default-RI.ttf",
+    "NotoSans-Bold.ttf" to "Default-B.ttf",
+    "NotoSans-BoldItalic.ttf" to "Default-BI.ttf",
+  )
+)
+
+val downloadMonoFonts = downloadFontsInZip(
+  "downloadMonoFonts",
+  "mono",
+  "https://download.jetbrains.com/fonts/JetBrainsMono-1.0.3.zip",
+  mapOf(
+    "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Regular.ttf" to "Mono-R.ttf",
+    "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Italic.ttf" to "Mono-RI.ttf",
+    "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Bold.ttf" to "Mono-B.ttf",
+    "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Bold-Italic.ttf" to "Mono-BI.ttf",
+  )
+)
+
 
 val downloadFonts = task("downloadFonts") {
   dependsOn(downloadCjkFonts, downloadDefaultFonts, downloadMonoFonts)
