@@ -1,3 +1,8 @@
+import org.jetbrains.kotlin.gradle.utils.loadPropertyFromResources
+import kotlin.streams.toList
+import java.net.*
+import java.util.zip.*
+
 /*
  * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -22,12 +27,10 @@
  * if you need additional information or have any questions.
  */
 
-import java.util.zip.ZipFile
-
 plugins {
-  id("org.jetbrains.kotlin.jvm")
-  id("application")
-  id("maven-publish")
+  kotlin("jvm")
+  `maven-publish`
+  application
 }
 
 application {
@@ -36,8 +39,8 @@ application {
 
 publishing {
   publications {
-    maven(MavenPublication) {
-      from components.java
+    create<MavenPublication>("maven") {
+      from(components["java"])
     }
   }
   repositories {
@@ -49,17 +52,23 @@ publishing {
 }
 
 configurations.all {
-  // disable caching of -SNAPSHOT dependencies
   resolutionStrategy.cacheChangingModulesFor(0, "seconds")
 }
+
+val projectorClientGroup: String by project
+val projectorClientVersion: String by project
+val mockitoKotlinVersion: String by project
+val kotlinVersion: String by project
 
 dependencies {
   implementation("$projectorClientGroup:projector-common:$projectorClientVersion")
   implementation("$projectorClientGroup:projector-server-core:$projectorClientVersion")
   implementation("$projectorClientGroup:projector-util-loading:$projectorClientVersion")
   implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
-  api project(":projector-awt")
+  api(project(":projector-awt"))
 
+  testImplementation("org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion")
+  testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
   compileOnly("com.jetbrains.intellij.platform:code-style:$intellijPlatformVersion")
   compileOnly("com.jetbrains.intellij.platform:core-ui:$intellijPlatformVersion")
   compileOnly("com.jetbrains.intellij.platform:ide-impl:$intellijPlatformVersion")
@@ -69,71 +78,72 @@ dependencies {
   testImplementation("com.jetbrains.intellij.platform:core:$intellijPlatformVersion")
 }
 
-jar {
+tasks.jar {
   manifest {
     attributes(
-      "Main-Class": application.mainClassName,
-      )
+      "Main-Class" to application.mainClassName
+    )
   }
   duplicatesStrategy = DuplicatesStrategy.WARN
 }
 
-//Server running tasks
-Properties localProperties = new Properties()
-if (project.rootProject.file('local.properties').canRead()) {
-  localProperties.load(project.rootProject.file("local.properties").newDataInputStream())
+val relayURL: java.util.Properties? = null
+val serverId: java.util.Properties? = null
+val serverTargetClasspath: java.util.Properties? = null
+val serverClassToLaunch: java.util.Properties? = null
+val ideaPath: java.util.Properties? = null
+
+if (project.rootProject.file("local.rpoperties").canRead()) {
+  relayURL?.loadPropertyFromResources("local.properties", "ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL")
+  serverId?.loadPropertyFromResources("local.properties", "ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID")
+  serverTargetClasspath?.loadPropertyFromResources("local.properties", "projectorLauncher.targetClassPath")
+  serverClassToLaunch?.loadPropertyFromResources("local.properties", "projectorLauncher.classToLaunch")
+  ideaPath?.loadPropertyFromResources("local.properties", "projectorLauncher.ideaPath")
 }
 
-// relay arguments
-def relayURL=localProperties["ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL"]
-def serverId=localProperties["ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID"]
+lateinit var relayArgs: List<String>
 
-def relayArgs = []
-
+if (relayURL != null && serverId != null) {
+  relayArgs = listOf("-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL=$relayURL", "-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID=$serverId")
 println("url=$relayURL; id=$serverId")
 
 if (relayURL!=null && serverId != null) {
   relayArgs = ["-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL=$relayURL", "-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID=$serverId"]
 }
 
-
-def serverTargetClasspath = localProperties['projectorLauncher.targetClassPath']
-def serverClassToLaunch = localProperties['projectorLauncher.classToLaunch']
 println("----------- Server launch config ---------------")
 println("Classpath: $serverTargetClasspath")
 println("ClassToLaunch: $serverClassToLaunch")
 println("------------------------------------------------")
 if (serverTargetClasspath != null && serverClassToLaunch != null) {
-  task runServer(type: JavaExec) {
+  (tasks["runServer"] as JavaExec).apply {
     group = "projector"
-    main = "org.jetbrains.projector.server.ProjectorLauncher"
-    classpath(sourceSets.main.runtimeClasspath, jar, "$serverTargetClasspath")
-    jvmArgs = [
+    classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, serverTargetClasspath)
+    jvmArgs = jvmArgs.orEmpty() + listOf(
       "-Dorg.jetbrains.projector.server.classToLaunch=$serverClassToLaunch",
       "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
       "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
       "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-    ] + relayArgs
+    ) + relayArgs
   }
 }
 
-def ideaPath = localProperties['projectorLauncher.ideaPath']
 println("----------- Idea launch config ---------------")
 println("Idea path: $ideaPath")
 println("------------------------------------------------")
 if (ideaPath != null) {
-  def ideaLib = "$ideaPath/lib"
-  def ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar:$ideaLib/trove4j.jar"
-  def jdkHome = System.getProperty('java.home')
+  val ideaLib = "$ideaPath/lib"
+  val ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar:$ideaLib/trove4j.jar"
+  val jdkHome = System.getProperty("java.home")
   println(jdkHome)
 
-  def ideaPathsSelector = "ProjectorIntelliJIdea"
+  val ideaPathsSelector = "ProjectorIntelliJIdea"
 
-  task runIdeaServer(type: JavaExec) {
+  (tasks["runIdeaServer"] as JavaExec).apply {
     group = "projector"
     main = "org.jetbrains.projector.server.ProjectorLauncher"
-    classpath(sourceSets.main.runtimeClasspath, jar, "$ideaClassPath", "$jdkHome/../lib/tools.jar")
-    jvmArgs = [
+    classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, ideaClassPath, "$jdkHome/../lib/tools.jar")
+    jvmArgs = jvmArgs.orEmpty() + listOf(
       "-Dorg.jetbrains.projector.server.classToLaunch=com.intellij.idea.Main",
       "-Didea.paths.selector=$ideaPathsSelector",
       "-Didea.jre.check=true",
@@ -149,100 +159,87 @@ if (ideaPath != null) {
       "--add-opens=java.base/java.lang=ALL-UNNAMED",
       "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
       "-Djdk.attach.allowAttachSelf=true",
-    ] + relayArgs
+    ) + relayArgs
   }
 }
 
-def downloadFontsInZip(
-  String name,
-  String zipUrl,
-  Map<String, String> originalToDest
-) {
-  // todo: when rewriting this build script to Kotlin, make this function create a task
-  def fontsPath = "src/main/resources/fonts"
-  def requiredFonts = originalToDest.values().stream().map { "$fontsPath/$it" }.collect()
+fun downloadFontsInZip(name: String, zipUrl: String, originalToDest: Map<String, String>) {
+  val fontsPath = "src/main/resources/fonts"
+  val requiredFonts = originalToDest.values.stream().map { "$fontsPath/$it" }.toList()
 
   println("Checking $name fonts: $requiredFonts")
 
-  def haveAll = requiredFonts.stream().allMatch { project.file(it).exists() }
-
-  if (haveAll) {
+  if (requiredFonts.stream().allMatch { project.file(it).exists() }) {
     println("$name fonts already exist, skipping download.")
   }
   else {
     println("Some $name fonts are missing, downloading... If some fonts exist, they will be overwritten.")
-
     project.file(fontsPath).mkdirs()
 
-    def url = new URL(zipUrl)
-    def tempFile = File.createTempFile("${name}-fonts", "zip")
-    url.withInputStream { i -> tempFile.withOutputStream { it << i } }
+    val tempFile = File.createTempFile("${name}-fonts", "zip")
+    URL(zipUrl).openStream().copyTo(tempFile.outputStream())
 
-    def zipFile = new ZipFile(tempFile)
-
-    originalToDest.forEach { srcPath, dest ->
-      def destFile = project.file("$fontsPath/$dest")
+    originalToDest.forEach { (srcPath, dest) ->
+      val destFile = project.file("$fontsPath/$dest")
 
       destFile.delete()
       destFile.createNewFile()
 
-      destFile.withOutputStream { it << zipFile.getInputStream(zipFile.getEntry(srcPath)) }
+      ZipFile(tempFile).let {
+        it.getInputStream(it.getEntry(srcPath))
+      }
     }
 
     tempFile.delete()
 
     println("Download complete")
   }
-
 }
 
-task downloadCjkFonts {
+val downloadCjkFonts = task("downloadCjkFonts") {
   doLast {
     downloadFontsInZip(
       "CJK",
       "https://noto-website-2.storage.googleapis.com/pkgs/NotoSansCJKjp-hinted.zip",
-      [
-        "NotoSansCJKjp-Regular.otf" : "CJK-R.otf",
-      ]
+      mapOf("NotoSansCJKjp-Regular.otf" to "CJK-R.otf")
     )
   }
 }
 
-task downloadDefaultFonts {
+val downloadDefaultFonts = task("downloadDefaultFonts") {
   doLast {
     downloadFontsInZip(
       "default",
       "https://noto-website-2.storage.googleapis.com/pkgs/NotoSans-hinted.zip",
-      [
-        "NotoSans-Regular.ttf" : "Default-R.ttf",
-        "NotoSans-Italic.ttf": "Default-RI.ttf",
-        "NotoSans-Bold.ttf" : "Default-B.ttf",
-        "NotoSans-BoldItalic.ttf": "Default-BI.ttf",
-      ]
+      mapOf(
+        "NotoSans-Regular.ttf" to "Default-R.ttf",
+        "NotoSans-Italic.ttf" to "Default-RI.ttf",
+        "NotoSans-Bold.ttf" to "Default-B.ttf",
+        "NotoSans-BoldItalic.ttf" to "Default-BI.ttf",
+      )
     )
   }
 }
 
-task downloadMonoFonts {
+val downloadMonoFonts = task("downloadMonoFonts") {
   doLast {
     downloadFontsInZip(
       "mono",
       "https://download.jetbrains.com/fonts/JetBrainsMono-1.0.3.zip",
-      [
-        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Regular.ttf"    : "Mono-R.ttf",
-        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Italic.ttf"     : "Mono-RI.ttf",
-        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Bold.ttf"       : "Mono-B.ttf",
-        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Bold-Italic.ttf": "Mono-BI.ttf",
-      ]
+      mapOf(
+        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Regular.ttf" to "Mono-R.ttf",
+        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Italic.ttf" to "Mono-RI.ttf",
+        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Bold.ttf" to "Mono-B.ttf",
+        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Bold-Italic.ttf" to "Mono-BI.ttf",
+      )
     )
   }
 }
 
-task downloadFonts {
+val downloadFonts = task("downloadFonts") {
   dependsOn(downloadCjkFonts, downloadDefaultFonts, downloadMonoFonts)
 }
 
-// Modify existing task which puts resources to the target dir:
-processResources {
-  dependsOn(downloadFonts)
-}
+//val processResources = task("processResources") {
+//  dependsOn(downloadFonts)
+//}
