@@ -1,0 +1,24 @@
+name: Check integration of projector-demo and projector-server
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    types: [ assigned, opened, synchronize, reopened ]
+    branches: [ master ]
+
+jobs:
+  Integrate-projector-demo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+
+      - run: |
+          cd ..
+          git clone https://github.com/JetBrains/projector-demo.git
+          cd projector-demo
+          echo useLocalProjectorServer=true > local.properties
+          ./gradlew build
