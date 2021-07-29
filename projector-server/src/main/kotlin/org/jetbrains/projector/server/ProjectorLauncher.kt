@@ -23,7 +23,9 @@
  */
 package org.jetbrains.projector.server
 
+import org.jetbrains.projector.server.core.classloader.initClassLoader
 import org.jetbrains.projector.server.service.ProjectorFontProvider
+import org.jetbrains.projector.util.loading.unprotect
 import java.lang.reflect.Method
 import kotlin.system.exitProcess
 
@@ -35,53 +37,90 @@ object ProjectorLauncher {
 
   @JvmStatic
   fun main(args: Array<String>) {
-    val canonicalMainClassName = requireNotNull(System.getProperty(MAIN_CLASS_PROPERTY_NAME)) {
-      "System property `$MAIN_CLASS_PROPERTY_NAME` isn't assigned, so can't understand which class to launch"
-    }
 
-    val mainMethod = getMainMethodOf(canonicalMainClassName)
-
-    if (runProjectorServer()) {
-      mainMethod.invoke(null, args)
-    }
-    else {
-      exitProcess(1)
-    }
+    /**
+     * [Starter.start]
+     */
+    getStarterClass()
+      .getDeclaredMethod("start", Array<String>::class.java)
+      .apply(Method::unprotect)
+      .invoke(null, args)
   }
 
-  private fun getMainMethodOf(canonicalClassName: String): Method {
-    val mainClass = Class.forName(canonicalClassName)
-    return mainClass.getMethod("main", Array<String>::class.java)
-  }
-
-  private fun setupSingletons() {
-    setupGraphicsEnvironment()
-    setupToolkit()
-    setupFontManager()
-    setupRepaintManager()
-  }
-
-  private fun initializeHeadless() {
-    setupSystemProperties()
-    setupSingletons()
-    ProjectorFontProvider.isAgent = false
-  }
-
+  @Suppress("unused") // "invoked from CWM code as the generic launcher can't be used there"
   @JvmStatic
   fun runProjectorServer(): Boolean {
-    System.setProperty(ProjectorServer.ENABLE_PROPERTY_NAME, true.toString())
 
-    assert(ProjectorServer.isEnabled) { "Can't start the ${ProjectorServer::class.simpleName} because it's disabled..." }
+    /**
+     * [Starter.runProjectorServer]
+     */
+    return getStarterClass()
+      .getDeclaredMethod("runProjectorServer")
+      .apply(Method::unprotect)
+      .invoke(null) as Boolean
+  }
 
-    val server = ProjectorServer.startServer(isAgent = false) { initializeHeadless() }
+  /**
+   * @return [Starter] Class
+   */
+  private fun getStarterClass(): Class<*> {
+    val prjClassLoader = initClassLoader(javaClass.classLoader)
 
-    Runtime.getRuntime().addShutdownHook(object : Thread() {
+    return prjClassLoader.loadClass("${javaClass.name}\$Starter")
+  }
 
-      override fun run() {
-        server.stop()
+  private object Starter {
+
+    @JvmStatic
+    fun start(args: Array<String>) {
+      val canonicalMainClassName = requireNotNull(System.getProperty(MAIN_CLASS_PROPERTY_NAME)) {
+        "System property `$MAIN_CLASS_PROPERTY_NAME` isn't assigned, so can't understand which class to launch"
       }
-    })
 
-    return server.wasStarted
+      val mainMethod = getMainMethodOf(canonicalMainClassName)
+
+      if (runProjectorServer()) {
+        mainMethod.invoke(null, args)
+      }
+      else {
+        exitProcess(1)
+      }
+    }
+
+    private fun getMainMethodOf(canonicalClassName: String): Method {
+      val mainClass = Class.forName(canonicalClassName)
+      return mainClass.getMethod("main", Array<String>::class.java)
+    }
+
+    private fun setupSingletons() {
+      setupGraphicsEnvironment()
+      setupToolkit()
+      setupFontManager()
+      setupRepaintManager()
+    }
+
+    private fun initializeHeadless() {
+      setupSystemProperties()
+      setupSingletons()
+      ProjectorFontProvider.isAgent = false
+    }
+
+    @JvmStatic
+    fun runProjectorServer(): Boolean {
+      System.setProperty(ProjectorServer.ENABLE_PROPERTY_NAME, true.toString())
+
+      assert(ProjectorServer.isEnabled) { "Can't start the ${ProjectorServer::class.simpleName} because it's disabled..." }
+
+      val server = ProjectorServer.startServer(isAgent = false) { initializeHeadless() }
+
+      Runtime.getRuntime().addShutdownHook(object : Thread() {
+
+        override fun run() {
+          server.stop()
+        }
+      })
+
+      return server.wasStarted
+    }
   }
 }

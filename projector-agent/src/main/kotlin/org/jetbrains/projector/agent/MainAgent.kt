@@ -26,39 +26,60 @@ package org.jetbrains.projector.agent
 
 import javassist.ClassPool
 import javassist.LoaderClassPath
+import org.jetbrains.projector.server.core.classloader.initClassLoader
+import org.jetbrains.projector.util.loading.unprotect
 import org.jetbrains.projector.util.logging.Logger
 import java.lang.instrument.Instrumentation
+import java.lang.reflect.Method
 
+@Suppress("unused")
 public object MainAgent {
 
   private val logger = Logger<MainAgent>()
 
   @JvmStatic
   public fun agentmain(args: String?, instrumentation: Instrumentation) {
-    logger.info { "agentmain start, args=$args" }
+    val prjClassLoader = initClassLoader(javaClass.classLoader)
 
-    val threads = Thread.getAllStackTraces().keys
-    val classLoaders = threads.mapNotNull { it.contextClassLoader }.toSet()
-    logger.info { "Found classloaders, appending to Javassist: ${classLoaders.joinToString()}" }
-    classLoaders.forEach { ClassPool.getDefault().appendClassPath(LoaderClassPath(it)) }
+    /**
+     * [Starter.start]
+     */
+    prjClassLoader
+      .loadClass("${javaClass.name}\$Starter")
+      .getDeclaredMethod("start", String::class.java, Instrumentation::class.java)
+      .apply(Method::unprotect)
+      .invoke(null, args, instrumentation)
+  }
 
-    // Override swing property before swing initialized. Need for MacOS.
-    //System.setProperty("swing.bufferPerWindow", false.toString())  // todo: this doesn't work because Swing is initialized already
+  private object Starter {
 
-    // Make DrawHandler class visible for System classloader
-    //instrumentation.appendToSystemClassLoaderSearch(JarFile(args)) // todo: seems not needed (maybe after appending all classloaders)
+    @JvmStatic
+    fun start(args: String?, instrumentation: Instrumentation) {
+      logger.info { "agentmain start, args=$args" }
 
-    instrumentation.addTransformer(GraphicsTransformer(), true)
+      val threads = Thread.getAllStackTraces().keys
+      val classLoaders = threads.mapNotNull { it.contextClassLoader }.toSet()
+      logger.info { "Found classloaders, appending to Javassist: ${classLoaders.joinToString()}" }
+      classLoaders.forEach { ClassPool.getDefault().appendClassPath(LoaderClassPath(it)) }
 
-    instrumentation.retransformClasses(
-      sun.java2d.SunGraphics2D::class.java,
-      sun.awt.image.SunVolatileImage::class.java,
-      java.awt.image.BufferedImage::class.java,
-      java.awt.Component::class.java,
-      javax.swing.JComponent::class.java,
-      //Class.forName("com.intellij.ui.BalloonImpl\$MyComponent"),  // todo
-    )
+      // Override swing property before swing initialized. Need for MacOS.
+      //System.setProperty("swing.bufferPerWindow", false.toString())  // todo: this doesn't work because Swing is initialized already
 
-    logger.info { "agentmain finish" }
+      // Make DrawHandler class visible for System classloader
+      //instrumentation.appendToSystemClassLoaderSearch(JarFile(args)) // todo: seems not needed (maybe after appending all classloaders)
+
+      instrumentation.addTransformer(GraphicsTransformer(), true)
+
+      instrumentation.retransformClasses(
+        sun.java2d.SunGraphics2D::class.java,
+        sun.awt.image.SunVolatileImage::class.java,
+        java.awt.image.BufferedImage::class.java,
+        java.awt.Component::class.java,
+        javax.swing.JComponent::class.java,
+        //Class.forName("com.intellij.ui.BalloonImpl\$MyComponent"),  // todo
+      )
+
+      logger.info { "agentmain finish" }
+    }
   }
 }
