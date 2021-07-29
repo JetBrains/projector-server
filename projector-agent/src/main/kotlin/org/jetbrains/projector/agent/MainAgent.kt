@@ -26,7 +26,7 @@ package org.jetbrains.projector.agent
 
 import javassist.ClassPool
 import javassist.LoaderClassPath
-import org.jetbrains.projector.server.core.classloader.initClassLoader
+import org.jetbrains.projector.server.core.classloader.ProjectorClassLoaderSetup
 import org.jetbrains.projector.util.loading.unprotect
 import org.jetbrains.projector.util.logging.Logger
 import java.lang.instrument.Instrumentation
@@ -39,7 +39,7 @@ public object MainAgent {
 
   @JvmStatic
   public fun agentmain(args: String?, instrumentation: Instrumentation) {
-    val prjClassLoader = initClassLoader(javaClass.classLoader)
+    val prjClassLoader = ProjectorClassLoaderSetup.initClassLoader(javaClass.classLoader)
 
     /**
      * [Starter.start]
