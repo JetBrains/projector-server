@@ -32,7 +32,7 @@ import org.jetbrains.projector.common.protocol.data.ImageId
 import org.jetbrains.projector.common.protocol.toClient.ServerImageDataReplyEvent
 import org.jetbrains.projector.server.ProjectorServer
 import org.jetbrains.projector.server.core.util.SizeAware
-import org.jetbrains.projector.server.core.util.unprotect
+import org.jetbrains.projector.util.loading.unprotect
 import org.jetbrains.projector.util.logging.Logger
 import sun.awt.image.SunVolatileImage
 import sun.awt.image.ToolkitImage

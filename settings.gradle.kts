@@ -51,6 +51,7 @@ if (localProperties["useLocalProjectorClient"] == "true") {
     dependencySubstitution {
       substitute(module("$projectorClientGroup:projector-common")).with(project(":projector-common"))
       substitute(module("$projectorClientGroup:projector-server-core")).with(project(":projector-server-core"))
+      substitute(module("$projectorClientGroup:projector-util-loading")).with(project(":projector-util-loading"))
       substitute(module("$projectorClientGroup:projector-util-logging")).with(project(":projector-util-logging"))
     }
   }
