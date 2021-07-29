@@ -25,6 +25,7 @@ package org.jetbrains.projector.agent
 
 import com.sun.tools.attach.VirtualMachine
 import org.jetbrains.projector.agent.GraphicsTransformer.Companion.DRAW_HANDLER_CLASS
+import org.jetbrains.projector.util.loading.unprotect
 import java.beans.PropertyChangeListener
 import java.lang.management.ManagementFactory
 import java.lang.reflect.Method
@@ -70,8 +71,23 @@ public object AgentLauncher {
     println("dynamically attaching agent... - done")
   }
 
+  /**
+   * Get ProjectorClassLoader instance via AppClassLoader
+   */
+  private val classLoader: ClassLoader by lazy {
+    // language=java prefix="import " suffix=;
+    val projectorClassLoaderName = "org.jetbrains.projector.util.loading.ProjectorClassLoader"
+
+    ClassLoader
+      .getSystemClassLoader()
+      .loadClass(projectorClassLoaderName)
+      .getDeclaredMethod("getInstance")
+      .apply(Method::unprotect)
+      .invoke(null) as ClassLoader
+  }
+
   private fun getHandlerClass(): Class<*> {
-    return ClassLoader.getSystemClassLoader().loadClass(DRAW_HANDLER_CLASS)
+    return classLoader.loadClass(DRAW_HANDLER_CLASS)
   }
 
   @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")  // KTIJ-18982

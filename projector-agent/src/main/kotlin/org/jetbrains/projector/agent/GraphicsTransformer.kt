@@ -230,7 +230,18 @@ internal class GraphicsTransformer : ClassFileTransformer {
     private val logger = Logger<GraphicsTransformer>()
 
     val DRAW_HANDLER_CLASS = GraphicsInterceptor::class.qualifiedName!!
-    private val DRAW_HANDLER_CLASS_LOADING = "Class clazz = ClassLoader.getSystemClassLoader().loadClass(\"$DRAW_HANDLER_CLASS\");"
+
+    // language=java prefix="import " suffix=;
+    private const val PROJECTOR_CLASS_LOADER_NAME = "org.jetbrains.projector.util.loading.ProjectorClassLoader"
+
+    @Suppress("rawtypes", "unchecked")
+    // language=java prefix="class Dummy { void dummy() {" suffix=}}
+    private val DRAW_HANDLER_CLASS_LOADING = """
+      Class prjClassLoaderClazz = ClassLoader.getSystemClassLoader().loadClass("$PROJECTOR_CLASS_LOADER_NAME");
+      ClassLoader loader = (ClassLoader) prjClassLoaderClazz.getDeclaredMethod("getInstance", new Class[0]).invoke(null, new Object[0]);
+      Class clazz = loader.loadClass("$DRAW_HANDLER_CLASS");
+    """.trimIndent()
+
     private const val JAVASSIST_ARGS = "${'$'}args"
     private const val JAVASSIST_THIS = "${'$'}0"
   }
