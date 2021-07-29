@@ -21,12 +21,12 @@
   ~ Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
   ~ if you need additional information or have any questions.
   -->
-<idea-plugin>
+<idea-plugin require-restart="false">
   <id>org.jetbrains.projector-plugin</id>
   <name>Projector</name>
   <vendor email="support@jetbrains.org" url="https://www.jetbrains.org">JetBrains</vendor>
 
-  <idea-version since-build="193"/>
+  <idea-version since-build="201"/>
 
   <description><![CDATA[
     <p>Share the IDE window using the <a href="https://github.com/JetBrains/projector-server">Projector server</a>.</p>
@@ -48,6 +48,10 @@
     <applicationService serviceImplementation="org.jetbrains.projector.plugin.ProjectorService"/>
     <postStartupActivity implementation="org.jetbrains.projector.plugin.RegisterPluginInstallerStateListener"/>
   </extensions>
+
+  <applicationListeners>
+    <listener class="org.jetbrains.projector.plugin.ProjectorDynamicPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"></listener>
+  </applicationListeners>
 
   <actions>
     <group id="projector.menu" class="org.jetbrains.projector.plugin.actions.ProjectorActionGroup"  text="Projector" description="Projector menu" popup="true">

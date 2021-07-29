@@ -21,36 +21,18 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-package org.jetbrains.projector.plugin.actions
+package org.jetbrains.projector.plugin
 
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.project.DumbAware
-import org.jetbrains.projector.plugin.getActionGroup
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import org.jetbrains.projector.plugin.actions.ProjectorActionGroup
 
-class ProjectorActionGroup : DefaultActionGroup(), DumbAware {
-  override fun update(event: AnActionEvent) {
-    event.presentation.isEnabledAndVisible = showMenu
+class ProjectorDynamicPluginListener : DynamicPluginListener {
+
+  override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
   }
 
-  companion object {
-    private var showMenu = false
-
-    fun show() {
-      showMenu = true
-      update("projector.menu")
-    }
-
-    fun hide() {
-      showMenu = false
-      update("projector.menu")
-    }
-
-    private fun update(agName: String) {
-      val menu = getActionGroup(agName)
-      val event = AnActionEvent.createFromAnAction(menu, null, "", DataContext.EMPTY_CONTEXT)
-      menu.update(event)
-    }
+  override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+    ProjectorActionGroup.hide()
   }
 }

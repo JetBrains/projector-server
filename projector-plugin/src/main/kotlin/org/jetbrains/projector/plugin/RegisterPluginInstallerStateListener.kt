@@ -56,6 +56,7 @@ class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
       }
     })
 
+    installMenu(project)
     installUI(project)
     ProjectorService.autostartIfRequired()
   }
