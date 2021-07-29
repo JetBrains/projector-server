@@ -23,7 +23,7 @@
  */
 package org.jetbrains.projector.server
 
-import org.jetbrains.projector.server.core.classloader.initClassLoader
+import org.jetbrains.projector.server.core.classloader.ProjectorClassLoaderSetup
 import org.jetbrains.projector.server.service.ProjectorFontProvider
 import org.jetbrains.projector.util.loading.unprotect
 import java.lang.reflect.Method
@@ -64,7 +64,7 @@ object ProjectorLauncher {
    * @return [Starter] Class
    */
   private fun getStarterClass(): Class<*> {
-    val prjClassLoader = initClassLoader(javaClass.classLoader)
+    val prjClassLoader = ProjectorClassLoaderSetup.initClassLoader(javaClass.classLoader)
 
     return prjClassLoader.loadClass("${javaClass.name}\$Starter")
   }
