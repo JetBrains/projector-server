@@ -38,6 +38,8 @@ subprojects {
   repositories {
     mavenCentral()
     maven("https://jitpack.io")
+    maven("https://www.jetbrains.com/intellij-repository/releases")
+    maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
   }
 
   tasks.withType<JavaCompile> {

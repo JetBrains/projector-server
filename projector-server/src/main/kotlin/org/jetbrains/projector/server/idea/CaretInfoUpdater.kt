@@ -25,6 +25,12 @@
 
 package org.jetbrains.projector.server.idea
 
+import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.view.EditorView
 import org.jetbrains.projector.awt.PWindow
 import org.jetbrains.projector.awt.peer.PComponentPeer
 import org.jetbrains.projector.common.protocol.data.CommonRectangle
@@ -37,65 +43,17 @@ import org.jetbrains.projector.util.loading.unprotect
 import org.jetbrains.projector.util.logging.Logger
 import sun.awt.AWTAccessor
 import java.awt.Component
-import java.awt.Font
-import java.awt.geom.Point2D
 import java.awt.peer.ComponentPeer
 import java.lang.reflect.Field
-import javax.swing.text.JTextComponent
+import java.util.concurrent.TimeoutException
 import kotlin.concurrent.thread
 
 class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEvent.CaretInfoChange) -> Unit) {
 
   private lateinit var thread: Thread
 
-  private lateinit var ideaClassLoader: ClassLoader
-
   private val editorImplClass by lazy {
-    Class.forName("com.intellij.openapi.editor.impl.EditorImpl", false, ideaClassLoader)
-  }
-
-  private val ourCaretBlinkingCommandField by lazy {
-    editorImplClass
-      .getDeclaredField("ourCaretBlinkingCommand")
-      .apply(Field::unprotect)
-  }
-
-  private val myEditorField by lazy {
-    Class
-      .forName("com.intellij.openapi.editor.impl.EditorImpl\$RepaintCursorCommand", false, ideaClassLoader)
-      .getDeclaredField("myEditor")
-      .apply(Field::unprotect)
-  }
-
-  private val myEditorComponentField by lazy {
-    editorImplClass
-      .getDeclaredField("myEditorComponent")
-      .apply(Field::unprotect)
-  }
-
-  private val myCaretCursorField by lazy {
-    editorImplClass
-      .getDeclaredField("myCaretCursor")
-      .apply(Field::unprotect)
-  }
-
-  private val myLocationsField by lazy {
-    Class
-      .forName("com.intellij.openapi.editor.impl.EditorImpl\$CaretCursor", false, ideaClassLoader)
-      .getDeclaredField("myLocations")
-      .apply(Field::unprotect)
-  }
-
-  private val myPointField by lazy {
-    Class
-      .forName("com.intellij.openapi.editor.impl.EditorImpl\$CaretRectangle", false, ideaClassLoader)
-      .getDeclaredField("myPoint")
-  }
-
-  private val getEditorFontMethod by lazy {
-    Class
-      .forName("com.intellij.openapi.editor.ex.util.EditorUtil", false, ideaClassLoader)
-      .getDeclaredMethod("getEditorFont")
+    EditorImpl::class.java
   }
 
   private val myViewField by lazy {
@@ -104,17 +62,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
       .apply(Field::unprotect)
   }
 
-  private val editorViewClass by lazy {
-    Class.forName("com.intellij.openapi.editor.impl.view.EditorView", false, ideaClassLoader)
-  }
-
-  private val getNominalLineHeightMethod by lazy {
-    editorViewClass.getDeclaredMethod("getNominalLineHeight")
-  }
-
-  private val getPlainSpaceWidthMethod by lazy {
-    editorViewClass.getDeclaredMethod("getPlainSpaceWidth")
-  }
+  private val myDataManager by lazy { DataManager.getInstance() }
 
   private var errorOccurred = false
 
@@ -131,20 +79,31 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
     onCaretInfoChanged(lastCaretInfo)
   }
 
-  private fun loadCaretInfo(): ServerCaretInfoChangedEvent.CaretInfoChange {
-    val editorFont = getEditorFontMethod.invoke(null) as Font
+  private fun getCurrentEditorImpl(): EditorImpl? {
 
-    val focusedCaretBlinkingCommand = ourCaretBlinkingCommandField.get(null)
-    val focusedEditor = myEditorField.get(focusedCaretBlinkingCommand)
-    val focusedEditorComponent = myEditorComponentField.get(focusedEditor) as JTextComponent
+    val dataContext = try {
+      myDataManager.dataContextFromFocusAsync.blockingGet(DATA_CONTEXT_QUERYING_TIMEOUT_MS)
+    } catch (e : TimeoutException) {
+      null
+    } ?: return null
+
+    return dataContext.getData(CommonDataKeys.EDITOR) as? EditorImpl
+  }
+
+  // TODO Remove remaining reflection bits once we get rid of nominalLineHeight and plainSpaceWidth
+  private fun loadCaretInfo(): ServerCaretInfoChangedEvent.CaretInfoChange {
+    val editorFont = EditorUtil.getEditorFont()
+
+    val focusedEditor = getCurrentEditorImpl() ?: return ServerCaretInfoChangedEvent.CaretInfoChange.NoCarets
+    val focusedEditorComponent = focusedEditor.contentComponent
 
     if (!focusedEditorComponent.isShowing) return ServerCaretInfoChangedEvent.CaretInfoChange.NoCarets
 
     val componentLocation = focusedEditorComponent.locationOnScreen
 
-    val focusedEditorView = myViewField.get(focusedEditor)
-    val nominalLineHeight = getNominalLineHeightMethod.invoke(focusedEditorView) as Int
-    val plainSpaceWidth = getPlainSpaceWidthMethod.invoke(focusedEditorView) as Float
+    val focusedEditorView = myViewField.get(focusedEditor) as EditorView
+    val nominalLineHeight = focusedEditorView.nominalLineHeight
+    val plainSpaceWidth = focusedEditorView.plainSpaceWidth
 
     var rootComponent: Component? = focusedEditorComponent
     var editorPWindow: PWindow? = null
@@ -166,20 +125,19 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
       else -> {
         val rootComponentLocation = rootComponent!!.locationOnScreen
 
-        val focusedCaretCursor = myCaretCursorField.get(focusedEditor)
-        val focusedLocations = myLocationsField.get(focusedCaretCursor) as Array<*>
-        val points = focusedLocations
-          .filterNotNull()
-          .map(myPointField::get)
-          .map { it as Point2D }
-          .map {
-            CaretInfo(
-              Point(
-                x = componentLocation.x - rootComponentLocation.x + it.x,
-                y = componentLocation.y - rootComponentLocation.y + it.y
-              )
-            )
-          }
+        val editorLocationInWindowX = componentLocation.x - rootComponentLocation.x
+        val editorLocationInWindowY = componentLocation.y - rootComponentLocation.y
+
+        val points = focusedEditor.caretModel.allCarets.map {
+          val caretLocationInEditor = invokeAndWaitIfNeeded { it.editor.visualPositionToXY(it.visualPosition) }
+
+          val point = Point(
+            x = (editorLocationInWindowX + caretLocationInEditor.x).toDouble(),
+            y = (editorLocationInWindowY + caretLocationInEditor.y).toDouble(),
+          )
+
+          CaretInfo(point)
+        }
 
         ServerCaretInfoChangedEvent.CaretInfoChange.Carets(
           points,
@@ -200,9 +158,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
   }
 
   fun start() {
-    invokeWhenIdeaIsInitialized("search for editors") { ideaClassLoader ->
-      this.ideaClassLoader = ideaClassLoader
-
+    invokeWhenIdeaIsInitialized("search for editors") {
       thread = thread(isDaemon = true) {
         while (!Thread.currentThread().isInterrupted) {
           try {
@@ -239,5 +195,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
   companion object {
 
     private val logger = Logger<CaretInfoUpdater>()
+
+    private const val DATA_CONTEXT_QUERYING_TIMEOUT_MS = 1000
   }
 }

@@ -54,6 +54,10 @@ dependencies {
   implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
   api project(":projector-awt")
 
+  compileOnly("com.jetbrains.intellij.platform:code-style:$intellijPlatformVersion")
+  compileOnly("com.jetbrains.intellij.platform:core-ui:$intellijPlatformVersion")
+  compileOnly("com.jetbrains.intellij.platform:ide-impl:$intellijPlatformVersion")
+
   testImplementation "org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion"
   testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
 }
