@@ -114,7 +114,12 @@ public object AgentLauncher {
 
   @JvmStatic
   public fun removeClientsObserver(listener: PropertyChangeListener) {
-    removeClientsObserverMethod.invoke(null, listener)
+    try {
+      removeClientsObserverMethod.invoke(null, listener)
+    }
+    catch (e: ClassNotFoundException) {
+      println("Class GraphicsInterceptor not found: agent wasn't injected.")
+    }
   }
 
   @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")  // KTIJ-18982
