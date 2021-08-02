@@ -27,20 +27,14 @@ package org.jetbrains.projector.plugin
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginStateListener
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.wm.StatusBar
-import com.intellij.openapi.wm.StatusBarWidget
-import com.intellij.openapi.wm.WindowManager
-import org.jetbrains.projector.plugin.actions.ProjectorActionGroup
-import org.jetbrains.projector.plugin.ui.ProjectorStatusWidget
-import org.jetbrains.projector.plugin.ui.displayNotification
+import org.jetbrains.projector.plugin.ui.installUI
+import org.jetbrains.projector.plugin.ui.removeUI
 
 
 class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
-  private val logger = Logger.getInstance(RegisterPluginInstallerStateListener::class.java)
 
   override fun runActivity(project: Project) {
     PluginInstaller.addStateListener(object : PluginStateListener {
@@ -59,65 +53,5 @@ class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
     //installMenu()
     installUI()
     ProjectorService.autostartIfRequired()
-  }
-
-  private fun installUI() {
-    if (!installProjectorWidget()) {
-      installMenu()
-    }
-  }
-
-  private fun installMenu() {
-    ProjectorActionGroup.show()
-    displayNotification("Warning", "Can't display status bar widget",
-                        "Use Projector menu to manage plugin")
-  }
-
-  private fun getIdeStatusBar(): StatusBar? {
-    val frame = WindowManager.getInstance().getIdeFrame(null) ?: return null
-    return WindowManager.getInstance().getStatusBar(frame.component, null)
-  }
-
-  private fun installProjectorWidget(): Boolean {
-    val statusBar = getIdeStatusBar() ?: return false
-
-    if (statusBar.getWidget(ProjectorStatusWidget.ID) != null) return true // already installed
-
-    val method = try {
-      StatusBar::class.java.getMethod("addWidget", StatusBarWidget::class.java, String::class.java)
-    }
-    catch (e: NoSuchMethodException) {
-      logger.error("StatusBar widget is unsupported in this IDEA version: StatusBar has no addWidget method")
-      null
-    }
-
-    val ret = method != null
-
-    method?.let {
-      val widget = ProjectorStatusWidget(statusBar)
-      it.invoke(statusBar, widget, StatusBar.Anchors.DEFAULT_ANCHOR)
-      widget.update()
-    }
-
-    return ret
-  }
-
-  private fun removeUI() {
-    ProjectorActionGroup.hide()
-    removeProjectorWidget()
-  }
-
-  private fun removeProjectorWidget() {
-    val statusBar = getIdeStatusBar() ?: return
-
-    val method = try {
-      StatusBar::class.java.getMethod("removeWidget", String::class.java)
-    }
-    catch (e: NoSuchMethodException) {
-      logger.error("StatusBar has no removeWidget method")
-      null
-    }
-
-    method?.invoke(statusBar, ProjectorStatusWidget.ID)
   }
 }
