@@ -27,27 +27,24 @@ package org.jetbrains.projector.plugin.ui
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
-import com.intellij.openapi.wm.impl.status.EditorBasedWidget
 import com.intellij.util.Consumer
 import org.jetbrains.projector.plugin.*
 import org.jetbrains.projector.plugin.actions.*
 import java.awt.Component
-import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
-import java.util.*
 import javax.swing.Icon
 import javax.swing.SwingUtilities
 
-class ProjectorStatusWidget(project: Project)
-  : EditorBasedWidget(project),
+class ProjectorStatusWidget(private val myStatusBar: StatusBar)
+  : DumbAware,
     StatusBarWidget.MultipleTextValuesPresentation,
     StatusBarWidget.Multiframe,
     ProjectorStateListener,
@@ -57,7 +54,7 @@ class ProjectorStatusWidget(project: Project)
 
   override fun ID(): String = ID
 
-  override fun copy(): StatusBarWidget = ProjectorStatusWidget(project)
+  override fun copy(): StatusBarWidget = ProjectorStatusWidget(myStatusBar)
 
   override fun getPopupStep(): ListPopup? {
     onClick()
@@ -75,7 +72,6 @@ class ProjectorStatusWidget(project: Project)
   override fun getIcon() = updateIcon()
 
   override fun install(statusBar: StatusBar) {
-    super.install(statusBar)
     ProjectorService.subscribe(this)
     update()
   }
@@ -83,11 +79,10 @@ class ProjectorStatusWidget(project: Project)
   override fun dispose() {
     ProjectorService.unsubscribe(this)
     ProjectorService.removeClientsObserver(this)
-    super.dispose()
   }
 
   fun update() {
-    myStatusBar?.updateWidget(ID())
+    myStatusBar.updateWidget(ID())
   }
 
   override fun stateChanged() {
