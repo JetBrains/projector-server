@@ -23,6 +23,10 @@
  */
 package org.jetbrains.projector.plugin.ui
 
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
@@ -89,4 +93,14 @@ private fun removeProjectorWidget() {
 private fun getIdeStatusBar(): StatusBar? {
   val frame = WindowManager.getInstance().getIdeFrame(null) ?: return null
   return WindowManager.getInstance().getStatusBar(frame.component, null)
+}
+
+fun getActionGroup(groupId: String): ActionGroup {
+  return ActionManager.getInstance().getAction(groupId) as ActionGroup
+}
+
+fun updateActionGroup(agName: String) {
+  val menu = getActionGroup(agName)
+  val event = AnActionEvent.createFromAnAction(menu, null, "", DataContext.EMPTY_CONTEXT)
+  menu.update(event)
 }

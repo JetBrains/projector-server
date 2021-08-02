@@ -29,8 +29,6 @@ import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.plugins.PluginManagerConfigurable
-import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
@@ -116,7 +114,6 @@ fun isProjectorDisabled(): Boolean {
 
 fun isProjectorStopped() = ProjectorService.enabled == EnabledState.STOPPED
 
-
 fun confirmRestart(messageString: String): Boolean {
   val title = "Restart is needed..."
   val message = Function<String, String> { messageString }
@@ -130,11 +127,6 @@ fun restartIde() {
 fun attachDynamicAgent() {
   val agentJar = "${getPathToPluginDir()}/projector-agent-${getAgentVersion()}.jar"
   AgentLauncher.attachAgent(agentJar)
-}
-
-
-fun getActionGroup(groupId: String): ActionGroup {
-  return ActionManager.getInstance().getAction(groupId) as ActionGroup
 }
 
 private const val SUBSYSTEM = "PROJECTOR_SERVICE_CONFIG"

@@ -42,7 +42,6 @@ dependencies {
 
 intellij {
   version.set("2019.3")
-  //version.set("2020.3")
   updateSinceUntilBuild.set(false)
 }
 
