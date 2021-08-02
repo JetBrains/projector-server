@@ -49,10 +49,6 @@
     <postStartupActivity implementation="org.jetbrains.projector.plugin.RegisterPluginInstallerStateListener"/>
   </extensions>
 
-  <!--<applicationListeners>-->
-  <!--  <listener class="org.jetbrains.projector.plugin.ProjectorDynamicPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"></listener>-->
-  <!--</applicationListeners>-->
-
   <actions>
     <group id="projector.menu" class="org.jetbrains.projector.plugin.actions.ProjectorActionGroup"  text="Projector" description="Projector menu">
       <add-to-group group-id="MainMenu" anchor="last"/>
