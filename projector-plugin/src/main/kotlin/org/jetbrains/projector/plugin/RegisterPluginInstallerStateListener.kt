@@ -56,20 +56,20 @@ class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
       }
     })
 
-    installMenu(project)
+    installMenu()
     installUI(project)
     ProjectorService.autostartIfRequired()
   }
 
   private fun installUI(project: Project) {
     if (!installProjectorWidget(project)) {
-      installMenu(project)
+      installMenu()
     }
   }
 
-  private fun installMenu(project: Project) {
+  private fun installMenu() {
     ProjectorActionGroup.show()
-    displayNotification(project, "Warning", "Can't display status bar widget",
+    displayNotification("Warning", "Can't display status bar widget",
                         "Use Projector menu to manage plugin")
   }
 
