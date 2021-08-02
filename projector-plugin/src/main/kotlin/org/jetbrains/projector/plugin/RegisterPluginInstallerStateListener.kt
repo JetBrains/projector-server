@@ -47,7 +47,7 @@ class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
       override fun install(descriptor: IdeaPluginDescriptor) {}
 
       override fun uninstall(descriptor: IdeaPluginDescriptor) {
-        removeUI(project)
+        removeUI()
         ProjectorService.autostart = false
 
         if (isProjectorRunning()) {
@@ -56,13 +56,13 @@ class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
       }
     })
 
-    installMenu()
-    installUI(project)
+    //installMenu()
+    installUI()
     ProjectorService.autostartIfRequired()
   }
 
-  private fun installUI(project: Project) {
-    if (!installProjectorWidget(project)) {
+  private fun installUI() {
+    if (!installProjectorWidget()) {
       installMenu()
     }
   }
@@ -73,8 +73,13 @@ class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
                         "Use Projector menu to manage plugin")
   }
 
-  private fun installProjectorWidget(project: Project): Boolean {
-    val statusBar = WindowManager.getInstance().getStatusBar(project) ?: return false
+  private fun getIdeStatusBar(): StatusBar? {
+    val frame = WindowManager.getInstance().getIdeFrame(null) ?: return null
+    return WindowManager.getInstance().getStatusBar(frame.component, null)
+  }
+
+  private fun installProjectorWidget(): Boolean {
+    val statusBar = getIdeStatusBar() ?: return false
 
     if (statusBar.getWidget(ProjectorStatusWidget.ID) != null) return true // already installed
 
@@ -89,7 +94,7 @@ class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
     val ret = method != null
 
     method?.let {
-      val widget = ProjectorStatusWidget(project)
+      val widget = ProjectorStatusWidget(statusBar)
       it.invoke(statusBar, widget, StatusBar.Anchors.DEFAULT_ANCHOR)
       widget.update()
     }
@@ -97,13 +102,13 @@ class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
     return ret
   }
 
-  private fun removeUI(project: Project) {
+  private fun removeUI() {
     ProjectorActionGroup.hide()
-    removeProjectorWidget(project)
+    removeProjectorWidget()
   }
 
-  private fun removeProjectorWidget(project: Project) {
-    val statusBar = WindowManager.getInstance().getStatusBar(project) ?: return
+  private fun removeProjectorWidget() {
+    val statusBar = getIdeStatusBar() ?: return
 
     val method = try {
       StatusBar::class.java.getMethod("removeWidget", String::class.java)
