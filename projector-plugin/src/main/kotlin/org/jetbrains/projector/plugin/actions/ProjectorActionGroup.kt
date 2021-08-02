@@ -23,34 +23,27 @@
  */
 package org.jetbrains.projector.plugin.actions
 
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.project.DumbAware
-import org.jetbrains.projector.plugin.getActionGroup
 
 class ProjectorActionGroup : DefaultActionGroup(), DumbAware {
   override fun update(event: AnActionEvent) {
     event.presentation.isEnabledAndVisible = showMenu
   }
 
+  override fun hideIfNoVisibleChildren() = true
+
+  override fun disableIfNoVisibleChildren() = true
+
   companion object {
     private var showMenu = false
 
     fun show() {
       showMenu = true
-      update("projector.menu")
     }
 
     fun hide() {
       showMenu = false
-      update("projector.menu")
-    }
-
-    private fun update(agName: String) {
-      val menu = getActionGroup(agName)
-      val event = AnActionEvent.createFromAnAction(menu, null, "", DataContext.EMPTY_CONTEXT)
-      menu.update(event)
     }
   }
 }
