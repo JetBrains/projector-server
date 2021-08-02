@@ -26,13 +26,20 @@ package org.jetbrains.projector.plugin
 import com.intellij.ide.plugins.DynamicPluginListener
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import org.jetbrains.projector.plugin.actions.ProjectorActionGroup
+import org.jetbrains.projector.plugin.ui.installUI
+import org.jetbrains.projector.plugin.ui.removeUI
 
 class ProjectorDynamicPluginListener : DynamicPluginListener {
 
+
   override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+    //installUI()
+    //ProjectorService.autostartIfRequired()
   }
 
   override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-    ProjectorActionGroup.hide()
+    //removeUI()
   }
+
+
 }

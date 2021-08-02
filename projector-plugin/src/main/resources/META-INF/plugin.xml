@@ -42,19 +42,19 @@
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
        on how to target different products -->
-  <!--<depends>com.intellij.modules.platform</depends>-->
+  <depends>com.intellij.modules.platform</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.projector.plugin.ProjectorService"/>
     <postStartupActivity implementation="org.jetbrains.projector.plugin.RegisterPluginInstallerStateListener"/>
   </extensions>
 
-  <applicationListeners>
-    <listener class="org.jetbrains.projector.plugin.ProjectorDynamicPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"></listener>
-  </applicationListeners>
+  <!--<applicationListeners>-->
+  <!--  <listener class="org.jetbrains.projector.plugin.ProjectorDynamicPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"></listener>-->
+  <!--</applicationListeners>-->
 
   <actions>
-    <group id="projector.menu" class="org.jetbrains.projector.plugin.actions.ProjectorActionGroup"  text="Projector" description="Projector menu" popup="true">
+    <group id="projector.menu" class="org.jetbrains.projector.plugin.actions.ProjectorActionGroup"  text="Projector" description="Projector menu">
       <add-to-group group-id="MainMenu" anchor="last"/>
       <action id="projector.enable" class="org.jetbrains.projector.plugin.actions.EnableAction" text="Start Remote Access to IDE" description="Enable projector"/>
       <action id="projector.disable" class="org.jetbrains.projector.plugin.actions.DisableAction" text="Stop Remote Access to IDE" description="Disable projector"/>
