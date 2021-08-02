@@ -27,7 +27,6 @@ package org.jetbrains.projector.plugin.ui
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.project.Project
 
 
 private fun getNotificationGroup(): NotificationGroup? {
@@ -54,7 +53,7 @@ private fun getNotificationGroup(): NotificationGroup? {
   }
 }
 
-fun displayNotification(project: Project, title: String, subtitle: String, content: String) {
+fun displayNotification(title: String, subtitle: String, content: String) {
   val msg = getNotificationGroup()?.createNotification(title, subtitle, content, NotificationType.INFORMATION)
-  msg?.notify(project)
+  msg?.notify(null)
 }
