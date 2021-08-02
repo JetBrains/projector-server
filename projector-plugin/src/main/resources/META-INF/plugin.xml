@@ -26,7 +26,7 @@
   <name>Projector</name>
   <vendor email="support@jetbrains.org" url="https://www.jetbrains.org">JetBrains</vendor>
 
-  <idea-version since-build="201"/>
+  <idea-version since-build="193"/>
 
   <description><![CDATA[
     <p>Share the IDE window using the <a href="https://github.com/JetBrains/projector-server">Projector server</a>.</p>
@@ -42,7 +42,7 @@
 
   <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
        on how to target different products -->
-  <depends>com.intellij.modules.platform</depends>
+  <!--<depends>com.intellij.modules.platform</depends>-->
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.projector.plugin.ProjectorService"/>
