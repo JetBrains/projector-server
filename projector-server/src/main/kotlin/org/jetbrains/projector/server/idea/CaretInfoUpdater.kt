@@ -39,6 +39,7 @@ import org.jetbrains.projector.common.protocol.data.CommonRectangle
 import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.toClient.ServerCaretInfoChangedEvent
 import org.jetbrains.projector.common.protocol.toClient.data.idea.CaretInfo
+import org.jetbrains.projector.common.protocol.toClient.data.idea.SelectionInfo
 import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
 import org.jetbrains.projector.server.platform.getTextAttributesCompat
 import org.jetbrains.projector.server.platform.readAction
@@ -123,12 +124,41 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
         val points = focusedEditor.caretModel.allCarets.map {
           val caretLocationInEditor = invokeAndWaitIfNeeded { it.editor.visualPositionToXY(it.visualPosition) }
 
+          val caretOffset = readAction { it.offset }
+          val selectionStart = readAction { it.selectionStart }
+          val selectionEnd = readAction { it.selectionEnd }
+
+          val selectionInfo = if (selectionStart == selectionEnd) {
+            null
+          } else {
+            val selectionStartPointVisual = invokeAndWaitIfNeeded { it.editor.visualPositionToXY(it.selectionStartPosition) }
+
+            val selectionStartPoint = Point(
+              x = (editorLocationInWindowX + selectionStartPointVisual.x).toDouble(),
+              y = (editorLocationInWindowY + selectionStartPointVisual.y).toDouble(),
+            )
+
+            val selectionEndPointVisual = invokeAndWaitIfNeeded { it.editor.visualPositionToXY(it.selectionEndPosition) }
+
+            val selectionEndPoint = Point(
+              x = (editorLocationInWindowX + selectionEndPointVisual.x).toDouble(),
+              y = (editorLocationInWindowY + selectionEndPointVisual.y).toDouble(),
+            )
+
+            SelectionInfo(
+              selectionStartPoint,
+              selectionStart,
+              selectionEndPoint,
+              selectionEnd,
+            )
+          }
+
           val point = Point(
             x = (editorLocationInWindowX + caretLocationInEditor.x).toDouble(),
             y = (editorLocationInWindowY + caretLocationInEditor.y).toDouble(),
           )
 
-          CaretInfo(point)
+          CaretInfo(point, caretOffset, selectionInfo)
         }
 
         val isVerticalScrollBarVisible = visibleEditorRect.height < focusedEditorComponent.height
@@ -154,6 +184,8 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
           verticalScrollBarWidth = verticalScrollBarWidth,
           textColor = textColor,
           backgroundColor = backgroundColor,
+          editorScrolled = Point(visibleEditorRect.x.toDouble(), visibleEditorRect.y.toDouble()),
+          editorId = System.identityHashCode(focusedEditor),
         )
       }
     }
