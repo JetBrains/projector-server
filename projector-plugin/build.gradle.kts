@@ -22,15 +22,11 @@
  * if you need additional information or have any questions.
  */
 import java.nio.file.Paths
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   kotlin("jvm")
   id("org.jetbrains.intellij")
 }
-
-val compileKotlin: KotlinCompile by tasks
-compileKotlin.kotlinOptions.freeCompilerArgs += "-Xjvm-default=enable"
 
 val projectorClientVersion: String by project
 val projectorClientGroup: String by project
