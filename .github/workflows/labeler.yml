@@ -10,4 +10,4 @@ jobs:
     steps:
       - uses: zwaldowski/match-label-action@v2
         with:
-          allowed: 'server:feature, server:fix, server:bug, server:tests, agent:feature, agent:fix, agent:bug, ci'
+          allowed: 'server:feature, server:fix, server:bug, server:tests, agent:feature, agent:fix, agent:bug, ci, skip-changelog'
