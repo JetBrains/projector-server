@@ -1,0 +1,26 @@
+name-template: 'v$NEXT_PATCH_VERSION'
+tag-template: 'v$NEXT_PATCH_VERSION'
+exclude-labels:
+  - 'skip-changelog'
+include-labels:
+  - 'agent:feature'
+  - 'agent:fix'
+  - 'agent:bug'
+  - 'agent:tests'
+
+categories:
+  - title: '🚀 New Features'
+    labels:
+      - 'agent:feature'
+
+  - title: '🐛 Fixes'
+    labels:
+      - 'agent:fix'
+      - 'agent:bug'
+
+change-template: '- $TITLE @$AUTHOR (#$NUMBER)'
+template: |
+  ## Changes
+  $CHANGES
+  ## Contributors
+  $CONTRIBUTORS
