@@ -22,17 +22,11 @@ jobs:
           ./gradlew :projector-server:distZip
           cd projector-server/build/distributions
           find . -maxdepth 1 -type f -name projector-server-*.zip -exec mv {} projector-server.zip \;
-      - name: Create Release
+      - name: create draft release
         id: create_release
-        uses: actions/create-release@v1
+        uses: release-drafter/release-drafter@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
-          body: Changelog is available in [CHANGELOG.md](https://github.com/JetBrains/projector-server/blob/master/projector-server/CHANGELOG.md).
       - name: Tag name  # Inspired from https://github.community/t/how-to-get-just-the-tag-name/16241/11
         id: tag_name
         run: echo ::set-output name=SOURCE_TAG::${GITHUB_REF#refs/tags/}
