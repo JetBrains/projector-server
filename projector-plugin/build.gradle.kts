@@ -28,6 +28,7 @@ plugins {
   id("org.jetbrains.intellij")
 }
 
+
 val projectorClientVersion: String by project
 val projectorClientGroup: String by project
 
