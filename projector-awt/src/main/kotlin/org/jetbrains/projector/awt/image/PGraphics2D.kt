@@ -186,10 +186,9 @@ class PGraphics2D private constructor(
     paintShape(AwtPaintType.DRAW, s)
   }
 
-
   override fun drawRenderedImage(img: RenderedImage, xform: AffineTransform?) {
     // xform nullability is required for compatibility, so provide a default (identity) transformation
-    val xFormOrDefault = xform?: AffineTransform()
+    val xFormOrDefault = xform ?: AffineTransform()
 
     // Currently only BufferedImage is supported
     when (img) {
