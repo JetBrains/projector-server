@@ -30,7 +30,6 @@ import com.intellij.ide.plugins.PluginStateListener
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import org.jetbrains.projector.plugin.ui.installMenu
 import org.jetbrains.projector.plugin.ui.installUI
 import org.jetbrains.projector.plugin.ui.removeUI
 
