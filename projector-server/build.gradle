@@ -48,8 +48,9 @@ configurations.all {
 }
 
 dependencies {
-  annotationProcessor("org.apache.logging.log4j:log4j-core:2.13.3")
-  implementation("org.apache.logging.log4j:log4j-core:2.13.3")
+  implementation("ch.qos.logback:logback-classic:1.2.3")
+  implementation("ch.qos.logback:logback-core:1.2.3")
+  implementation("org.slf4j:slf4j-api:1.7.30")
   implementation("$projectorClientGroup:projector-common:$projectorClientVersion")
   implementation("$projectorClientGroup:projector-server-core:$projectorClientVersion")
   implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")

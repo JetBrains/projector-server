@@ -26,7 +26,6 @@
 package org.jetbrains.projector.server
 
 import com.sun.management.OperatingSystemMXBean
-import org.apache.logging.log4j.LogManager
 import org.java_websocket.WebSocket
 import org.java_websocket.exceptions.WebsocketNotConnectedException
 import org.jetbrains.projector.awt.PClipboard
@@ -65,6 +64,7 @@ import org.jetbrains.projector.server.service.ProjectorImageCacher
 import org.jetbrains.projector.server.util.*
 import org.jetbrains.projector.util.logging.Logger
 import org.jetbrains.projector.util.logging.loggerFactory
+import org.slf4j.LoggerFactory
 import sun.awt.AWTAccessor
 import java.awt.*
 import java.awt.datatransfer.DataFlavor
@@ -118,7 +118,7 @@ class ProjectorServer private constructor(
     windowColorsEvent = ServerWindowColorsEvent(colors)
   }
 
-  private val log: org.apache.logging.log4j.Logger? = LogManager.getLogger("Performance")
+  private val log: org.slf4j.Logger = LoggerFactory.getLogger("Performance")
   private val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
 
   init {
@@ -160,8 +160,8 @@ class ProjectorServer private constructor(
   }
 
   private fun initTransport(): HttpWsTransport {
-    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
-    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
+    log.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     val builder = createTransportBuilder()
 
     builder.onWsMessageByteBuffer = { _, message ->
@@ -257,8 +257,8 @@ class ProjectorServer private constructor(
   }
 
   private fun createUpdateThread(): Thread = thread(isDaemon = true) {
-    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
-    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
+    log.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     // TODO: remove this thread: encapsulate the logic in an extracted class and maybe even don't use threads but coroutines' channels
     logger.debug { "Daemon thread starts" }
     while (!Thread.currentThread().isInterrupted) {
@@ -282,8 +282,8 @@ class ProjectorServer private constructor(
 
   @OptIn(ExperimentalStdlibApi::class)
   private fun createDataToSend(): List<ServerEvent> {
-    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
-    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
+    log.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     val clipboardEvent = when (val clipboardContents = PClipboard.extractLastContents()) {
       null -> emptyList()
 
@@ -355,8 +355,8 @@ class ProjectorServer private constructor(
   }
 
   private fun processMessage(clientSettings: ReadyClientSettings, message: ClientEvent) {
-    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
-    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
+    log.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     if (
       !clientSettings.setUpClientData.hasWriteAccess &&
       message !is ClientRequestImageDataEvent &&
@@ -494,8 +494,8 @@ class ProjectorServer private constructor(
   }
 
   private fun checkHandshakeVersion(conn: WebSocket, connectedClientSettings: ConnectedClientSettings, message: String) {
-    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
-    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
+    log.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     val (handshakeVersion, handshakeVersionId) = message.split(";")
     if (handshakeVersion != "$HANDSHAKE_VERSION") {
       val reason =
@@ -515,8 +515,8 @@ class ProjectorServer private constructor(
   }
 
   private fun setUpClient(conn: WebSocket, supportedHandshakeClientSettings: SupportedHandshakeClientSettings, message: String) {
-    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
-    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
+    log.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     fun sendHandshakeFailureEvent(reason: String) {
       val failureEvent = ToClientHandshakeFailureEvent(reason)
 
@@ -644,8 +644,8 @@ class ProjectorServer private constructor(
   }
 
   private fun sendPictures(dataToSend: List<ServerEvent>) {
-    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
-    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
+    log.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     httpWsTransport.forEachOpenedConnection { client ->
       val readyClientSettings = client.getAttachment<ClientSettings?>() as? ReadyClientSettings ?: return@forEachOpenedConnection
 
@@ -673,8 +673,8 @@ class ProjectorServer private constructor(
   private var previousWindowEvents: Set<WindowData> = emptySet()
 
   private fun areChangedWindows(windowEvents: List<WindowData>): Boolean {
-    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
-    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
+    log.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     val set = windowEvents.toSet()
     val hasDifferentWindowEvents = set != previousWindowEvents
 
