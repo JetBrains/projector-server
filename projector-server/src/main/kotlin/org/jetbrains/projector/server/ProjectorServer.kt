@@ -25,6 +25,8 @@
 
 package org.jetbrains.projector.server
 
+import com.sun.management.OperatingSystemMXBean
+import org.apache.logging.log4j.LogManager
 import org.java_websocket.WebSocket
 import org.java_websocket.exceptions.WebsocketNotConnectedException
 import org.jetbrains.projector.awt.PClipboard
@@ -72,6 +74,7 @@ import java.awt.peer.ComponentPeer
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.lang.Thread.sleep
+import java.lang.management.ManagementFactory
 import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -272,6 +275,10 @@ class ProjectorServer private constructor(
 
   @OptIn(ExperimentalStdlibApi::class)
   private fun createDataToSend(): List<ServerEvent> {
+    val log: org.apache.logging.log4j.Logger? = LogManager.getLogger("Performance create data to send")
+    val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
+    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     val clipboardEvent = when (val clipboardContents = PClipboard.extractLastContents()) {
       null -> emptyList()
 
@@ -343,6 +350,10 @@ class ProjectorServer private constructor(
   }
 
   private fun processMessage(clientSettings: ReadyClientSettings, message: ClientEvent) {
+    val log: org.apache.logging.log4j.Logger? = LogManager.getLogger("Performance process message")
+    val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
+    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     if (
       !clientSettings.setUpClientData.hasWriteAccess &&
       message !is ClientRequestImageDataEvent &&
@@ -480,6 +491,10 @@ class ProjectorServer private constructor(
   }
 
   private fun checkHandshakeVersion(conn: WebSocket, connectedClientSettings: ConnectedClientSettings, message: String) {
+    val log: org.apache.logging.log4j.Logger? = LogManager.getLogger("Performance check HandshakeVersion")
+    val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
+    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     val (handshakeVersion, handshakeVersionId) = message.split(";")
     if (handshakeVersion != "$HANDSHAKE_VERSION") {
       val reason =
@@ -499,6 +514,10 @@ class ProjectorServer private constructor(
   }
 
   private fun setUpClient(conn: WebSocket, supportedHandshakeClientSettings: SupportedHandshakeClientSettings, message: String) {
+    val log: org.apache.logging.log4j.Logger? = LogManager.getLogger("Performance setup client")
+    val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
+    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     fun sendHandshakeFailureEvent(reason: String) {
       val failureEvent = ToClientHandshakeFailureEvent(reason)
 
@@ -626,6 +645,10 @@ class ProjectorServer private constructor(
   }
 
   private fun sendPictures(dataToSend: List<ServerEvent>) {
+    val log: org.apache.logging.log4j.Logger? = LogManager.getLogger("Performance send pictures")
+    val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
+    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     httpWsTransport.forEachOpenedConnection { client ->
       val readyClientSettings = client.getAttachment<ClientSettings?>() as? ReadyClientSettings ?: return@forEachOpenedConnection
 
@@ -653,6 +676,10 @@ class ProjectorServer private constructor(
   private var previousWindowEvents: Set<WindowData> = emptySet()
 
   private fun areChangedWindows(windowEvents: List<WindowData>): Boolean {
+    val log: org.apache.logging.log4j.Logger? = LogManager.getLogger("Performance are changed windows")
+    val osBean = ManagementFactory.getPlatformMXBean(OperatingSystemMXBean::class.java)
+    log?.info( "CPU load: ${osBean.processCpuLoad * 100}")
+    log?.info( "Virtual Memory ${osBean.committedVirtualMemorySize / 1048576} Mb" )
     val set = windowEvents.toSet()
     val hasDifferentWindowEvents = set != previousWindowEvents
 
@@ -807,6 +834,8 @@ class ProjectorServer private constructor(
     }
 
     private fun createTransportBuilder(): TransportBuilder {
+      //val operatingSystemMXBean: OperatingSystemMXBean =
+      //  ManagementFactory.getOperatingSystemMXBean() as OperatingSystemMXBean
       val builders = arrayListOf<TransportBuilder>()
 
       val relayUrl = getProperty(RELAY_PROPERTY_NAME)
@@ -825,6 +854,7 @@ class ProjectorServer private constructor(
       val host = getEnvHost()
       val port = getEnvPort()
       logger.info { "${ProjectorServer::class.simpleName} is starting on host $host and port $port" }
+      //logger.info { "------------MXBEAN: ${operatingSystemMXBean.processCpuLoad} --------------" }
 
       val serverBuilder = HttpWsServerBuilder(host, port)
       serverBuilder.getMainWindows = {

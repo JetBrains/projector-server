@@ -6,5 +6,6 @@
 !.idea/runConfigurations/
 build/
 out/
+logs/
 local.properties
 pluginVersions.txt
