@@ -1,8 +1,3 @@
-import org.jetbrains.kotlin.gradle.utils.loadPropertyFromResources
-import java.net.URL
-import java.util.zip.ZipFile
-import kotlin.streams.toList
-
 /*
  * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -27,8 +22,8 @@ import kotlin.streams.toList
  * if you need additional information or have any questions.
  */
 
-import org.jetbrains.kotlin.gradle.utils.loadPropertyFromResources
 import java.net.URL
+import java.util.*
 import java.util.zip.ZipFile
 import kotlin.streams.toList
 
@@ -70,7 +65,7 @@ dependencies {
   testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
 }
 
-tasks.jar {
+tasks.withType<Jar> {
   manifest {
     attributes(
       "Main-Class" to application.mainClassName
@@ -79,23 +74,27 @@ tasks.jar {
   duplicatesStrategy = DuplicatesStrategy.WARN
 }
 
-val relayURL: java.util.Properties? = null
-val serverId: java.util.Properties? = null
-val serverTargetClasspath: java.util.Properties? = null
-val serverClassToLaunch: java.util.Properties? = null
-val ideaPath: java.util.Properties? = null
+var relayURL: String = null.toString()
+var serverId: String = null.toString()
+var serverTargetClasspath: String = null.toString()
+var serverClassToLaunch: String = null.toString()
+var ideaPath: String = null.toString()
 
-if (project.rootProject.file("local.rpoperties").canRead()) {
-  relayURL?.loadPropertyFromResources("local.properties", "ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL")
-  serverId?.loadPropertyFromResources("local.properties", "ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID")
-  serverTargetClasspath?.loadPropertyFromResources("local.properties", "projectorLauncher.targetClassPath")
-  serverClassToLaunch?.loadPropertyFromResources("local.properties", "projectorLauncher.classToLaunch")
-  ideaPath?.loadPropertyFromResources("local.properties", "projectorLauncher.ideaPath")
+rootProject.file("local.properties").let {
+  if (it.canRead()) {
+    val relayURL = Properties().apply { load(it.inputStream()) }.getProperty("ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL") ?: null.toString()
+    serverId = Properties().apply { load(it.inputStream()) }.getProperty("ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID")
+               ?: null.toString()
+    serverTargetClasspath = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.targetClassPath")
+                            ?: null.toString()
+    serverClassToLaunch = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.classToLaunch") ?: null.toString()
+    ideaPath = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.ideaPath") ?: null.toString()
+  }
 }
 
-lateinit var relayArgs: List<String>
+var relayArgs: List<String> = emptyList()
 
-if (relayURL != null && serverId != null) {
+if (relayURL != null.toString() && serverId != null.toString()) {
   relayArgs = listOf("-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL=$relayURL", "-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID=$serverId")
 }
 
@@ -103,8 +102,8 @@ println("----------- Server launch config ---------------")
 println("Classpath: $serverTargetClasspath")
 println("ClassToLaunch: $serverClassToLaunch")
 println("------------------------------------------------")
-if (serverTargetClasspath != null && serverClassToLaunch != null) {
-  (tasks["runServer"] as JavaExec).apply {
+if (serverTargetClasspath != null.toString() && serverClassToLaunch != null.toString()) {
+  task("runServer", JavaExec::class) {
     group = "projector"
     classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, serverTargetClasspath)
     jvmArgs = listOf(
@@ -119,7 +118,7 @@ if (serverTargetClasspath != null && serverClassToLaunch != null) {
 println("----------- Idea launch config ---------------")
 println("Idea path: $ideaPath")
 println("------------------------------------------------")
-if (ideaPath != null) {
+if (ideaPath != null.toString()) {
   val ideaLib = "$ideaPath/lib"
   val ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar:$ideaLib/trove4j.jar"
   val jdkHome = System.getProperty("java.home")
@@ -127,7 +126,7 @@ if (ideaPath != null) {
 
   val ideaPathsSelector = "ProjectorIntelliJIdea"
 
-  (tasks["runIdeaServer"] as JavaExec).apply {
+  task("runIdeaServer", JavaExec::class) {
     group = "projector"
     main = "org.jetbrains.projector.server.ProjectorLauncher"
     classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, ideaClassPath, "$jdkHome/../lib/tools.jar")
@@ -234,6 +233,7 @@ val downloadFonts = task("downloadFonts") {
   dependsOn(downloadCjkFonts, downloadDefaultFonts, downloadMonoFonts)
 }
 
-//val processResources = task("processResources") {
-//  dependsOn(downloadFonts)
-//}
+// todo: Modify existing task which puts resources to the target dir
+tasks.processResources {
+  dependsOn(downloadFonts)
+}
