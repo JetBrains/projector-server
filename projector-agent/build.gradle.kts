@@ -23,6 +23,7 @@
  */
 
 import java.util.*
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
   kotlin("jvm")
@@ -40,6 +41,10 @@ publishing {
 kotlin {
   explicitApi()
 }
+
+val compileKotlin: KotlinCompile by tasks
+val targetJvm: String by project
+compileKotlin.kotlinOptions.jvmTarget = targetJvm
 
 val projectorClientGroup: String by project
 val projectorClientVersion: String by project
@@ -77,14 +82,15 @@ tasks.withType<Jar> {
       "Agent-Class" to agentClassName,
       "Main-Class" to launcherClassName,
     )
-    duplicatesStrategy = DuplicatesStrategy.WARN
   }
 
   exclude("META-INF/versions/9/module-info.class")
+  duplicatesStrategy = DuplicatesStrategy.WARN
 
   from(inline(configurations.runtimeClasspath)) // todo: remove
 }
 
+// Server running tasks
 println("----------- Agent launch config ---------------")
 println("Classpath: $serverTargetClasspath")
 println("ClassToLaunch: $serverClassToLaunch")
