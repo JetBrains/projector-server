@@ -57,6 +57,7 @@ jar {
   from {
     inline(configurations.runtimeClasspath)  // todo: remove
   }
+  duplicatesStrategy = DuplicatesStrategy.WARN
 }
 
 //Server running tasks
