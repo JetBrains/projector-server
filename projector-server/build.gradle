@@ -63,6 +63,7 @@ jar {
       "Main-Class": application.mainClassName,
       )
   }
+  duplicatesStrategy = DuplicatesStrategy.WARN
 }
 
 //Server running tasks
