@@ -1,6 +1,3 @@
-import org.jetbrains.kotlin.gradle.utils.loadPropertyFromResources
-import java.util.*
-
 /*
  * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -25,6 +22,8 @@ import java.util.*
  * if you need additional information or have any questions.
  */
 
+import java.util.*
+
 plugins {
   kotlin("jvm")
   `maven-publish`
@@ -47,7 +46,7 @@ val projectorClientVersion: String by project
 val javassistVersion: String by project
 val agentClassName = "org.jetbrains.projector.agent.MainAgent"
 val launcherClassName = "org.jetbrains.projector.agent.AgentLauncher"
-
+version = project(":projector-plugin").version
 
 dependencies {
   implementation("$projectorClientGroup:projector-common:$projectorClientVersion")
@@ -58,17 +57,19 @@ dependencies {
   implementation("org.javassist:javassist:$javassistVersion")
 }
 
-val serverTargetClasspath: Properties? = null
-val serverClassToLaunch: Properties? = null
-val ideaPath: Properties? = null
+var serverTargetClasspath: String = null.toString()
+var serverClassToLaunch: String = null.toString()
+var ideaPath: String = null.toString()
 
-if (project.rootProject.file("local.properties").canRead()) {
-  serverTargetClasspath?.loadPropertyFromResources("local.properties", "projectorLauncher.targetClassPath")
-  serverClassToLaunch?.loadPropertyFromResources("local.properties", "projectorLauncher.classToLaunch")
-  ideaPath?.loadPropertyFromResources("local.properties", "projectorLauncher.ideaPath")
+rootProject.file("local.properties").let {
+  if (it.canRead()) {
+    ideaPath = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.ideaPath") ?: null.toString()
+    serverTargetClasspath = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.targetClassPath") ?: null.toString()
+    serverClassToLaunch = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.classToLaunch") ?: null.toString()
+  }
 }
 
-tasks.jar {
+tasks.withType<Jar> {
   manifest {
     attributes(
       "Can-Redefine-Classes" to true,
@@ -76,27 +77,22 @@ tasks.jar {
       "Agent-Class" to agentClassName,
       "Main-Class" to launcherClassName,
     )
+    duplicatesStrategy = DuplicatesStrategy.WARN
   }
 
   exclude("META-INF/versions/9/module-info.class")
 
-  from({
-         configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) }
-       })
+  from(inline(configurations.runtimeClasspath)) // todo: remove
 }
 
 println("----------- Agent launch config ---------------")
 println("Classpath: $serverTargetClasspath")
 println("ClassToLaunch: $serverClassToLaunch")
 println("------------------------------------------------")
-if (serverTargetClasspath != null && serverClassToLaunch != null) {
-  tasks.run {
+if (serverTargetClasspath != null.toString() && serverClassToLaunch != null.toString()) {
+  task("runWithAgent", JavaExec::class) {
     group = "projector"
-    //classpath(sourceSets.main.runtimeClasspath, jar, )
-  }
-  (tasks["runWithAgent"] as JavaExec).apply {
-    group = "projector"
-    classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, "$serverTargetClasspath")
+    classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, serverTargetClasspath)
     jvmArgs(
       "-Djdk.attach.allowAttachSelf=true",
       "-Dswing.bufferPerWindow=false",
@@ -110,14 +106,14 @@ if (serverTargetClasspath != null && serverClassToLaunch != null) {
 println("----------- Idea launch config ---------------")
 println("Idea path: $ideaPath")
 println("------------------------------------------------")
-if (ideaPath != null) {
+if (ideaPath != null.toString()) {
   val ideaLib = "$ideaPath/lib"
   val ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar:$ideaLib/jna.jar:$ideaPath/jbr/lib/tools.jar"
   val jdkHome = System.getProperty("java.home")
 
   println(jdkHome)
 
-  (tasks["runIdeaWithAgent"] as JavaExec).apply {
+  task("runIdeaWithAgent", JavaExec::class) {
     group = "projector"
     classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, ideaClassPath, "$jdkHome/../lib/tools.jar")
     jvmArgs(
