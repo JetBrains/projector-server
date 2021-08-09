@@ -27,6 +27,11 @@ import kotlin.streams.toList
  * if you need additional information or have any questions.
  */
 
+import org.jetbrains.kotlin.gradle.utils.loadPropertyFromResources
+import java.net.URL
+import java.util.zip.ZipFile
+import kotlin.streams.toList
+
 plugins {
   kotlin("jvm")
   `maven-publish`
