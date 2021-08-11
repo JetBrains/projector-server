@@ -28,6 +28,7 @@ package org.jetbrains.projector.server.idea
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -135,6 +136,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
 
         val textColor = getTextColorBeforeCaret(focusedEditor)
         val editorFont = getFontBeforeCaret(focusedEditor)
+        val backgroundColor = getBackgroundBeforeCaret(focusedEditor)
 
         ServerCaretInfoChangedEvent.CaretInfoChange.Carets(
           points,
@@ -151,6 +153,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
           lineAscent = lineAscent,
           verticalScrollBarWidth = verticalScrollBarWidth,
           textColor = textColor,
+          backgroundColor = backgroundColor,
         )
       }
     }
@@ -175,7 +178,23 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
     return editor.colorsScheme.getFont(editorFontType)
   }
 
-  private fun getTextAttributesBeforeCaret(editor: EditorEx, filter: (TextAttributes) -> Boolean): TextAttributes? {
+  private fun getBackgroundBeforeCaret(editor: EditorEx): Int {
+    val attrs = getTextAttributesBeforeCaret(editor, {
+      if (it.priority >= 0) it.attrs else null
+    }) { it.backgroundColor != null }
+
+    val color = attrs?.backgroundColor
+                ?: editor.colorsScheme.getColor(EditorColors.CARET_ROW_COLOR)
+                ?: editor.colorsScheme.defaultBackground
+
+    return color.rgb
+  }
+
+  private fun getTextAttributesBeforeCaret(
+    editor: EditorEx,
+    mapper: (ExtendedTextAttributes) -> TextAttributes? = { it.attrs },
+    filter: (TextAttributes) -> Boolean
+  ): TextAttributes? {
 
     val caretOffset = readAction { editor.caretModel.offset }
 
@@ -194,7 +213,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
       it(editor, caretOffset, compareAndUpdate)
     }
 
-    return bestFitAttributes?.attrs
+    return bestFitAttributes?.let(mapper)
   }
 
   private fun getAttrsFromRangeHighlighters(
@@ -203,7 +222,9 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
     compareAndUpdate: (ExtendedTextAttributes) -> Unit,
   ) {
 
-    val rangeHighlighters = invokeAndWaitIfNeeded { editor.filteredDocumentMarkupModel.allHighlighters }
+    val rangeHighlighters = invokeAndWaitIfNeeded {
+      editor.filteredDocumentMarkupModel.allHighlighters + editor.markupModel.allHighlighters
+    }
 
     val startPos = caretOffset - 1
 
