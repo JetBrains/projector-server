@@ -86,7 +86,30 @@ class ProjectorDrawEventQueue private constructor(val target: ServerDrawCommands
       return this
     }
 
+    override fun setFromEditor(): DrawEventQueue.CommandBuilder {
+      return setFromEditor(true)
+    }
+
+    override fun setFromEditor(fromEditor: Boolean): DrawEventQueue.CommandBuilder {
+      if (fromEditor) {
+        events.add(ServerFromEditorEvent())
+      }
+      return this
+    }
+
     private fun build() {
+
+      //if (events.filterIsInstance<ServerFromEditorEvent>().isNotEmpty()) {
+      //
+      //  if (events.any { it is ServerWindowPaintEvent && it !is ServerDrawStringEvent }) {
+      //    println("AAAAAAAA")
+      //    events.forEach {
+      //      println("ServerEvent: ${it.javaClass.name}")
+      //    }
+      //  }
+      //}
+
+      //commands.add(extractData(events))
       commands.add(events)
     }
 

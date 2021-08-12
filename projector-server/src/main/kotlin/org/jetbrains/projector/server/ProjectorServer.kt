@@ -25,6 +25,14 @@
 
 package org.jetbrains.projector.server
 
+import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.command.executeCommand
+import com.intellij.openapi.editor.EditorFactory
+import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.view.EditorPainter
+import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.util.DocumentUtil
 import org.java_websocket.WebSocket
 import org.java_websocket.exceptions.WebsocketNotConnectedException
 import org.jetbrains.projector.awt.PClipboard
@@ -110,6 +118,7 @@ class ProjectorServer private constructor(
   }
 
   private val markdownQueue = ConcurrentLinkedQueue<ServerMarkdownEvent>()
+  //private val speculativeQueue = ConcurrentLinkedQueue<Pair<SpeculativeEvent, String>>()
 
   private var windowColorsEvent: ServerWindowColorsEvent? = null
 
@@ -219,7 +228,12 @@ class ProjectorServer private constructor(
 
     builder.onWsOpen = { connection ->
       val address = connection.remoteSocketAddress?.address?.hostAddress
-      connection.setAttachment(ConnectedClientSettings(connectionMillis = System.currentTimeMillis(), address = address))
+
+      val sett = ConnectedClientSettings(connectionMillis = System.currentTimeMillis(), address = address)
+
+      logger.debug { "setAttachment: $connection \\/ $sett" }
+
+      connection.setAttachment(sett)
       logger.info { "$address connected." }
     }
 
@@ -352,6 +366,8 @@ class ProjectorServer private constructor(
     ) {
       return
     }
+
+    //logger.debug { "New message: $message" }
 
     Do exhaustive when (message) {
       is ClientResizeEvent -> SwingUtilities.invokeLater { resize(message.size.width, message.size.height) }

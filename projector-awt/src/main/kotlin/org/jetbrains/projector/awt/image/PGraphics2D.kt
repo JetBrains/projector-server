@@ -82,13 +82,189 @@ class PGraphics2D private constructor(
       return field
     }
 
-  private inline fun paintPlain(crossinline command: DrawEventQueue.CommandBuilder.() -> Unit) {
-    drawEventQueue.buildCommand().command()
+  private fun paintPlain(command: DrawEventQueue.CommandBuilder.() -> Unit) {
+
+    if (skipDrawing()) return
+
+    val elem = isFromEditor()
+    //if (elem != null) {
+    //  //logger.debug { "paintPlain from Editor $elem" }
+    //  return
+    //}
+
+    drawEventQueue
+      .buildCommand()
+      .setFromEditor(elem != null)
+      .command()
+  }
+
+  private var printed = false
+
+  private fun skipDrawing(): Boolean {
+    return false
+
+    val stackTrace = Thread.currentThread().stackTrace
+
+    // TODO not handled: scrollbars (only horizontal?), popups (including code magnifier). Repaintings?
+    return stackTrace.any {
+      //it.className.startsWith("com.intellij.openapi.fileEditor.impl.EditorTabbedContainer") // TODO removes all, including tabs
+      //||
+      it.className.startsWith("com.intellij.openapi.editor.impl.EditorGutterComponentImpl") && it.methodName.startsWith("paint")
+      || it.className.startsWith("com.intellij.openapi.editor.impl.view.EditorPainter") && it.methodName.startsWith("paint")
+      || it.className.startsWith("com.intellij.openapi.editor.impl.EditorMarkupModelImpl") && it.methodName.startsWith("paint")
+      || it.className.startsWith("com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponentImpl") && it.methodName.startsWith("paint")
+      //|| it.className.startsWith("com.intellij.openapi.ui.SimpleToolWindowPanel") && it.methodName.startsWith("paint")
+      || it.className.startsWith("com.intellij.openapi.actionSystem.impl.ActionToolbarImpl") && it.methodName.startsWith("paint")  // TODO used in other places too
+      || it.className.startsWith("com.intellij.openapi.actionSystem.impl.ActionButton") && it.methodName.startsWith("paint") // TODO used in other places too
+    }.also {
+
+      //if (it && !printed) {
+      //  printed = true
+      //
+      //  logger.debug { "Stack:: Print" }
+      //  stackTrace.forEach {
+      //    logger.debug { "Stack:: $it" }
+      //  }
+      //}
+
+    }
+    //       || (transform.translateX in 367.0..1867.0 && transform.translateY in 80.0..482.0).also {
+    //
+    //  if (it) {
+    //    logger.debug { "Stack:: Print" }
+    //      stackTrace.forEach {
+    //        logger.debug { "Stack:: $it" }
+    //      }
+    //  }
+    //}
+  }
+
+  private fun isFromEditor(): StackTraceElement? {
+    val stackTrace = Thread.currentThread().stackTrace
+
+    //if (stackTrace.any { it.className == javaClass.name && it.methodName == "paintString" }) return null
+
+    //return stackTrace.find {
+    //  it.className.startsWith("com.intellij.openapi.editor.impl.view.EditorPainter")
+    //}?.also {
+    //  //logger.debug { "paintSimpleTextFragment" }
+    //  //stackTrace.forEach {
+    //  //  logger.debug { "Stacktrace: $it" }
+    //  //}
+    //}
+
+    val paintIndex = stackTrace.indexOfFirst {
+      it.className.startsWith("com.intellij.openapi.editor.impl.view.EditorPainter") && it.methodName == "paint"
+    }
+
+    var directPaint = paintIndex != -1 && !stackTrace[paintIndex - 1].className.startsWith("com.intellij.openapi.editor.impl.view.EditorPainter")
+
+    //if (directPaint) {
+    //  logger.debug { "DirectPaint" }
+    //  stackTrace.forEach {
+    //    logger.debug { "Stacktrace: $it" }
+    //  }
+    //}
+
+    //if (paintIndex >= 0 && stackTrace.any { it.className == javaClass.name && it.methodName == "paintShape" }) {
+    //  logger.debug { "paintStringgg" }
+    //  stackTrace.forEach {
+    //    logger.debug { "Stacktrace: $it" }
+    //  }
+    //}
+
+    //directPaint = false
+
+    val check = directPaint || !stackTrace.any {
+      it.className.startsWith("com.intellij.openapi.editor.impl.view.EditorPainter")
+
+      && (
+         //false
+         //true
+        //it.methodName == "paintCustomRenderers"
+        //|| it.methodName == "paintForegroundCustomRenderers"
+        //||
+      it.methodName == "paintCaret"
+      //  ||
+      //it.methodName == "paintRightMargin"
+         )
+      || (it.className.startsWith("com.intellij.ui.paint.LinePainter2D")
+               //&& it.methodName == "paint"
+         )
+
+      //|| (it.className.startsWith("com.intellij.openapi.editor.impl.EditorGutterComponentImpl") && it.methodName.startsWith("paint"))
+      //&& (
+      //   it.methodName.startsWith("paint")
+      //   && !(
+      //     it.methodName.contains("paintCaret")
+      //     || it.methodName == "repaintCarets"
+      //     || it.methodName == "paintBackground"
+      //     || it.methodName == "paintTextWithEffects"
+      //     || it.methodName == "paintForegroundCustomRenderers"
+      //     || it.methodName == "paintBlockInlays"
+      //     || it.methodName == "paintCustomRenderers"
+      //       )
+      //   )
+    }
+
+    //val has = stackTrace.any {
+    //  it.className.startsWith("com.intellij.openapi.editor.impl.view.EditorPainter")
+    //}
+    //
+    //if (check) {
+    //
+    //  logger.debug { "Check pass" }
+    //  stackTrace.forEach {
+    //    logger.debug { "Stacktrace: $it" }
+    //  }
+    //}
+
+
+    if (!check) return null
+
+    val elem = stackTrace.find {
+      it.className.startsWith("com.intellij.openapi.editor.impl.view.EditorPainter")
+
+      //&& (
+      //  false
+      //  //it.methodName == "paintCustomRenderers"
+      //  //|| it.methodName == "paintForegroundCustomRenderers"
+      //  //||
+      //  //it.methodName == "paintLineFragments"
+      //  //|| it.methodName == "paintLineLayoutWithEffect"
+      //   )
+      //|| (it.className.startsWith("com.intellij.openapi.editor.impl.view.SimpleTextFragmentYY")
+      //  //&& it.methodName == "paint"
+      //   )
+      ////&& (
+      ////   it.methodName.startsWith("paint")
+      ////   && !(
+      ////     it.methodName.contains("paintCaret")
+      ////     || it.methodName == "repaintCarets"
+      ////     || it.methodName == "paintBackground"
+      ////     || it.methodName == "paintTextWithEffects"
+      ////     || it.methodName == "paintForegroundCustomRenderers"
+      ////     || it.methodName == "paintBlockInlays"
+      ////     || it.methodName == "paintCustomRenderers"
+      ////       )
+      ////   )
+    }
+
+    //var has = false
+
+    //if (stackTrace.any { it.methodName.contains("paintCaret") }) {
+    //  logger.debug { "emmm" }
+    //}
+
+
+
+    return elem
   }
 
   private inline fun paintShape(crossinline command: DrawEventQueue.CommandBuilder.() -> Unit) {
     drawEventQueue
       .buildCommand()
+      .setFromEditor(elem != null)
       .setClip(identitySpaceClip = identitySpaceClip)
       .setTransform(transform.toList())
       .setStroke(stroke)
@@ -97,9 +273,29 @@ class PGraphics2D private constructor(
       .command()
   }
 
-  private inline fun paintArea(crossinline command: DrawEventQueue.CommandBuilder.() -> Unit) {
+  private fun paintArea(command: DrawEventQueue.CommandBuilder.() -> Unit) {
+
+    if (skipDrawing()) return
+
+    //if (transform.translateX in 1740.0..1860.0 && transform.translateY in 70.0..155.0) {
+    //
+    //  logger.debug { "RREREMME ${transform.translateX}:${transform.translateY}" }
+    //  Thread.currentThread().stackTrace.forEach {
+    //    logger.debug { "stack:: $it" }
+    //  }
+    //
+    //  return
+    //}
+
+    val elem = isFromEditor()
+    //if (elem != null) {
+    //  //logger.debug { "paintArea from Editor $elem" }
+    //  return
+    //}
+
     drawEventQueue
       .buildCommand()
+      .setFromEditor(elem != null)
       .setClip(identitySpaceClip = identitySpaceClip)
       .setTransform(transform.toList())
       .setComposite(backingComposite)
@@ -111,17 +307,40 @@ class PGraphics2D private constructor(
       return
     }
 
+    if (str.contains("Copyright")) {
+      logger.debug { "HasStrrr" }
+    }
+
+    if (skipDrawing()) return
+
+    //if (transform.translateX in 1740.0..1870.0 && transform.translateY in 70.0..160.0) return
+
+    val elem = isFromEditor()
+    //if (elem != null) {
+    //  //logger.debug { "DrawStrng from Editor $elem: $str" }
+    //  return
+    //}
+
     val metrics = FontDesignMetrics.getMetrics(font, backingFontRenderContext)
     val desiredWidth = metrics.stringWidth(str)
 
-    drawEventQueue
+    //if (elem != null && x >= 50 && x <= 55) {
+    //  logger.debug { "UgABUGA: $str, $x, $y, $desiredWidth" }
+    //}
+
+    val builder = drawEventQueue
       .buildCommand()
+      .setFromEditor(elem != null)
       .setClip(identitySpaceClip = identitySpaceClip)
       .setTransform(transform.toList())
       .setFont(font)
       .setPaint(paint)
-      .setComposite(backingComposite)
-      .drawString(str, x = x, y = y, desiredWidth = desiredWidth.toDouble())
+
+      if (elem == null) {
+        builder.setComposite(backingComposite)
+      }
+
+    builder.drawString(str, x = x, y = y, desiredWidth = desiredWidth.toDouble())
   }
 
   constructor(target: PVolatileImage.Descriptor) : this(
@@ -186,18 +405,8 @@ class PGraphics2D private constructor(
     paintShape(AwtPaintType.DRAW, s)
   }
 
-  override fun drawRenderedImage(img: RenderedImage, xform: AffineTransform?) {
-    // xform nullability is required for compatibility, so provide a default (identity) transformation
-    val xFormOrDefault = xform ?: AffineTransform()
-
-    // Currently only BufferedImage is supported
-    when (img) {
-      is BufferedImage -> {
-        val info = AwtImageInfo.Transformation(xFormOrDefault.toList())
-        extractImage(img, info, "drawRenderedImage(img, xform)")
-      }
-      else -> paintPlain { drawRenderedImage() }
-    }
+  override fun drawRenderedImage(img: RenderedImage, xform: AffineTransform) {
+    paintPlain { drawRenderedImage() }
   }
 
   override fun drawRenderableImage(img: RenderableImage, xform: AffineTransform) {

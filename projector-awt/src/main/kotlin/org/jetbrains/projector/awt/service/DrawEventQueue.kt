@@ -52,6 +52,9 @@ interface DrawEventQueue {
     fun setComposite(composite: Composite): CommandBuilder
     fun setFont(font: Font): CommandBuilder
 
+    fun setFromEditor(): CommandBuilder
+    fun setFromEditor(fromEditor: Boolean): CommandBuilder
+
     fun drawRenderedImage()
     fun drawRenderableImage()
     fun drawString(string: String, x: Double, y: Double, desiredWidth: Double)
