@@ -40,6 +40,7 @@ import java.awt.datatransfer.Clipboard
 import java.awt.dnd.DragGestureEvent
 import java.awt.dnd.InvalidDnDOperationException
 import java.awt.dnd.peer.DragSourceContextPeer
+import java.awt.event.InputEvent
 import java.awt.font.TextAttribute
 import java.awt.im.InputMethodHighlight
 import java.awt.im.spi.InputMethodDescriptor
@@ -354,7 +355,17 @@ class PToolkit : SunToolkit(), KeyboardFocusManagerPeerProvider, ComponentFactor
     }
   }
 
+  @Suppress("DEPRECATION")  // as in superclass
+  override fun isPrintableCharacterModifiersMask(mods: Int): Boolean {
+    return when (macKeyboardModifiersMode) {
+      true -> (mods and (InputEvent.META_MASK or InputEvent.CTRL_MASK)) == 0  // Mac
+      false -> (mods and InputEvent.ALT_MASK) == (mods and InputEvent.CTRL_MASK)  // Linux and Windows
+    }
+  }
+
   companion object {
+
+    var macKeyboardModifiersMode = false
 
     private val registerPeerMethod = AWTAutoShutdown::class.java.getDeclaredMethod("registerPeer", Any::class.java, Any::class.java).apply {
       isAccessible = true

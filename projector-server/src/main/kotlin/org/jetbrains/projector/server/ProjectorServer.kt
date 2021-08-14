@@ -28,6 +28,7 @@ package org.jetbrains.projector.server
 import org.java_websocket.WebSocket
 import org.java_websocket.exceptions.WebsocketNotConnectedException
 import org.jetbrains.projector.awt.PClipboard
+import org.jetbrains.projector.awt.PToolkit
 import org.jetbrains.projector.awt.PWindow
 import org.jetbrains.projector.awt.font.PFontManager
 import org.jetbrains.projector.awt.image.PGraphics2D
@@ -39,6 +40,7 @@ import org.jetbrains.projector.awt.peer.PMouseInfoPeer
 import org.jetbrains.projector.common.misc.Do
 import org.jetbrains.projector.common.protocol.data.ImageData
 import org.jetbrains.projector.common.protocol.data.ImageId
+import org.jetbrains.projector.common.protocol.data.UserKeymap
 import org.jetbrains.projector.common.protocol.handshake.*
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.common.protocol.toServer.*
@@ -453,10 +455,25 @@ class ProjectorServer private constructor(
 
       is ClientOpenLinkEvent -> PanelUpdater.openInExternalBrowser(message.link)
 
-      is ClientSetKeymapEvent -> when {
-        isAgent -> logger.info { "Client keymap was ignored (agent mode)!" }
-        getProperty(ENABLE_AUTO_KEYMAP_SETTING)?.toBoolean() == false -> logger.info { "Client keymap was ignored (property specified)!" }
-        else -> KeymapSetter.setKeymap(message.keymap)
+      is ClientSetKeymapEvent -> {
+        Do exhaustive when {
+          isAgent -> logger.info { "Client keymap was ignored (agent mode)!" }
+          getProperty(ENABLE_AUTO_KEYMAP_SETTING)?.toBoolean() == false -> logger.info { "Client keymap was ignored (property specified)!" }
+          else -> KeymapSetter.setKeymap(message.keymap)
+        }
+        Do exhaustive when {
+          isAgent -> logger.info { "Don't support matching keyboard modifiers mode in agent mode yet" }
+          getProperty(MAC_KEYBOARD_MODIFIERS_MODE) != null -> {
+            val mode = getProperty(MAC_KEYBOARD_MODIFIERS_MODE)!!.toBoolean()
+            logger.info { "Force keyboard modifiers to $mode (property specified)" }
+            Do exhaustive when (mode) {
+              true -> updateToolkitKeyboardModifiersMode(UserKeymap.MAC)
+              false -> updateToolkitKeyboardModifiersMode(UserKeymap.LINUX)
+            }
+          }
+          else -> updateToolkitKeyboardModifiersMode(
+            message.keymap)  // todo: it doesn't support multiple connected clients: for now need to reconnect to apply settings
+        }
       }
 
       is ClientWindowMoveEvent -> {
@@ -718,6 +735,13 @@ class ProjectorServer private constructor(
     val isEnabled: Boolean
       get() = System.getProperty(ENABLE_PROPERTY_NAME)?.toBoolean() ?: false
 
+    private fun updateToolkitKeyboardModifiersMode(keymap: UserKeymap) {
+      PToolkit.macKeyboardModifiersMode = when (keymap) {
+        UserKeymap.WINDOWS, UserKeymap.LINUX -> false
+        UserKeymap.MAC -> true
+      }
+    }
+
     private fun disconnectUser(conn: WebSocket, reason: String) {
       val normalClosureCode = 1000  // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#properties
       conn.close(normalClosureCode, reason)
@@ -885,6 +909,7 @@ class ProjectorServer private constructor(
       ?: DEFAULT_BIG_COLLECTIONS_CHECKS_SIZE
 
     const val ENABLE_AUTO_KEYMAP_SETTING = "ORG_JETBRAINS_PROJECTOR_SERVER_AUTO_KEYMAP"
+    const val MAC_KEYBOARD_MODIFIERS_MODE = "ORG_JETBRAINS_PROJECTOR_SERVER_MAC_KEYBOARD"
     const val ENABLE_CONNECTION_CONFIRMATION = "ORG_JETBRAINS_PROJECTOR_SERVER_CONNECTION_CONFIRMATION"
 
     private fun getEnvHost(): InetAddress {
