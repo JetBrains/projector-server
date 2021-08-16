@@ -38,11 +38,7 @@ application {
 }
 
 publishing {
-  publications {
-    create<MavenPublication>("maven") {
-      from(components["java"])
-    }
-  }
+  publishOnSpace(project)
 }
 
 configurations.all {

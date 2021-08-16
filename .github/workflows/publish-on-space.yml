@@ -1,0 +1,21 @@
+name: Publish on Space
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  publish:
+    name: publish on space
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: SetUp Java
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - name: Add properties and publish
+        run: |
+          echo publishingVersion=${{ github.sha }} | head -c 26 >> gradle.properties
+          ./gradlew clean publish -PmavenUsername=${{ secrets.SPACE_NAME }} -PmavenPassword=${{ secrets.SPACE_TOKEN }}

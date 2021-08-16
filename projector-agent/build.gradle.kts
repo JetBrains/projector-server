@@ -30,11 +30,7 @@ plugins {
 }
 
 publishing {
-  publications {
-    create<MavenPublication>("maven") {
-      from(components["java"])
-    }
-  }
+  publishOnSpace(project)
 }
 
 kotlin {

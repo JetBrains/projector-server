@@ -31,9 +31,11 @@ plugins {
 
 val kotlinVersion: String by project
 val targetJvm: String by project
+val publishingVersion: String by project
 
 subprojects {
   group = "org.jetbrains"
+  version = publishingVersion
 
   repositories {
     mavenCentral()
