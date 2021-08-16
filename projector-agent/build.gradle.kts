@@ -57,20 +57,21 @@ dependencies {
   implementation("$projectorClientGroup:projector-common:$projectorClientVersion")
   implementation("$projectorClientGroup:projector-server-core:$projectorClientVersion")
   implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
+  implementation("$projectorClientGroup:projector-util-loading:$projectorClientVersion")
   api(project(":projector-awt"))
   api(project(":projector-server"))
   implementation("org.javassist:javassist:$javassistVersion")
 }
 
-var serverTargetClasspath: String = null.toString()
-var serverClassToLaunch: String = null.toString()
-var ideaPath: String = null.toString()
+var serverTargetClasspath: String? = null
+var serverClassToLaunch: String? = null
+var ideaPath: String? = null
 
 rootProject.file("local.properties").let {
   if (it.canRead()) {
-    ideaPath = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.ideaPath") ?: null.toString()
-    serverTargetClasspath = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.targetClassPath") ?: null.toString()
-    serverClassToLaunch = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.classToLaunch") ?: null.toString()
+    ideaPath = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.ideaPath") ?: null
+    serverTargetClasspath = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.targetClassPath") ?: null
+    serverClassToLaunch = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.classToLaunch") ?: null
   }
 }
 
@@ -95,7 +96,7 @@ println("----------- Agent launch config ---------------")
 println("Classpath: $serverTargetClasspath")
 println("ClassToLaunch: $serverClassToLaunch")
 println("------------------------------------------------")
-if (serverTargetClasspath != null.toString() && serverClassToLaunch != null.toString()) {
+if (serverTargetClasspath != null && serverClassToLaunch != null) {
   task("runWithAgent", JavaExec::class) {
     group = "projector"
     classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, serverTargetClasspath)
@@ -112,7 +113,7 @@ if (serverTargetClasspath != null.toString() && serverClassToLaunch != null.toSt
 println("----------- Idea launch config ---------------")
 println("Idea path: $ideaPath")
 println("------------------------------------------------")
-if (ideaPath != null.toString()) {
+if (ideaPath != null) {
   val ideaLib = "$ideaPath/lib"
   val ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar:$ideaLib/jna.jar:$ideaPath/jbr/lib/tools.jar"
   val jdkHome = System.getProperty("java.home")
