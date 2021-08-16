@@ -26,32 +26,24 @@ import java.net.URL
 import java.util.*
 import java.util.zip.ZipFile
 import kotlin.streams.toList
+import java.io.FileInputStream
 
 plugins {
   kotlin("jvm")
-  `maven-publish`
   application
+  `maven-publish`
 }
 
 application {
-  mainClassName = "org.jetbrains.projector.server.ProjectorLauncher"
+  mainClass.set("org.jetbrains.projector.server.ProjectorLauncher")
 }
 
 publishing {
-  publications {
-    create<MavenPublication>("maven") {
-      from(components["java"])
-    }
-  }
-  repositories {
-    maven {
-      url "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies"
-      credentials(PasswordCredentials)
-    }
-  }
+  publishOnSpace(project)
 }
 
 configurations.all {
+  // disable caching of -SNAPSHOT dependencies
   resolutionStrategy.cacheChangingModulesFor(0, "seconds")
 }
 
@@ -59,6 +51,7 @@ val projectorClientGroup: String by project
 val projectorClientVersion: String by project
 val mockitoKotlinVersion: String by project
 val kotlinVersion: String by project
+val intellijPlatformVersion: String by project
 
 dependencies {
   implementation("$projectorClientGroup:projector-common:$projectorClientVersion")
@@ -67,61 +60,57 @@ dependencies {
   implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
   api(project(":projector-awt"))
 
+  compileOnly("com.jetbrains.intellij.platform:code-style:$intellijPlatformVersion")
+  compileOnly("com.jetbrains.intellij.platform:core-ui:$intellijPlatformVersion")
+  compileOnly("com.jetbrains.intellij.platform:ide-impl:$intellijPlatformVersion")
+
   testImplementation("org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion")
   testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
   compileOnly("com.jetbrains.intellij.platform:code-style:$intellijPlatformVersion")
   compileOnly("com.jetbrains.intellij.platform:core-ui:$intellijPlatformVersion")
   compileOnly("com.jetbrains.intellij.platform:ide-impl:$intellijPlatformVersion")
 
-  testImplementation "org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion"
-  testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
+  testImplementation("org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion")
+  testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
   testImplementation("com.jetbrains.intellij.platform:core:$intellijPlatformVersion")
 }
 
 tasks.withType<Jar> {
   manifest {
     attributes(
-      "Main-Class" to application.mainClassName
+      "Main-Class" to application.mainClass
     )
   }
   duplicatesStrategy = DuplicatesStrategy.WARN
 }
 
-var relayURL: String = null.toString()
-var serverId: String = null.toString()
-var serverTargetClasspath: String = null.toString()
-var serverClassToLaunch: String = null.toString()
-var ideaPath: String = null.toString()
-
-rootProject.file("local.properties").let {
-  if (it.canRead()) {
-    val relayURL = Properties().apply { load(it.inputStream()) }.getProperty("ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL") ?: null.toString()
-    serverId = Properties().apply { load(it.inputStream()) }.getProperty("ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID")
-               ?: null.toString()
-    serverTargetClasspath = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.targetClassPath")
-                            ?: null.toString()
-    serverClassToLaunch = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.classToLaunch") ?: null.toString()
-    ideaPath = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.ideaPath") ?: null.toString()
-  }
+// Server running tasks
+val localProperties = Properties()
+if (rootProject.file("local.properties").canRead()) {
+  localProperties.load(FileInputStream(rootProject.file("local.properties")))
 }
+
+// Relay arguments
+val relayURL: String? = localProperties.getProperty("ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL")
+val serverId: String? = localProperties.getProperty("ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID")
 
 var relayArgs: List<String> = emptyList()
 
-if (relayURL != null.toString() && serverId != null.toString()) {
+if (relayURL != null && serverId != null) {
   relayArgs = listOf("-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL=$relayURL", "-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID=$serverId")
-println("url=$relayURL; id=$serverId")
-
-if (relayURL!=null && serverId != null) {
-  relayArgs = ["-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL=$relayURL", "-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID=$serverId"]
+  println("url=$relayURL; id=$serverId")
 }
 
+val serverTargetClasspath: String? = localProperties.getProperty("'projectorLauncher.targetClassPath")
+val serverClassToLaunch: String? = localProperties.getProperty("projectorLauncher.classToLaunch")
 println("----------- Server launch config ---------------")
 println("Classpath: $serverTargetClasspath")
 println("ClassToLaunch: $serverClassToLaunch")
 println("------------------------------------------------")
-if (serverTargetClasspath != null.toString() && serverClassToLaunch != null.toString()) {
-  task("runServer", JavaExec::class) {
+if (serverTargetClasspath != null && serverClassToLaunch != null) {
+  task<JavaExec>("runServer") {
     group = "projector"
+    mainClass.set("org.jetbrains.projector.server.ProjectorLauncher")
     classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, serverTargetClasspath)
     jvmArgs = listOf(
       "-Dorg.jetbrains.projector.server.classToLaunch=$serverClassToLaunch",
@@ -132,10 +121,11 @@ if (serverTargetClasspath != null.toString() && serverClassToLaunch != null.toSt
   }
 }
 
+val ideaPath: String? = localProperties.getProperty("projectorLauncher.ideaPath")
 println("----------- Idea launch config ---------------")
 println("Idea path: $ideaPath")
 println("------------------------------------------------")
-if (ideaPath != null.toString()) {
+if (ideaPath != null) {
   val ideaLib = "$ideaPath/lib"
   val ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar:$ideaLib/trove4j.jar"
   val jdkHome = System.getProperty("java.home")
@@ -143,9 +133,9 @@ if (ideaPath != null.toString()) {
 
   val ideaPathsSelector = "ProjectorIntelliJIdea"
 
-  task("runIdeaServer", JavaExec::class) {
+  task<JavaExec>("runIdeaServer") {
     group = "projector"
-    main = "org.jetbrains.projector.server.ProjectorLauncher"
+    mainClass.set("org.jetbrains.projector.server.ProjectorLauncher")
     classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, ideaClassPath, "$jdkHome/../lib/tools.jar")
     jvmArgs = listOf(
       "-Dorg.jetbrains.projector.server.classToLaunch=com.intellij.idea.Main",
@@ -212,7 +202,6 @@ fun Project.downloadFontsInZip(
     }
   }
 }
-
 
 val downloadCjkFonts = downloadFontsInZip(
   "downloadCjkFonts",

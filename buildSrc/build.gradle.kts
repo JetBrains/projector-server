@@ -29,6 +29,8 @@ repositories {
   mavenCentral()
 }
 
-sourceSets.main.get().java.srcDir("src/main/kotlin")
+kotlin {
+  explicitApi()
+}
 
-// todo: when Gradle starts using Kotlin 1.4, declare this module as explicitApi()
+sourceSets.main.get().java.srcDir("src/main/kotlin")
