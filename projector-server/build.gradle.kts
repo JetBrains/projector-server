@@ -59,6 +59,7 @@ dependencies {
   implementation("$projectorClientGroup:projector-server-core:$projectorClientVersion")
   implementation("$projectorClientGroup:projector-util-loading:$projectorClientVersion")
   implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
+  implementation("$projectorClientGroup:projector-util-loading:$projectorClientVersion")
   api(project(":projector-awt"))
 
   testImplementation("org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion")
