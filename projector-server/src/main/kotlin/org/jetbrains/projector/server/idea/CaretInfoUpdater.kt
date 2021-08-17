@@ -90,7 +90,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
     val visibleEditorRect = scrollPane.viewport.viewRect
 
     val lineHeight = focusedEditor.lineHeight
-    val lineDescent = focusedEditor.descent
+    val lineAscent = focusedEditor.ascent
 
     var rootComponent: Component? = focusedEditorComponent
     var editorPWindow: PWindow? = null
@@ -126,9 +126,8 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
           CaretInfo(point)
         }
 
-        val scrollBarWidth = if (visibleEditorRect.height < focusedEditorComponent.height) // check scrollbar should be visible
-          scrollPane.verticalScrollBar?.width ?: 0
-        else 0
+        val isVerticalScrollBarVisible = visibleEditorRect.height < focusedEditorComponent.height
+        val verticalScrollBarWidth = if (isVerticalScrollBarVisible) scrollPane.verticalScrollBar?.width ?: 0 else 0
 
         ServerCaretInfoChangedEvent.CaretInfoChange.Carets(
           points,
@@ -142,8 +141,8 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
             height = visibleEditorRect.height.toDouble()
           ),
           lineHeight = lineHeight,
-          lineDescent = lineDescent,
-          scrollBarWidth = scrollBarWidth,
+          lineAscent = lineAscent,
+          verticalScrollBarWidth = verticalScrollBarWidth,
         )
       }
     }
