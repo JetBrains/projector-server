@@ -1,3 +1,22 @@
+# 1.3.0
+
+## Fixed
+
+- Speculative typing improvements
+- Get rid of Markdown plugin requirement in IDE to make IDE hooks work without MD plugin installed
+- PRJ-510 Fix caret position for IME, add color, adjust caret visibility
+- Move IME overlay from the bottom to the top (when no info about caret is found)
+- PRJ-625 Fix IME stopped working in Firefox after some mouse actions
+- PRJ-614 Fix Numpad Enter
+- PRJ-194 Support Option+key on Mac clients
+- PRJ-597 Check editor component is showing before getting location on screen
+- PRJ-613 Support PGraphics2D.drawRenderedImage image and null transformation parameter
+
+## Changed
+
+- Kotlin 1.5.20 and other dependencies updates
+- Classloader to load Projector and app classes
+
 # 1.2.1
 
 ## Fixed

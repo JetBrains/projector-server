@@ -2,6 +2,22 @@
 
 Notable changes to this project are documented in this file.
 
+# 1.6.0
+
+## Changed
+
+- Increase max row count in Hosts control.
+
+## Fixed
+
+- Fix possible leak when the server is in manually stopped state.
+- PRJ-314 Projector sessions dialog rendering takes uncomfortably long time to appear.
+- PRJ-122 Hide menu on plugin uninstall.
+
+## Updated
+
+- Projector Server v1.3.0.
+
 # 1.5.1
 
 ## Updated
