@@ -17,5 +17,6 @@ jobs:
           java-version: '11'
       - name: Add properties and publish
         run: |
-          echo publishingVersion=${{ github.sha }} | head -c 26 >> gradle.properties
+          echo -n publishingVersion= >> gradle.properties
+          ${{ github.sha }} | head -c 8 >> gradle.properties
           ./gradlew clean publish -PmavenUsername=${{ secrets.SPACE_NAME }} -PmavenPassword=${{ secrets.SPACE_TOKEN }}
