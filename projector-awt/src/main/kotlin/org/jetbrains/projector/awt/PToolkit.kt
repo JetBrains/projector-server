@@ -118,18 +118,21 @@ class PToolkit : SunToolkit(), KeyboardFocusManagerPeerProvider, ComponentFactor
   }
 
   override fun createCanvas(target: Canvas): CanvasPeer {
+    println("createPanel")
     return PCanvasPeer(target).also {
       targetCreatedPeer(target, it)
     }
   }
 
   override fun createPanel(target: Panel): PanelPeer {
+    println("createPanel")
     return PPanelPeer(target).also {
       targetCreatedPeer(target, it)
     }
   }
 
   override fun createWindow(target: Window): WindowPeer {
+    println("createWindow")
     return PWindowPeer(target).also {
       targetCreatedPeer(target, it)
     }

@@ -27,6 +27,7 @@ package org.jetbrains.projector.agent
 import javassist.ClassPool
 import javassist.LoaderClassPath
 import org.jetbrains.projector.server.core.classloader.ProjectorClassLoaderSetup
+import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
 import org.jetbrains.projector.util.loading.unprotect
 import org.jetbrains.projector.util.logging.Logger
 import java.lang.instrument.Instrumentation
@@ -55,7 +56,7 @@ public object MainAgent {
 
     @JvmStatic
     fun start(args: String?, instrumentation: Instrumentation) {
-      logger.info { "agentmain start, args=$args" }
+      logger.info { "agentmain start, args=$args; currentLoader: ${javaClass.classLoader}" }
 
       val threads = Thread.getAllStackTraces().keys
       val classLoaders = threads.mapNotNull { it.contextClassLoader }.toSet()
@@ -76,8 +77,11 @@ public object MainAgent {
         java.awt.image.BufferedImage::class.java,
         java.awt.Component::class.java,
         javax.swing.JComponent::class.java,
-        //Class.forName("com.intellij.ui.BalloonImpl\$MyComponent"),  // todo
       )
+
+      invokeWhenIdeaIsInitialized("Transform Balloon") {
+        instrumentation.retransformClasses(Class.forName("com.intellij.ui.BalloonImpl\$MyComponent")) // todo
+      }
 
       logger.info { "agentmain finish" }
     }

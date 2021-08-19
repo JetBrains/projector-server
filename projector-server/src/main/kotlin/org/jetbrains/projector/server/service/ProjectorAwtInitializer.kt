@@ -36,6 +36,7 @@ object ProjectorAwtInitializer {
 
   fun initProjectorAwt() {
     DrawEventQueue.createOffScreen = {
+      println("Creating offScreen for ${it.pVolatileImageId}")
       ProjectorDrawEventQueue.create(
         ServerDrawCommandsEvent.Target.Offscreen(
           pVolatileImageId = it.pVolatileImageId,
@@ -44,7 +45,10 @@ object ProjectorAwtInitializer {
         )
       )
     }
-    DrawEventQueue.createOnScreen = { ProjectorDrawEventQueue.create(ServerDrawCommandsEvent.Target.Onscreen(it.windowId)) }
+    DrawEventQueue.createOnScreen = {
+      println("Creating onScreen for ${it.windowId}")
+      ProjectorDrawEventQueue.create(ServerDrawCommandsEvent.Target.Onscreen(it.windowId))
+    }
 
     FontProvider.instance = ProjectorFontProvider
 

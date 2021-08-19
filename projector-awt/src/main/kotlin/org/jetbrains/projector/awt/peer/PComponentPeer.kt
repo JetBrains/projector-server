@@ -45,6 +45,10 @@ import java.awt.peer.ContainerPeer
 
 abstract class PComponentPeer(target: Component, private val isFocusable: Boolean = false) : ComponentPeer, DropTargetPeer {
 
+  init {
+    println("NewPComponentPeer: ${javaClass.name}")
+  }
+
   private val toolkit: Toolkit
     get() = Toolkit.getDefaultToolkit()
 

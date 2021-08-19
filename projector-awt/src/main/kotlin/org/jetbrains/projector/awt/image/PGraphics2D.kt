@@ -140,6 +140,7 @@ class PGraphics2D private constructor(
   }
 
   private fun isFromEditor(): StackTraceElement? {
+    return null
     val stackTrace = Thread.currentThread().stackTrace
 
     //if (stackTrace.any { it.className == javaClass.name && it.methodName == "paintString" }) return null
@@ -310,8 +311,10 @@ class PGraphics2D private constructor(
       return
     }
 
-    if (str.contains("Copyright")) {
-      logger.debug { "HasStrrr" }
+    return
+
+    if (str.contains("CONTENSGYDgsDjfsfsf") || str.contains("Clicked")) {
+      logger.debug { "drawEventQueue: ${drawEventQueue}" }
     }
 
     if (skipDrawing()) return
