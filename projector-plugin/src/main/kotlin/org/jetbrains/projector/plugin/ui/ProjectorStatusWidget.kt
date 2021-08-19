@@ -27,6 +27,7 @@ package org.jetbrains.projector.plugin.ui
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.IconLoader
@@ -138,9 +139,14 @@ class ProjectorStatusWidget(private val myStatusBar: StatusBar)
   private fun fireAction(actionId: String) {
     val am = ActionManager.getInstance()
     val action = am.getAction(actionId)
-    val ctx = DataManager.getInstance().getDataContext(myStatusBar as Component)
-    val event = AnActionEvent.createFromAnAction(action, null, "", ctx)
-    action.actionPerformed(event)
+
+    if (action != null) {
+      val ctx = DataManager.getInstance().getDataContext(myStatusBar as Component)
+      val event = AnActionEvent.createFromAnAction(action, null, "", ctx)
+      action.actionPerformed(event)
+    } else {
+      logger.error("Unable to get action with ID = $actionId")
+    }
   }
 
   override fun propertyChange(event: PropertyChangeEvent?) {
@@ -158,5 +164,6 @@ class ProjectorStatusWidget(private val myStatusBar: StatusBar)
     private val STARTING_SIGN: Icon by lazy { getIcon("/META-INF/startingSign.svg") }
     private val DISABLED_SIGN: Icon by lazy { getIcon("/META-INF/disabledSign.svg") }
     private val STOPPED_SIGN: Icon by lazy { getIcon("/META-INF/stoppedSign.svg") }
+    private val logger = Logger.getInstance(ProjectorStatusWidget::class.java)
   }
 }
