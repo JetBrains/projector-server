@@ -262,6 +262,9 @@ class PGraphics2D private constructor(
   }
 
   private inline fun paintShape(crossinline command: DrawEventQueue.CommandBuilder.() -> Unit) {
+
+    val elem = isFromEditor()
+
     drawEventQueue
       .buildCommand()
       .setFromEditor(elem != null)

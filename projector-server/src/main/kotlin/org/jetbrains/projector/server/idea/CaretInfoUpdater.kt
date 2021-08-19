@@ -136,7 +136,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
             y = (editorLocationInWindowY + caretLocationInEditor.y).toDouble(),
           )
 
-          CaretInfo(point)
+          CaretInfo(point, 0, point)
         }
 
         ServerCaretInfoChangedEvent.CaretInfoChange.Carets(
