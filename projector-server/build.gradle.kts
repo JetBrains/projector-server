@@ -26,15 +26,16 @@ import java.net.URL
 import java.util.*
 import java.util.zip.ZipFile
 import kotlin.streams.toList
+import java.io.FileInputStream
 
 plugins {
   kotlin("jvm")
-  `maven-publish`
   application
+  `maven-publish`
 }
 
 application {
-  mainClassName = "org.jetbrains.projector.server.ProjectorLauncher"
+  mainClass.set("org.jetbrains.projector.server.ProjectorLauncher")
 }
 
 publishing {
@@ -87,29 +88,21 @@ dependencies {
 tasks.withType<Jar> {
   manifest {
     attributes(
-      "Main-Class" to application.mainClassName
+      "Main-Class" to application.mainClass
     )
   }
   duplicatesStrategy = DuplicatesStrategy.WARN
 }
 
-var relayURL: String? = null
-var serverId: String? = null
-var serverTargetClasspath: String? = null
-var serverClassToLaunch: String? = null
-var ideaPath: String? = null
-
-rootProject.file("local.properties").let {
-  if (it.canRead()) {
-    val relayURL = Properties().apply { load(it.inputStream()) }.getProperty("ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL") ?: null
-    serverId = Properties().apply { load(it.inputStream()) }.getProperty("ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID")
-               ?: null
-    serverTargetClasspath = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.targetClassPath")
-                            ?: null
-    serverClassToLaunch = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.classToLaunch") ?: null
-    ideaPath = Properties().apply { load(it.inputStream()) }.getProperty("projectorLauncher.ideaPath") ?: null
-  }
+// Server running tasks
+val localProperties = Properties()
+if (rootProject.file("local.properties").canRead()) {
+  localProperties.load(FileInputStream(rootProject.file("local.properties")))
 }
+
+// Relay arguments
+val relayURL: String? = localProperties.getProperty("ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL")
+val serverId: String? = localProperties.getProperty("ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID")
 
 var relayArgs: List<String> = emptyList()
 
@@ -121,13 +114,16 @@ if (relayURL!=null && serverId != null) {
   relayArgs = ["-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL=$relayURL", "-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID=$serverId"]
 }
 
+val serverTargetClasspath: String? = localProperties.getProperty("'projectorLauncher.targetClassPath")
+val serverClassToLaunch: String? = localProperties.getProperty("projectorLauncher.classToLaunch")
 println("----------- Server launch config ---------------")
 println("Classpath: $serverTargetClasspath")
 println("ClassToLaunch: $serverClassToLaunch")
 println("------------------------------------------------")
 if (serverTargetClasspath != null && serverClassToLaunch != null) {
-  task("runServer", JavaExec::class) {
+  task<JavaExec>("runServer") {
     group = "projector"
+    mainClass.set("org.jetbrains.projector.server.ProjectorLauncher")
     classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, serverTargetClasspath)
     jvmArgs = listOf(
       "-Dorg.jetbrains.projector.server.classToLaunch=$serverClassToLaunch",
@@ -138,6 +134,7 @@ if (serverTargetClasspath != null && serverClassToLaunch != null) {
   }
 }
 
+val ideaPath: String? = localProperties.getProperty("projectorLauncher.ideaPath")
 println("----------- Idea launch config ---------------")
 println("Idea path: $ideaPath")
 println("------------------------------------------------")
@@ -149,9 +146,9 @@ if (ideaPath != null) {
 
   val ideaPathsSelector = "ProjectorIntelliJIdea"
 
-  task("runIdeaServer", JavaExec::class) {
+  task<JavaExec>("runIdeaServer") {
     group = "projector"
-    main = "org.jetbrains.projector.server.ProjectorLauncher"
+    mainClass.set("org.jetbrains.projector.server.ProjectorLauncher")
     classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, ideaClassPath, "$jdkHome/../lib/tools.jar")
     jvmArgs = listOf(
       "-Dorg.jetbrains.projector.server.classToLaunch=com.intellij.idea.Main",
