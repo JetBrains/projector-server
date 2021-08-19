@@ -25,6 +25,6 @@ import org.gradle.api.NamedDomainObjectProvider
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 
-fun Project.inline(conf: NamedDomainObjectProvider<Configuration>): Iterable<Any> {
+public fun Project.inline(conf: NamedDomainObjectProvider<Configuration>): Iterable<Any> {
   return conf.get().map { if (it.isDirectory) it else zipTree(it) }
 }
