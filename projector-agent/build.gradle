@@ -9,6 +9,12 @@ publishing {
       from components.java
     }
   }
+  repositories {
+    maven {
+      url "https://packages.jetbrains.team/maven/p/prj/projector-maven"
+      credentials(PasswordCredentials)
+    }
+  }
 }
 
 def agentClassName = "org.jetbrains.projector.agent.MainAgent"

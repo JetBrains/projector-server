@@ -32,6 +32,12 @@ publishing {
       from(components["java"])
     }
   }
+  repositories {
+    maven {
+      url = uri("https://packages.jetbrains.team/maven/p/prj/projector-maven")
+      credentials(PasswordCredentials::class)
+    }
+  }
 }
 
 val kotlinVersion: String by project

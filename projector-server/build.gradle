@@ -40,6 +40,12 @@ publishing {
       from components.java
     }
   }
+  repositories {
+    maven {
+      url "https://packages.jetbrains.team/maven/p/prj/projector-maven"
+      credentials(PasswordCredentials)
+    }
+  }
 }
 
 configurations.all {
@@ -78,12 +84,12 @@ if (project.rootProject.file('local.properties').canRead()) {
 }
 
 // relay arguments
-def relayURL=localProperties["ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL"]
-def serverId=localProperties["ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID"]
+def relayURL = localProperties["ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL"]
+def serverId = localProperties["ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID"]
 
 def relayArgs = []
 
-if (relayURL!=null && serverId != null) {
+if (relayURL != null && serverId != null) {
   relayArgs = ["-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL=$relayURL", "-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID=$serverId"]
 }
 
@@ -100,11 +106,11 @@ if (serverTargetClasspath != null && serverClassToLaunch != null) {
     main = "org.jetbrains.projector.server.ProjectorLauncher"
     classpath(sourceSets.main.runtimeClasspath, jar, "$serverTargetClasspath")
     jvmArgs = [
-      "-Dorg.jetbrains.projector.server.classToLaunch=$serverClassToLaunch",
-      "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
-      "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
-      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-    ] + relayArgs
+                "-Dorg.jetbrains.projector.server.classToLaunch=$serverClassToLaunch",
+                "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+                "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
+                "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+              ] + relayArgs
   }
 }
 
@@ -125,22 +131,22 @@ if (ideaPath != null) {
     main = "org.jetbrains.projector.server.ProjectorLauncher"
     classpath(sourceSets.main.runtimeClasspath, jar, "$ideaClassPath", "$jdkHome/../lib/tools.jar")
     jvmArgs = [
-      "-Dorg.jetbrains.projector.server.classToLaunch=com.intellij.idea.Main",
-      "-Didea.paths.selector=$ideaPathsSelector",
-      "-Didea.jre.check=true",
-      "-Didea.is.internal=true",
-      "--add-exports=java.base/jdk.internal.vm=ALL-UNNAMED",
-      "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
-      "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
-      "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
-      "--add-opens=java.desktop/sun.swing=ALL-UNNAMED",
-      "--add-opens=java.desktop/javax.swing=ALL-UNNAMED",
-      "--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED",
-      "--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED",
-      "--add-opens=java.base/java.lang=ALL-UNNAMED",
-      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-      "-Djdk.attach.allowAttachSelf=true",
-    ] + relayArgs
+                "-Dorg.jetbrains.projector.server.classToLaunch=com.intellij.idea.Main",
+                "-Didea.paths.selector=$ideaPathsSelector",
+                "-Didea.jre.check=true",
+                "-Didea.is.internal=true",
+                "--add-exports=java.base/jdk.internal.vm=ALL-UNNAMED",
+                "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+                "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
+                "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
+                "--add-opens=java.desktop/sun.swing=ALL-UNNAMED",
+                "--add-opens=java.desktop/javax.swing=ALL-UNNAMED",
+                "--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED",
+                "--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED",
+                "--add-opens=java.base/java.lang=ALL-UNNAMED",
+                "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+                "-Djdk.attach.allowAttachSelf=true",
+              ] + relayArgs
   }
 }
 
@@ -184,7 +190,6 @@ def downloadFontsInZip(
 
     println("Download complete")
   }
-
 }
 
 task downloadCjkFonts {
@@ -193,7 +198,7 @@ task downloadCjkFonts {
       "CJK",
       "https://noto-website-2.storage.googleapis.com/pkgs/NotoSansCJKjp-hinted.zip",
       [
-        "NotoSansCJKjp-Regular.otf" : "CJK-R.otf",
+        "NotoSansCJKjp-Regular.otf": "CJK-R.otf",
       ]
     )
   }
@@ -205,9 +210,9 @@ task downloadDefaultFonts {
       "default",
       "https://noto-website-2.storage.googleapis.com/pkgs/NotoSans-hinted.zip",
       [
-        "NotoSans-Regular.ttf" : "Default-R.ttf",
-        "NotoSans-Italic.ttf": "Default-RI.ttf",
-        "NotoSans-Bold.ttf" : "Default-B.ttf",
+        "NotoSans-Regular.ttf"   : "Default-R.ttf",
+        "NotoSans-Italic.ttf"    : "Default-RI.ttf",
+        "NotoSans-Bold.ttf"      : "Default-B.ttf",
         "NotoSans-BoldItalic.ttf": "Default-BI.ttf",
       ]
     )
