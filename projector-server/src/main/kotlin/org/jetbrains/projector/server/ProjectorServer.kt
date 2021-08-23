@@ -174,6 +174,7 @@ class ProjectorServer private constructor(
             clientSettings.connectionMillis,
             clientSettings.address,
             clientSettings.setUpClientData,
+            WindowDrawInterestManagerImpl(),
             if (ENABLE_BIG_COLLECTIONS_CHECKS) BIG_COLLECTIONS_CHECKS_START_SIZE else null,
           ))
 
@@ -493,6 +494,8 @@ class ProjectorServer private constructor(
       }
 
       is ClientWindowCloseEvent -> SwingUtilities.invokeLater { PWindow.getWindow(message.windowId)?.close() }
+
+      is ClientWindowInterestEvent -> SwingUtilities.invokeLater { clientSettings.interestManager.processClientEvent(message) }
     }
   }
 
@@ -648,7 +651,7 @@ class ProjectorServer private constructor(
 
       val compressed = with(readyClientSettings.setUpClientData) {
         val requestedData = extractData(readyClientSettings.requestedData)
-        val message = requestedData + dataToSend
+        val message = readyClientSettings.interestManager.filterEvents(requestedData.asSequence() + dataToSend.asSequence()).toList()
 
         if (message.isEmpty()) {
           return@forEachOpenedConnection
