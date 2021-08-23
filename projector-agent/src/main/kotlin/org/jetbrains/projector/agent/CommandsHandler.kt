@@ -146,7 +146,7 @@ internal object CommandsHandler {
         ServerSetFontEvent(
           fontId = FontCacher.getId(it),
           fontSize = it.size,
-          ligaturesOn = (it.attributes.getOrDefault(TextAttribute.LIGATURES, 0) as Int) > 0,
+          ligaturesOn = ((it.attributes[TextAttribute.LIGATURES] as Int?) ?: 0) > 0,
         )
       },
       ServerSetPaintEvent(createPaintValue(g.paint)),

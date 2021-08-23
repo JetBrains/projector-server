@@ -82,7 +82,7 @@ class ProjectorDrawEventQueue private constructor(val target: ServerDrawCommands
       events.add(ServerSetFontEvent(
         fontId = FontCacher.getId(font),
         fontSize = font.size,
-        ligaturesOn = (font.attributes.getOrDefault(TextAttribute.LIGATURES, 0) as Int) > 0))
+        ligaturesOn = ((font.attributes[TextAttribute.LIGATURES] as Int?) ?: 0) > 0))
       return this
     }
 
