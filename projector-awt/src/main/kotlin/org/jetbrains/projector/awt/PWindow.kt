@@ -24,6 +24,7 @@
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 package org.jetbrains.projector.awt
 
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.projector.awt.data.Direction
 import org.jetbrains.projector.awt.image.PGraphics2D
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
@@ -39,7 +40,11 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 import kotlin.math.min
 
-class PWindow(val target: Component, val isAgent: Boolean) {
+class PWindow private constructor(val target: Component, val isAgent: Boolean, graphicsOverride: Graphics2D?) {
+
+  constructor(target: Component, isAgent: Boolean) : this(target, isAgent, null)
+
+  val graphics: Graphics2D
 
   val id: Int
 
@@ -94,11 +99,9 @@ class PWindow(val target: Component, val isAgent: Boolean) {
 
       weakWindows.addLast(self)
     }
-  }
 
-  val graphics = PGraphics2D(target, Descriptor(id))
+    graphics = graphicsOverride ?: PGraphics2D(target, Descriptor(id))
 
-  init {
     updateGraphics()
   }
 
@@ -151,7 +154,7 @@ class PWindow(val target: Component, val isAgent: Boolean) {
               min(abs(deviceBounds.y - windowMidpoint.y), abs(deviceBounds.y + deviceBounds.height - windowMidpoint.y)))
         }
       } ?: return
-      graphics.device = newDevice
+      (graphics as? PGraphics2D)?.device = newDevice
       graphics.transform = newDevice.configuration.defaultTransform
       AWTAccessor.getComponentAccessor().setGraphicsConfiguration(target, newDevice.configuration)
     }
@@ -268,6 +271,11 @@ class PWindow(val target: Component, val isAgent: Boolean) {
     }
 
     fun getWindow(windowId: Int): PWindow? = windows.find { it.id == windowId }
+
+    @TestOnly
+    fun createWithGraphicsOverride(target: Component, isAgent: Boolean, graphicsOverride: Graphics2D?): PWindow {
+      return PWindow(target, isAgent, graphicsOverride)
+    }
   }
 
   class Descriptor(val windowId: Int)
