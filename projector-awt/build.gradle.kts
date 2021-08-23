@@ -32,6 +32,11 @@ publishing {
       from(components["java"])
     }
   }
+  repositories {
+    maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies") {
+      credentials(PasswordCredentials::class)
+    }
+  }
 }
 
 val kotlinVersion: String by project
