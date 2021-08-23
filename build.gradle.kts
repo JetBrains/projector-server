@@ -33,7 +33,7 @@ val kotlinVersion: String by project
 val targetJvm: String by project
 
 subprojects {
-  group = "org.jetbrains"
+  group = "org.jetbrains.projector"
 
   repositories {
     mavenCentral()
