@@ -319,7 +319,21 @@ class ProjectorServer private constructor(
           icons = window.icons?.map { it as ImageId },
           isShowing = window.target.isShowing,
           zOrder = i,
-          bounds = window.target.shiftBounds(PGraphicsEnvironment.defaultDevice.clientShift),
+          bounds = window.target.shiftBounds(
+
+            //window.target.let {
+            //  if (it is Window && it.owner != null) {
+            //    AwtPoint()
+            //  } else {
+            //    PGraphicsEnvironment.defaultDevice.clientShift
+            //  }
+            //}
+
+            if (window.target.javaClass.name.endsWith("BalloonWindow"))
+              AwtPoint()
+            else
+              PGraphicsEnvironment.defaultDevice.clientShift
+          ),
           headerHeight = window.headerHeight,
           cursorType = window.cursor?.type?.toCursorType(),
           resizable = window.resizable,
@@ -377,12 +391,21 @@ class ProjectorServer private constructor(
       }
 
       is ClientMouseEvent -> SwingUtilities.invokeLater {
-        val shiftedMessage = message.shift(PGraphicsEnvironment.defaultDevice.clientShift)
 
-        PMouseInfoPeer.lastMouseCoords.setLocation(shiftedMessage.x, shiftedMessage.y)
 
         val window = PWindow.getWindow(message.windowId)?.target
         PMouseInfoPeer.lastWindowUnderMouse = window
+
+        val shiftedMessage = if (window?.javaClass?.simpleName == "BalloonWindow")
+          message.shift(PGraphicsEnvironment.defaultDevice.clientShift)
+        else
+          message.shift(PGraphicsEnvironment.defaultDevice.clientShift)
+
+        PMouseInfoPeer.lastMouseCoords.setLocation(shiftedMessage.x, shiftedMessage.y)
+
+
+
+        //logger.debug { "Found window: ${window?.javaClass?.simpleName} (${message.windowId}) === $shiftedMessage" }
 
         window ?: return@invokeLater
 

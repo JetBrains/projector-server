@@ -86,6 +86,8 @@ class PGraphics2D private constructor(
 
     if (skipDrawing()) return
 
+    //return
+
     val elem = isFromEditor()
     //if (elem != null) {
     //  //logger.debug { "paintPlain from Editor $elem" }
@@ -101,7 +103,7 @@ class PGraphics2D private constructor(
   private var printed = false
 
   private fun skipDrawing(): Boolean {
-    return false
+    //return false
 
     val stackTrace = Thread.currentThread().stackTrace
 
@@ -114,8 +116,11 @@ class PGraphics2D private constructor(
       || it.className.startsWith("com.intellij.openapi.editor.impl.EditorMarkupModelImpl") && it.methodName.startsWith("paint")
       || it.className.startsWith("com.intellij.openapi.editor.toolbar.floating.FloatingToolbarComponentImpl") && it.methodName.startsWith("paint")
       //|| it.className.startsWith("com.intellij.openapi.ui.SimpleToolWindowPanel") && it.methodName.startsWith("paint")
-      || it.className.startsWith("com.intellij.openapi.actionSystem.impl.ActionToolbarImpl") && it.methodName.startsWith("paint")  // TODO used in other places too
+      //|| it.className.startsWith("com.intellij.openapi.actionSystem.impl.ActionToolbarImpl") && it.methodName.startsWith("paint")  // TODO used in other places too
       || it.className.startsWith("com.intellij.openapi.actionSystem.impl.ActionButton") && it.methodName.startsWith("paint") // TODO used in other places too
+      || it.className.startsWith("com.intellij.ui.Balloon") && it.methodName.startsWith("paint") // TODO used in other places too
+      || it.className.startsWith("com.intellij.ui.popup.Balloon") && it.methodName.startsWith("paint") // TODO used in other places too
+      || it.className.startsWith("com.intellij.ui.popup.PopupFactory") && it.methodName.endsWith("BalloonBuilder") // TODO used in other places too
     }.also {
 
       //if (it && !printed) {
@@ -140,7 +145,7 @@ class PGraphics2D private constructor(
   }
 
   private fun isFromEditor(): StackTraceElement? {
-    return null
+    //return null
     val stackTrace = Thread.currentThread().stackTrace
 
     //if (stackTrace.any { it.className == javaClass.name && it.methodName == "paintString" }) return null
@@ -264,7 +269,21 @@ class PGraphics2D private constructor(
 
   private inline fun paintShape(crossinline command: DrawEventQueue.CommandBuilder.() -> Unit) {
 
+    if (skipDrawing()) return
+
     val elem = isFromEditor()
+
+    //if (transform.translateX >= 120 && transform.translateX <= 1800) return
+    //if (transform.translateY >= 70 && transform.translateY <= 130) {
+    //  val stackTrace = Exception().stackTrace
+    //  logger.debug { "paintShape.." }
+    //  stackTrace.forEach {
+    //    logger.debug { "paintShape: $it" }
+    //  }
+    //  return
+    //}
+
+    //return
 
     drawEventQueue
       .buildCommand()
@@ -311,11 +330,11 @@ class PGraphics2D private constructor(
       return
     }
 
-    return
+    //return
 
-    if (str.contains("CONTENSGYDgsDjfsfsf") || str.contains("Clicked")) {
-      logger.debug { "drawEventQueue: ${drawEventQueue}" }
-    }
+    //if (str.contains("CONTENSGYDgsDjfsfsf") || str.contains("Clicked")) {
+    //  logger.debug { "drawEventQueue: ${drawEventQueue}" }
+    //}
 
     if (skipDrawing()) return
 
@@ -738,6 +757,47 @@ class PGraphics2D private constructor(
       return
     }
 
+    if (transform.translateX >= 70 && transform.translateX <= 140) {
+      val stackTrace = Exception().stackTrace
+
+      if (stackTrace.any {
+          //it.className.startsWith("com.intellij.ui.plaf.beg.IdeaMenuUI")
+          //||
+          //it.className.startsWith("com.intellij.ui.tabs.impl.JBTabsImpl")
+          //||
+          //it.className.startsWith("com.intellij.ui.tabs.impl.JBEditorTabsBorder")
+          //||
+          //it.className.startsWith("com.intellij.openapi.editor.impl.EditorGutterComponentImpl")
+          //||
+          //it.className.startsWith("com.intellij.ui.tabs.impl.JBEditorTabPainter")
+          //
+          //||
+          //it.className.startsWith("com.intellij.openapi.wm.impl.StripeButtonUI")
+          //
+          //||
+          it.className.startsWith("com.intellij.openapi.fileEditor.impl.EditorTabbedContainer")
+          //
+          //||
+          //it.className.startsWith("com.intellij.openapi.progress.impl.CoreProgressManager")
+        //false
+        }) {
+
+
+
+        return
+      }
+    }
+
+    if (transform.translateX >= 70 && transform.translateX <= 140) {
+      val stackTrace = Exception().stackTrace
+      println("RoundRect..")
+      stackTrace.forEach {
+        println("RoundRect: $it")
+      }
+
+      logger.debug { "RoundRect: ($x;$y) + (${transform.translateX};${transform.translateY})" }
+    }
+
     paintShape {
       paintRect(
         paintType = paintType,
@@ -767,6 +827,17 @@ class PGraphics2D private constructor(
     if (width <= 0 || height <= 0) {
       return
     }
+
+    //if (transform.translateX == 1753.0) {
+    //  println("RoundRect..")
+    //  val stackTrace = Exception().stackTrace
+    //  stackTrace.forEach {
+    //    println("RoundRect: $it")
+    //  }
+    //  return
+    //}
+
+    //logger.debug { "RoundRect: ($x;$y) + (${transform.translateX};${transform.translateY})" }
 
     paintShape {
       paintRoundRect(

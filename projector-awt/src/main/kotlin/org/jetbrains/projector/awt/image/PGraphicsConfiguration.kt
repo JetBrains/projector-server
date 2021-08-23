@@ -61,4 +61,8 @@ class PGraphicsConfiguration(private val device: PGraphicsDevice) : GraphicsConf
   override fun createCompatibleVolatileImage(width: Int, height: Int, caps: ImageCapabilities?, transparency: Int): VolatileImage {
     return PVolatileImage(width, height, transparency, caps)
   }
+
+  override fun isTranslucencyCapable(): Boolean {
+    return true
+  }
 }

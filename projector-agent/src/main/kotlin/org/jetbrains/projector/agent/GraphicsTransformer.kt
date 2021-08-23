@@ -72,7 +72,7 @@ internal class GraphicsTransformer : ClassFileTransformer {
         "java/awt/image/BufferedImage" -> transformBufferedImage(className, classfileBuffer)
         "java/awt/Component" -> transformComponent(className, classfileBuffer)
         "javax/swing/JComponent" -> transformJComponent(className, classfileBuffer)
-        "com/intellij/ui/BalloonImpl\$MyComponent" -> transformBalloonImpl(className, classfileBuffer)
+        //"com/intellij/ui/BalloonImpl\$MyComponent" -> transformBalloonImpl(className, classfileBuffer)
         else -> classfileBuffer
       }
     }

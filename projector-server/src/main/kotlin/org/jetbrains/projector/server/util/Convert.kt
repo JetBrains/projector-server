@@ -55,7 +55,11 @@ val PWindow.windowType: WindowType
   get() = when {
     "IdeFrameImpl" in target::class.java.simpleName -> WindowType.IDEA_WINDOW
     target is Popup -> WindowType.POPUP
-    else -> WindowType.WINDOW
+    //"BalloonWindow" in target.javaClass.simpleName -> WindowType.HEAVYWEIGHT_WRAPPER
+    else -> {
+      //println("windowType: ${target.javaClass.name}")
+      WindowType.WINDOW
+    }
   }
 
 fun ResizeDirection.toDirection() = when (this) {

@@ -366,6 +366,20 @@ class PToolkit : SunToolkit(), KeyboardFocusManagerPeerProvider, ComponentFactor
     }
   }
 
+  override fun isWindowTranslucencySupported(): Boolean {
+    println("PToolkit: isWindowTranslucencySupported")
+    return true
+  }
+
+  override fun isWindowOpacitySupported(): Boolean {
+    println("PToolkit: isWindowOpacitySupported")
+    return true
+  }
+
+  override fun isWindowShapingSupported(): Boolean {
+    return true
+  }
+
   companion object {
 
     var macKeyboardModifiersMode = false

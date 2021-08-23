@@ -191,7 +191,7 @@ internal object CommandsHandler {
 
   private fun drawString(str: String, x: Double, y: Double, g: GraphicsState): List<ServerWindowEvent> {
 
-    return emptyList()
+    //return emptyList()
 
     val metrics = FontDesignMetrics.getMetrics(g.font, extractFontRenderingContextFromGraphicsState(g))
     val desiredWidth = metrics.stringWidth(str)
