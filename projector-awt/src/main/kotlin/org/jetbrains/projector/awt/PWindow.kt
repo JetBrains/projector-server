@@ -29,11 +29,13 @@ import org.jetbrains.projector.awt.image.PGraphics2D
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
 import org.jetbrains.projector.awt.peer.PWindowPeer.Companion.getVisibleWindowBoundsIfNeeded
 import org.jetbrains.projector.awt.service.ImageCacher
+import org.jetbrains.projector.util.logging.Logger
 import sun.awt.AWTAccessor
 import java.awt.*
 import java.awt.event.ComponentEvent
 import java.lang.ref.WeakReference
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -85,8 +87,10 @@ class PWindow(val target: Component, val isAgent: Boolean) {
 
   init {
     synchronized(weakWindows) {
-      val usedIds = weakWindows.mapNotNull { it.get()?.id }.toSet()
-      id = generateSequence(0) { 1 + it }.first { it !in usedIds }
+      id = windowIdCounter.incrementAndGet()
+
+      // it's very unlikely that this will happen, as this requires creation of about 60 new windows per second, every second, for an entire year
+      if (id == 0) logger.error { "Window IDs wrapped around; issues will follow" }
 
       weakWindows.addLast(self)
     }
@@ -242,6 +246,8 @@ class PWindow(val target: Component, val isAgent: Boolean) {
   companion object {
 
     private var weakWindows = ArrayDeque<WeakReference<PWindow>>()  // first is back and last is front
+    private val windowIdCounter = AtomicInteger()
+    private val logger = Logger<PWindow>()
 
     /** All windows on screen. First is back and last is front. */
     val windows: List<PWindow>
