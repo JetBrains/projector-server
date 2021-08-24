@@ -40,6 +40,9 @@ public object MainAgent {
   @JvmStatic
   public fun agentmain(args: String?, instrumentation: Instrumentation) {
     val prjClassLoader = ProjectorClassLoaderSetup.initClassLoader(javaClass.classLoader)
+    val agentJarPath = args!!
+
+    prjClassLoader.addJarSource(agentJarPath)
 
     /**
      * [Starter.start]
