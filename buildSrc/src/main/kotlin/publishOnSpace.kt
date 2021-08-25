@@ -21,21 +21,33 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-plugins {
-  kotlin("jvm")
-  `maven-publish`
-}
+import org.gradle.api.Project
+import org.gradle.api.artifacts.repositories.PasswordCredentials
+import org.gradle.api.publish.PublishingExtension
+import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.kotlin.dsl.create
+import org.gradle.kotlin.dsl.credentials
+import org.gradle.kotlin.dsl.get
+import org.gradle.kotlin.dsl.maven
 
-publishing {
-  publishOnSpace(project)
-}
-
-val kotlinVersion: String by project
-val projectorClientVersion: String by project
-val projectorClientGroup: String by project
-version = project(":projector-server").version
-
-dependencies {
-  implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
-  testImplementation(kotlin("test", kotlinVersion))
+public fun PublishingExtension.publishOnSpace(project: Project) {
+  this.publications {
+    create<MavenPublication>("maven") {
+      pom {
+        url.set("https://github.com/JetBrains/projector-server")
+        licenses {
+          license {
+            name.set("GPLv2+CPE")
+            url.set("https://github.com/JetBrains/projector-server/blob/master/GPLv2%2BCPE.txt")
+          }
+        }
+      }
+      from(project.components["java"])
+    }
+  }
+  this.repositories {
+    maven("https://packages.jetbrains.team/maven/p/ij/intellij-dependencies") {
+      credentials(PasswordCredentials::class)
+    }
+  }
 }

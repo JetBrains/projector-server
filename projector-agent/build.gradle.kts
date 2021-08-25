@@ -31,11 +31,7 @@ plugins {
 }
 
 publishing {
-  publications {
-    create<MavenPublication>("maven") {
-      from(components["java"])
-    }
-  }
+  publishOnSpace(project)
 }
 
 val agentClassName = "org.jetbrains.projector.agent.MainAgent"

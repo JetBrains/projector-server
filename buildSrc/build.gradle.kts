@@ -31,8 +31,6 @@ repositories {
 
 kotlin {
   explicitApi()
-
-  explicitApiWarning()
 }
 
 sourceSets.main.get().java.srcDir("src/main/kotlin")

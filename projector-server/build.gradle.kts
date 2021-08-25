@@ -39,17 +39,7 @@ application {
 }
 
 publishing {
-  publications {
-    create<MavenPublication>("maven") {
-      from(components["java"])
-    }
-  }
-  repositories {
-    maven {
-      url "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies"
-      credentials(PasswordCredentials)
-    }
-  }
+  publishOnSpace(project)
 }
 
 configurations.all {
