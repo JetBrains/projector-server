@@ -2,6 +2,12 @@
 
 Notable changes to this project are documented in this file.
 
+# 1.6.1
+
+## Fixed
+
+- PRJ-658 Fix Projector plugin startup in IDEA 2021.2.
+
 # 1.6.0
 
 ## Changed
