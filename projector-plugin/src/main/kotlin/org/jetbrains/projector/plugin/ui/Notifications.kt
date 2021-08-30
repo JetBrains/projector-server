@@ -54,6 +54,7 @@ private fun getNotificationGroup(): NotificationGroup? {
 }
 
 fun displayNotification(title: String, subtitle: String, content: String) {
-  val msg = getNotificationGroup()?.createNotification(title, subtitle, content, NotificationType.INFORMATION)
+  val msg = getNotificationGroup()?.createNotification(content, NotificationType.INFORMATION)
+  msg?.setTitle(title, subtitle)
   msg?.notify(null)
 }
