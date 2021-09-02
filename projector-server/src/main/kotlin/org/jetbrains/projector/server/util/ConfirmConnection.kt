@@ -27,11 +27,11 @@ import java.net.InetAddress
 import javax.swing.JLabel
 import javax.swing.JOptionPane
 
-class ConfirmConnection(ip: InetAddress?, private val accessType: String)
+class ConfirmConnection private constructor(private val accessType: String)
   : JLabel(), ResolvedHostSubscriber {
   private val resolver = AsyncHostResolver()
 
-  init {
+  constructor(ip: InetAddress?, accessType: String) : this(accessType) {
     text = if (ip != null) {
       resolver.resolve(this, ip)
       getMessage(ip.hostAddress)
@@ -39,6 +39,10 @@ class ConfirmConnection(ip: InetAddress?, private val accessType: String)
     else {
       getMessage("unknown host")
     }
+  }
+
+  constructor(hostName: String, accessType: String) : this(accessType) {
+    text = getMessage(hostName)
   }
 
   private fun getMessage(host: String) = "<html>Somebody from $host wants to connect with $accessType access. " +
@@ -49,11 +53,11 @@ class ConfirmConnection(ip: InetAddress?, private val accessType: String)
   }
 
   companion object {
-    fun confirm(ip: InetAddress?, accessType: String): Boolean {
-      val message = ConfirmConnection(ip, accessType)
-      val result = JOptionPane.showConfirmDialog(null, message,
-                                                 "New connection", JOptionPane.OK_CANCEL_OPTION)
-      return result == JOptionPane.OK_OPTION
-    }
+    fun confirm(ip: InetAddress?, accessType: String) = ConfirmConnection(ip, accessType).doShow()
+
+    fun confirm(hostName: String, accessType: String) = ConfirmConnection(hostName, accessType).doShow()
+
+    private fun ConfirmConnection.doShow() =
+      JOptionPane.showConfirmDialog(null, this, "New connection", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION
   }
 }

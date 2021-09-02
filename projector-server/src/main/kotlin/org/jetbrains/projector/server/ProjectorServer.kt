@@ -25,8 +25,6 @@
 
 package org.jetbrains.projector.server
 
-import org.java_websocket.WebSocket
-import org.java_websocket.exceptions.WebsocketNotConnectedException
 import org.jetbrains.projector.awt.PClipboard
 import org.jetbrains.projector.awt.PToolkit
 import org.jetbrains.projector.awt.PWindow
@@ -56,28 +54,36 @@ import org.jetbrains.projector.server.core.ij.md.PanelUpdater
 import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshakeEncoder
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshakeDecoder
-import org.jetbrains.projector.server.core.util.*
-import org.jetbrains.projector.server.core.websocket.*
+import org.jetbrains.projector.server.core.util.LaterInvokator
+import org.jetbrains.projector.server.core.util.focusOwnerOrTarget
+import org.jetbrains.projector.server.core.util.getProperty
+import org.jetbrains.projector.server.core.util.getWildcardHostAddress
 import org.jetbrains.projector.server.idea.CaretInfoUpdater
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
 import org.jetbrains.projector.server.service.ProjectorImageCacher
 import org.jetbrains.projector.server.util.*
+import org.jetbrains.projector.server.websocket.WebsocketServer
 import org.jetbrains.projector.util.logging.Logger
 import org.jetbrains.projector.util.logging.loggerFactory
 import sun.awt.AWTAccessor
-import java.awt.*
-import java.awt.datatransfer.*
+import java.awt.Frame
+import java.awt.GraphicsEnvironment
+import java.awt.Rectangle
+import java.awt.Toolkit
+import java.awt.datatransfer.DataFlavor
+import java.awt.datatransfer.Transferable
+import java.awt.datatransfer.UnsupportedFlavorException
 import java.awt.peer.ComponentPeer
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
 import java.lang.Thread.sleep
 import java.net.InetAddress
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.locks.ReentrantLock
 import javax.swing.SwingUtilities
-import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
 import kotlin.concurrent.withLock
 import kotlin.math.roundToLong
@@ -88,15 +94,11 @@ class ProjectorServer private constructor(
   private val laterInvokator: LaterInvokator,
   private val isAgent: Boolean,
 ) {
-  private lateinit var httpWsTransport: HttpWsTransport
+  private val transports: MutableSet<ServerTransport> = ConcurrentHashMap<ServerTransport, Unit>().keySet(Unit)
 
   val wasStarted : Boolean
     get() {
-      while (!::httpWsTransport.isInitialized) {
-        sleep(10)
-      }
-
-      return httpWsTransport.wasStarted
+      return transports.all { it.wasStarted }
     }
 
   private lateinit var updateThread: Thread
@@ -153,28 +155,36 @@ class ProjectorServer private constructor(
     }
   }
 
-  private fun initTransport(): HttpWsTransport {
-    val builder = createTransportBuilder()
-
-    builder.onWsMessageByteBuffer = { _, message ->
-      throw RuntimeException("Unsupported message type: $message")
+  private val clientEventHandler : ClientEventHandler = object : ClientEventHandler {
+    override fun onClientConnectionEnded(connection: ClientWrapper) {
+      val clientSettings = connection.settings
+      val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
+      logger.info { "${clientSettings.address} disconnected, was connected for ${connectionTime.roundToLong()} s." }
     }
 
-    builder.onWsMessageString = { connection, message ->
-      Do exhaustive when (val clientSettings = connection.getAttachment<ClientSettings>()!!) {
-        is ConnectedClientSettings -> checkHandshakeVersion(connection, clientSettings, message)
+    override fun getInitialClientState(address: String?): ClientSettings {
+      return ConnectedClientSettings(connectionMillis = System.currentTimeMillis(), address = address)
+    }
 
-        is SupportedHandshakeClientSettings -> setUpClient(connection, clientSettings, message)
+    override fun onClientConnected(connection: ClientWrapper) {
+      // do nothing for now
+    }
+
+    override fun handleMessage(wrapper: ClientWrapper, message: String) {
+      Do exhaustive when (val clientSettings = wrapper.settings) {
+        is ConnectedClientSettings -> checkHandshakeVersion(wrapper, clientSettings, message)
+
+        is SupportedHandshakeClientSettings -> setUpClient(wrapper, clientSettings, message)
 
         is SetUpClientSettings -> {
           // this means that the client has loaded fonts and is ready to draw
-          connection.setAttachment(ReadyClientSettings(
+          wrapper.settings = ReadyClientSettings(
             clientSettings.connectionMillis,
             clientSettings.address,
             clientSettings.setUpClientData,
             WindowDrawInterestManagerImpl(),
             if (ENABLE_BIG_COLLECTIONS_CHECKS) BIG_COLLECTIONS_CHECKS_START_SIZE else null,
-          ))
+          )
 
           PVolatileImage.images.forEach(PVolatileImage::invalidate)
           PWindow.windows.forEach {
@@ -201,32 +211,11 @@ class ProjectorServer private constructor(
       }
     }
 
-    builder.onWsClose = { connection ->
-      // todo: we need more informative message, add parameters to this method inside the superclass
-      updateClientsCount()
-      connection.getAttachment<ClientSettings>()
-        ?.let { clientSettings ->
-          val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
-          logger.info { "${clientSettings.address} disconnected, was connected for ${connectionTime.roundToLong()} s." }
-        } ?: logger.info {
-        val address = connection.remoteSocketAddress?.address?.hostAddress
-        "Client from address $address is disconnected. This client hasn't clientSettings. " +
-        "This usually happens when the handshake stage didn't have time to be performed " +
-        "(so it seems the client has been connected for a very short time)"
-      }
-    }
+    override fun updateClientsCount() {
+      val count = transports.sumOf { it.clientCount }
 
-    builder.onWsOpen = { connection ->
-      val address = connection.remoteSocketAddress?.address?.hostAddress
-      connection.setAttachment(ConnectedClientSettings(connectionMillis = System.currentTimeMillis(), address = address))
-      logger.info { "$address connected." }
+      clientsCountLock.withLock { clientsCount = count }
     }
-
-    builder.onError = { _, e ->
-      logger.error(e) { "onError" }
-    }
-
-    return builder.build()
   }
 
   private val clientsObservers: MutableList<PropertyChangeListener> = Collections.synchronizedList(ArrayList<PropertyChangeListener>())
@@ -240,24 +229,13 @@ class ProjectorServer private constructor(
     }
   }
 
-  private fun updateClientsCount() {
-    var count = 0
-    httpWsTransport.forEachOpenedConnection {
-      ++count
-    }
-
-    clientsCountLock.withLock { clientsCount = count }
-  }
-
   private fun createUpdateThread(): Thread = thread(isDaemon = true) {
     // TODO: remove this thread: encapsulate the logic in an extracted class and maybe even don't use threads but coroutines' channels
     logger.debug { "Daemon thread starts" }
     while (!Thread.currentThread().isInterrupted) {
       try {
-        if (::httpWsTransport.isInitialized) {
-          val dataToSend = createDataToSend()  // creating data even if there are no clients to avoid memory leaks
-          sendPictures(dataToSend)
-        }
+        val dataToSend = createDataToSend()  // creating data even if there are no clients to avoid memory leaks
+        sendPictures(dataToSend)
 
         sleep(10)
       }
@@ -509,26 +487,24 @@ class ProjectorServer private constructor(
     }
   }
 
-  private fun checkHandshakeVersion(conn: WebSocket, connectedClientSettings: ConnectedClientSettings, message: String) {
+  private fun checkHandshakeVersion(conn: ClientWrapper, connectedClientSettings: ConnectedClientSettings, message: String) {
     val (handshakeVersion, handshakeVersionId) = message.split(";")
     if (handshakeVersion != "$HANDSHAKE_VERSION") {
       val reason =
         "Incompatible handshake versions: server - $HANDSHAKE_VERSION (#${handshakeVersionList.indexOf(HANDSHAKE_VERSION)}), " +
         "client - $handshakeVersion (#$handshakeVersionId)"
-      disconnectUser(conn, reason)
+      conn.disconnect(reason)
 
       return
     }
 
-    conn.setAttachment(
-      SupportedHandshakeClientSettings(
-        connectionMillis = connectedClientSettings.connectionMillis,
-        address = connectedClientSettings.address,
-      )
+    conn.settings = SupportedHandshakeClientSettings(
+      connectionMillis = connectedClientSettings.connectionMillis,
+      address = connectedClientSettings.address,
     )
   }
 
-  private fun setUpClient(conn: WebSocket, supportedHandshakeClientSettings: SupportedHandshakeClientSettings, message: String) {
+  private fun setUpClient(conn: ClientWrapper, supportedHandshakeClientSettings: SupportedHandshakeClientSettings, message: String) {
     fun sendHandshakeFailureEvent(reason: String) {
       val failureEvent = ToClientHandshakeFailureEvent(reason)
 
@@ -591,10 +567,8 @@ class ProjectorServer private constructor(
       return
     }
 
-    val remoteAddress = conn.remoteSocketAddress?.address
-
     if (
-      isAgent && remoteAddress?.isLoopbackAddress != true &&
+      isAgent && conn.requiresConfirmation &&
       getProperty(ENABLE_CONNECTION_CONFIRMATION)?.toBoolean() != false
     ) {
       logger.info { "Asking for connection confirmation because of agent mode..." }
@@ -607,7 +581,7 @@ class ProjectorServer private constructor(
           false -> "read-only"
         }
 
-        resp = ConfirmConnection.confirm(remoteAddress, accessType)
+        resp = conn.confirmationRemoteIp?.let { ConfirmConnection.confirm(it, accessType) } ?: ConfirmConnection.confirm(conn.confirmationRemoteName, accessType)
       }
 
       if (!resp) {
@@ -631,17 +605,15 @@ class ProjectorServer private constructor(
     )
     conn.send(KotlinxJsonToClientHandshakeEncoder.encode(successEvent))
 
-    conn.setAttachment(
-      SetUpClientSettings(
-        connectionMillis = supportedHandshakeClientSettings.connectionMillis,
-        address = supportedHandshakeClientSettings.address,
-        setUpClientData = SetUpClientData(
-          hasWriteAccess = hasWriteAccess,
-          toClientMessageEncoder = toClientEncoder,
-          toClientMessageCompressor = toClientCompressor,
-          toServerMessageDecoder = toServerDecoder,
-          toServerMessageDecompressor = toServerDecompressor
-        )
+    conn.settings = SetUpClientSettings(
+      connectionMillis = supportedHandshakeClientSettings.connectionMillis,
+      address = supportedHandshakeClientSettings.address,
+      setUpClientData = SetUpClientData(
+        hasWriteAccess = hasWriteAccess,
+        toClientMessageEncoder = toClientEncoder,
+        toClientMessageCompressor = toClientCompressor,
+        toServerMessageDecoder = toServerDecoder,
+        toServerMessageDecompressor = toServerDecompressor
       )
     )
 
@@ -652,30 +624,27 @@ class ProjectorServer private constructor(
       with(toServerHandshakeEvent.displays[0]) { resize(width, height) }
     }
 
-    updateClientsCount()
+    clientEventHandler.updateClientsCount()
   }
 
   private fun sendPictures(dataToSend: List<ServerEvent>) {
-    httpWsTransport.forEachOpenedConnection { client ->
-      val readyClientSettings = client.getAttachment<ClientSettings?>() as? ReadyClientSettings ?: return@forEachOpenedConnection
+    transports.forEach { transport ->
+      transport.forEachOpenedConnection { client ->
+        val readyClientSettings = client.settings as? ReadyClientSettings ?: return@forEachOpenedConnection
 
-      val compressed = with(readyClientSettings.setUpClientData) {
-        val requestedData = extractData(readyClientSettings.requestedData)
-        val message = readyClientSettings.interestManager.filterEvents(requestedData.asSequence() + dataToSend.asSequence()).toList()
+        val compressed = with(readyClientSettings.setUpClientData) {
+          val requestedData = extractData(readyClientSettings.requestedData)
+          val message = readyClientSettings.interestManager.filterEvents(requestedData.asSequence() + dataToSend.asSequence()).toList()
 
-        if (message.isEmpty()) {
-          return@forEachOpenedConnection
+          if (message.isEmpty()) {
+            return@forEachOpenedConnection
+          }
+
+          val encoded = toClientMessageEncoder.encode(message)
+          toClientMessageCompressor.compress(encoded)
         }
 
-        val encoded = toClientMessageEncoder.encode(message)
-        toClientMessageCompressor.compress(encoded)
-      }
-
-      try {
-        client.send(compressed)  // can cause a "disconnected already" exception
-      }
-      catch (e: WebsocketNotConnectedException) {
-        logger.debug(e) { "While generating message, client disconnected" }
+        client.send(compressed)
       }
     }
   }
@@ -696,13 +665,39 @@ class ProjectorServer private constructor(
   fun start() {
     updateThread = createUpdateThread()
     caretInfoUpdater.start()
-    httpWsTransport = initTransport()
-    httpWsTransport.start()
+
+    if (getProperty(NO_WS_TRANSPORT_PROPERTY)?.toBoolean() != true) {
+      addTransport(WebsocketServer.createTransportBuilder().attachDefaultServerEventHandlers(clientEventHandler).build())
+    }
+  }
+
+
+  /**
+   * Adds the specified transport for this server and starts it
+   */
+  @Suppress("MemberVisibilityCanBePrivate") // used in CWM
+  fun addTransport(transport: ServerTransport) {
+    transports.add(transport)
+    transport.start()
+  }
+
+  /**
+   * Removes the specified transports from the server.
+   * If this transport was previously added, stops it with given timeout.
+   * Returns true if transport was present (and removed), false otherwise.
+   */
+  @Suppress("MemberVisibilityCanBePrivate", "unused") // used in CWM
+  fun removeTransport(transport: ServerTransport, timeoutMs: Int = 0): Boolean {
+    val removed = transports.remove(transport)
+    if (removed)
+      transport.stop(timeoutMs)
+    return removed
   }
 
   @JvmOverloads
   fun stop(timeout: Int = 0) {
-    httpWsTransport.stop(timeout)
+    transports.forEach { it.stop(timeout) }
+    transports.clear()
     caretInfoUpdater.stop()
 
     if (::updateThread.isInitialized) {
@@ -714,28 +709,37 @@ class ProjectorServer private constructor(
 
   fun getClientList(): Array<Array<String?>> {
     val s = arrayListOf<Array<String?>>()
-    httpWsTransport.forEachOpenedConnection {
-      val remoteAddress = it.remoteSocketAddress?.address
-      if (remoteAddress != null) {
-        s.add(arrayOf(
-          remoteAddress.hostAddress,
-          "resolving ..."
-        ))
+    transports.forEach { transport ->
+      transport.forEachOpenedConnection {
+        val remoteAddress = it.confirmationRemoteIp
+        if (remoteAddress != null) {
+          s.add(arrayOf(
+            remoteAddress.hostAddress,
+            "resolving ..."
+          ))
+        } else {
+          val name = it.confirmationRemoteName
+          s.add(arrayOf(name, name))
+        }
       }
     }
     return s.distinctBy { it[0] }.toTypedArray()
   }
 
   fun disconnectAll() {
-    httpWsTransport.forEachOpenedConnection {
-      disconnectUser(it, "The host has disconnected all the clients.")
+    transports.forEach { transport ->
+      transport.forEachOpenedConnection {
+        it.disconnect("The host has disconnected all the clients.")
+      }
     }
   }
 
   fun disconnectByIp(ip: String) {
-    httpWsTransport.forEachOpenedConnection {
-      if (it.remoteSocketAddress?.address?.hostAddress == ip) {
-        disconnectUser(it, "The host has disconnected the address: $ip.")
+    transports.forEach { transport ->
+      transport.forEachOpenedConnection {
+        if (it.confirmationRemoteIp?.hostAddress == ip) {
+          it.disconnect("The host has disconnected the address: $ip.")
+        }
       }
     }
   }
@@ -760,22 +764,7 @@ class ProjectorServer private constructor(
       }
     }
 
-    private fun disconnectUser(conn: WebSocket, reason: String) {
-      val normalClosureCode = 1000  // https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent#properties
-      conn.close(normalClosureCode, reason)
-
-      val clientSettings = conn.getAttachment<ClientSettings>()!!
-      logger.info { "Disconnecting user ${clientSettings.address}. Reason: $reason" }
-      conn.setAttachment(
-        ClosedClientSettings(
-          connectionMillis = clientSettings.connectionMillis,
-          address = clientSettings.address,
-          reason = reason,
-        )
-      )
-    }
-
-    private fun getMainWindows(): List<PWindow> {
+    internal fun getMainWindows(): List<PWindow> {
       val ideWindows = PWindow.windows.filter { it.windowType == WindowType.IDEA_WINDOW }
 
       if (ideWindows.isNotEmpty()) {
@@ -848,43 +837,6 @@ class ProjectorServer private constructor(
       }
     }
 
-    private fun createTransportBuilder(): TransportBuilder {
-      val builders = arrayListOf<TransportBuilder>()
-
-      val relayUrl = getProperty(RELAY_PROPERTY_NAME)
-      val serverId = getProperty(SERVER_ID_PROPERTY_NAME)
-
-      if (relayUrl != null && serverId != null) {
-        val scheme = when (getProperty(RELAY_USE_WSS)?.toBoolean() ?: true) {
-          false -> "ws"
-          true -> "wss"
-        }
-
-        logger.info { "${ProjectorServer::class.simpleName} connecting to relay $relayUrl with serverId $serverId" }
-        builders.add(HttpWsClientBuilder("$scheme://$relayUrl", serverId))
-      }
-
-      val host = getEnvHost()
-      val port = getEnvPort()
-      logger.info { "${ProjectorServer::class.simpleName} is starting on host $host and port $port" }
-
-      val serverBuilder = HttpWsServerBuilder(host, port)
-      serverBuilder.getMainWindows = {
-        getMainWindows().map {
-          MainWindow(
-            title = it.title,
-            pngBase64Icon = it.icons
-              ?.firstOrNull()
-              ?.let { imageId -> ProjectorImageCacher.getImage(imageId as ImageId) as? ImageData.PngBase64 }
-              ?.pngBase64,
-          )
-        }
-      }
-
-      builders.add(serverBuilder)
-      return MultiTransportBuilder(builders)
-    }
-
     @JvmStatic
     fun startServer(isAgent: Boolean, initializer: Runnable): ProjectorServer {
       loggerFactory = { DelegatingJvmLogger(it) }
@@ -904,9 +856,13 @@ class ProjectorServer private constructor(
       }
 
       return ProjectorServer(LaterInvokator.defaultLaterInvokator, isAgent).also {
+        lastStartedServer = it
         it.start()
       }
     }
+
+    var lastStartedServer: ProjectorServer? = null
+      private set
 
     const val ENABLE_PROPERTY_NAME = "org.jetbrains.projector.server.enable"
     const val HOST_PROPERTY_NAME_OLD = "org.jetbrains.projector.server.host"
@@ -916,9 +872,7 @@ class ProjectorServer private constructor(
     private const val DEFAULT_PORT = 8887
     const val TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HANDSHAKE_TOKEN"
     const val RO_TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RO_HANDSHAKE_TOKEN"
-    private const val RELAY_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL"
-    private const val SERVER_ID_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID"
-    private const val RELAY_USE_WSS = "ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_USE_WSS"
+    const val NO_WS_TRANSPORT_PROPERTY = "org.jetbrains.projector.server.websocket.disable"
 
     var ENABLE_BIG_COLLECTIONS_CHECKS = System.getProperty("org.jetbrains.projector.server.debug.collections.checks") == "true"
     private const val DEFAULT_BIG_COLLECTIONS_CHECKS_SIZE = 10_000
@@ -930,7 +884,7 @@ class ProjectorServer private constructor(
     const val MAC_KEYBOARD_MODIFIERS_MODE = "ORG_JETBRAINS_PROJECTOR_SERVER_MAC_KEYBOARD"
     const val ENABLE_CONNECTION_CONFIRMATION = "ORG_JETBRAINS_PROJECTOR_SERVER_CONNECTION_CONFIRMATION"
 
-    private fun getEnvHost(): InetAddress {
+    internal fun getEnvHost(): InetAddress {
       val host = getProperty(HOST_PROPERTY_NAME) ?: getProperty(HOST_PROPERTY_NAME_OLD)
       return if (host != null) InetAddress.getByName(host) else getWildcardHostAddress()
     }
