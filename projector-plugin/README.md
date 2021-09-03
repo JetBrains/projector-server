@@ -12,7 +12,8 @@ restart is needed after installation).
 
 ## Usage
 
-New menu item `Projector` will appear next to the `Help` in the title bar.
+New widget `Projector` will appear in the toolbar. 
+If toolbar widget can't be installed menu `Projector` will appear next to the `Help` menu.
 
 ## Building from sources
 
