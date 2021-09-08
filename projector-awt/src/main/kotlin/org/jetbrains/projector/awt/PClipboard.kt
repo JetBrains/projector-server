@@ -39,7 +39,7 @@ object PClipboard : Clipboard("System") {
     }
   }
 
-  fun putContents(contents: Transferable) {
+  fun putContentsWithoutLastContentsUpdate(contents: Transferable) {
     super.setContents(contents, null)  // owner=null is needed to reset ownership of other owners if they persist
   }
 

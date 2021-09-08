@@ -440,7 +440,10 @@ class ProjectorServer private constructor(
         }
 
         SwingUtilities.invokeLater {
-          PClipboard.putContents(transferable)
+          when (isAgent) {
+            true -> Toolkit.getDefaultToolkit().systemClipboard.setContents(transferable, null)
+            false -> PClipboard.putContentsWithoutLastContentsUpdate(transferable)
+          }
         }
       }
 
