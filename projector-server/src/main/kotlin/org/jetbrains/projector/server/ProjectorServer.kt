@@ -67,9 +67,7 @@ import org.jetbrains.projector.util.logging.Logger
 import org.jetbrains.projector.util.logging.loggerFactory
 import sun.awt.AWTAccessor
 import java.awt.*
-import java.awt.datatransfer.DataFlavor
-import java.awt.datatransfer.Transferable
-import java.awt.datatransfer.UnsupportedFlavorException
+import java.awt.datatransfer.*
 import java.awt.peer.ComponentPeer
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
@@ -272,15 +270,24 @@ class ProjectorServer private constructor(
     logger.debug { "Daemon thread finishes" }
   }
 
+  private var lastClipboardEvent: ServerClipboardEvent? = null
+
+  private fun isClipboardChanged(current: ServerClipboardEvent?) = lastClipboardEvent != current
+
   @OptIn(ExperimentalStdlibApi::class)
   private fun createDataToSend(): List<ServerEvent> {
-    val clipboardEvent = when (val clipboardContents = PClipboard.extractLastContents()) {
-      null -> emptyList()
+    val clipboardEvent = when (isAgent) {
+      false -> PClipboard.extractLastContents()?.toServerClipboardEvent().let(::listOfNotNull)
+      true -> {
+        val clipboardEvent = Toolkit.getDefaultToolkit().systemClipboard.getContents(null)?.toServerClipboardEvent()
 
-      else -> when (clipboardContents.isDataFlavorSupported(DataFlavor.stringFlavor)) {
-        false -> emptyList()
-
-        true -> listOf(ServerClipboardEvent(clipboardContents.getTransferData(DataFlavor.stringFlavor) as String))
+        if (isClipboardChanged(clipboardEvent)) {
+          lastClipboardEvent = clipboardEvent
+          clipboardEvent.let(::listOfNotNull)
+        }
+        else {
+          emptyList()
+        }
       }
     }
 
@@ -737,6 +744,11 @@ class ProjectorServer private constructor(
     @JvmStatic
     val isEnabled: Boolean
       get() = System.getProperty(ENABLE_PROPERTY_NAME)?.toBoolean() ?: false
+
+    private fun Transferable.toServerClipboardEvent(): ServerClipboardEvent? = when (this.isDataFlavorSupported(DataFlavor.stringFlavor)) {
+      false -> null
+      true -> ServerClipboardEvent(this.getTransferData(DataFlavor.stringFlavor) as String)
+    }
 
     private fun updateToolkitKeyboardModifiersMode(keymap: UserKeymap) {
       PToolkit.macKeyboardModifiersMode = when (keymap) {
