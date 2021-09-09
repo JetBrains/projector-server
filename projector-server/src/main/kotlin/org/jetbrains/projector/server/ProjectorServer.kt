@@ -666,7 +666,7 @@ class ProjectorServer private constructor(
     updateThread = createUpdateThread()
     caretInfoUpdater.start()
 
-    if (getProperty(NO_WS_TRANSPORT_PROPERTY)?.toBoolean() != true) {
+    if (getProperty(ENABLE_WS_TRANSPORT_PROPERTY)?.toBoolean() != false) {
       addTransport(WebsocketServer.createTransportBuilder().attachDefaultServerEventHandlers(clientEventHandler).build())
     }
   }
@@ -872,7 +872,7 @@ class ProjectorServer private constructor(
     private const val DEFAULT_PORT = 8887
     const val TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HANDSHAKE_TOKEN"
     const val RO_TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RO_HANDSHAKE_TOKEN"
-    const val NO_WS_TRANSPORT_PROPERTY = "org.jetbrains.projector.server.websocket.disable"
+    const val ENABLE_WS_TRANSPORT_PROPERTY = "ORG_JETBRAINS_PROJECTOR_SERVER_ENABLE_WS_TRANSPORT"
 
     var ENABLE_BIG_COLLECTIONS_CHECKS = System.getProperty("org.jetbrains.projector.server.debug.collections.checks") == "true"
     private const val DEFAULT_BIG_COLLECTIONS_CHECKS_SIZE = 10_000
