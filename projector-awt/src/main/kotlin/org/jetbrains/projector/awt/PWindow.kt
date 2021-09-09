@@ -40,7 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import kotlin.math.abs
 import kotlin.math.min
 
-class PWindow private constructor(val target: Component, val isAgent: Boolean, graphicsOverride: Graphics2D?) {
+class PWindow private constructor(val target: Component, private val isAgent: Boolean, graphicsOverride: Graphics2D?) {
 
   constructor(target: Component, isAgent: Boolean) : this(target, isAgent, null)
 
