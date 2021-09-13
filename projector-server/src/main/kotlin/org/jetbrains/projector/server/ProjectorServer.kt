@@ -218,7 +218,7 @@ class ProjectorServer private constructor(
     }
   }
 
-  private val clientsObservers: MutableList<PropertyChangeListener> = Collections.synchronizedList(ArrayList<PropertyChangeListener>())
+  private val clientsObservers = Collections.synchronizedList(mutableListOf<PropertyChangeListener>())
   fun addClientsObserver(listener: PropertyChangeListener) = clientsObservers.add(listener)
   fun removeClientsObserver(listener: PropertyChangeListener) = clientsObservers.remove(listener)
 
@@ -861,6 +861,7 @@ class ProjectorServer private constructor(
       }
     }
 
+    @Suppress("MemberVisibilityCanBePrivate")  // used in CWM
     var lastStartedServer: ProjectorServer? = null
       private set
 
