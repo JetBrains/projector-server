@@ -155,7 +155,8 @@ class ProjectorServer private constructor(
     }
   }
 
-  private val clientEventHandler: ClientEventHandler = object : ClientEventHandler {
+  @Suppress("MemberVisibilityCanBePrivate")  // used in CWM
+  val clientEventHandler : ClientEventHandler = object : ClientEventHandler {
     override fun onClientConnectionEnded(connection: ClientWrapper) {
       val clientSettings = connection.settings
       val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
