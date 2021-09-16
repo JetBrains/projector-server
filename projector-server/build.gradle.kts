@@ -70,8 +70,8 @@ dependencies {
   compileOnly("com.jetbrains.intellij.platform:core-ui:$intellijPlatformVersion")
   compileOnly("com.jetbrains.intellij.platform:ide-impl:$intellijPlatformVersion")
 
-  testImplementation "org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion"
-  testImplementation "org.jetbrains.kotlin:kotlin-test:$kotlinVersion"
+  testImplementation("org.mockito.kotlin:mockito-kotlin:$mockitoKotlinVersion")
+  testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
   testImplementation("com.jetbrains.intellij.platform:core:$intellijPlatformVersion")
 }
 
@@ -98,10 +98,7 @@ var relayArgs: List<String> = emptyList()
 
 if (relayURL != null && serverId != null) {
   relayArgs = listOf("-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL=$relayURL", "-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID=$serverId")
-println("url=$relayURL; id=$serverId")
-
-if (relayURL!=null && serverId != null) {
-  relayArgs = ["-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL=$relayURL", "-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID=$serverId"]
+  println("url=$relayURL; id=$serverId")
 }
 
 val serverTargetClasspath: String? = localProperties.getProperty("'projectorLauncher.targetClassPath")
