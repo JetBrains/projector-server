@@ -30,13 +30,12 @@ import org.jetbrains.projector.server.ProjectorServer
 import org.jetbrains.projector.server.core.util.getProperty
 import org.jetbrains.projector.server.core.websocket.HttpWsClientBuilder
 import org.jetbrains.projector.server.core.websocket.HttpWsServerBuilder
-import org.jetbrains.projector.server.core.websocket.MultiTransportBuilder
 import org.jetbrains.projector.server.core.websocket.WsTransportBuilder
 import org.jetbrains.projector.server.service.ProjectorImageCacher
 import org.jetbrains.projector.util.logging.Logger
 
 object WebsocketServer {
-  internal fun createTransportBuilder(): WsTransportBuilder {
+  internal fun createTransportBuilders(): List<WsTransportBuilder> {
     val builders = arrayListOf<WsTransportBuilder>()
 
     val relayUrl = getProperty(RELAY_PROPERTY_NAME)
@@ -70,7 +69,7 @@ object WebsocketServer {
     }
 
     builders.add(serverBuilder)
-    return MultiTransportBuilder(builders)
+    return builders
   }
 
   private val logger = Logger<WebsocketServer>()

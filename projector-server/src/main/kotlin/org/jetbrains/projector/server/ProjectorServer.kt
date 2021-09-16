@@ -96,7 +96,7 @@ class ProjectorServer private constructor(
 ) {
   private val transports: MutableSet<ServerTransport> = ConcurrentHashMap<ServerTransport, Unit>().keySet(Unit)
 
-  val wasStarted : Boolean
+  val wasStarted: Boolean
     get() {
       return transports.all { it.wasStarted }
     }
@@ -582,7 +582,8 @@ class ProjectorServer private constructor(
           false -> "read-only"
         }
 
-        resp = conn.confirmationRemoteIp?.let { ConfirmConnection.confirm(it, accessType) } ?: ConfirmConnection.confirm(conn.confirmationRemoteName, accessType)
+        resp = conn.confirmationRemoteIp?.let { ConfirmConnection.confirm(it, accessType) } ?: ConfirmConnection.confirm(
+          conn.confirmationRemoteName, accessType)
       }
 
       if (!resp) {
@@ -668,7 +669,9 @@ class ProjectorServer private constructor(
     caretInfoUpdater.start()
 
     if (getProperty(ENABLE_WS_TRANSPORT_PROPERTY)?.toBoolean() != false) {
-      addTransport(WebsocketServer.createTransportBuilder().attachDefaultServerEventHandlers(clientEventHandler).build())
+      WebsocketServer.createTransportBuilders().forEach {
+        addTransport(it.attachDefaultServerEventHandlers(clientEventHandler).build())
+      }
     }
   }
 
@@ -718,7 +721,8 @@ class ProjectorServer private constructor(
             remoteAddress.hostAddress,
             "resolving ..."
           ))
-        } else {
+        }
+        else {
           val name = it.confirmationRemoteName
           s.add(arrayOf(name, name))
         }
