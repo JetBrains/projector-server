@@ -22,7 +22,6 @@
  * if you need additional information or have any questions.
  */
 
-import java.io.FileInputStream
 import java.util.*
 
 plugins {
@@ -49,13 +48,15 @@ val javassistVersion: String by project
 dependencies {
   implementation("$projectorClientGroup:projector-common:$projectorClientVersion")
   implementation("$projectorClientGroup:projector-server-core:$projectorClientVersion")
-  implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
   implementation("$projectorClientGroup:projector-util-loading:$projectorClientVersion")
+  implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
   api(project(":projector-awt"))
   api(project(":projector-server"))
   implementation("org.javassist:javassist:$javassistVersion")
 }
 
+// todo: undestand why `tasks.jar` doesn't work when executing runWithAgent and runIdeaWithAgent:
+//       `Project#beforeEvaluate(Action) on project ':projector-client' cannot be executed in the current context.`
 tasks.withType<Jar> {
   manifest {
     attributes(
@@ -65,18 +66,20 @@ tasks.withType<Jar> {
       "Main-Class" to launcherClassName,
     )
   }
+
   exclude("META-INF/versions/9/module-info.class")
   duplicatesStrategy = DuplicatesStrategy.WARN
+
   from(inline(configurations.runtimeClasspath)) // todo: remove
 }
 
 val localProperties = Properties()
 if (rootProject.file("local.properties").canRead()) {
-  localProperties.load(FileInputStream(rootProject.file("local.properties")))
+  localProperties.load(rootProject.file("local.properties").inputStream())
 }
 
-val serverTargetClasspath: String? = localProperties.getProperty("projectorLauncher.targetClassPath")
-val serverClassToLaunch: String? = localProperties.getProperty("projectorLauncher.classToLaunch")
+val serverTargetClasspath = localProperties["projectorLauncher.targetClassPath"]
+val serverClassToLaunch = localProperties["projectorLauncher.classToLaunch"]
 
 // Server running tasks
 println("----------- Agent launch config ---------------")
@@ -98,7 +101,7 @@ if (serverTargetClasspath != null && serverClassToLaunch != null) {
   }
 }
 
-val ideaPath: String? = localProperties.getProperty("projectorLauncher.ideaPath")
+val ideaPath = localProperties["projectorLauncher.ideaPath"]
 println("----------- Idea launch config ---------------")
 println("Idea path: $ideaPath")
 println("------------------------------------------------")
@@ -130,6 +133,7 @@ if (ideaPath != null) {
       "--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED",
       "--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED",
       "--add-opens=java.base/java.lang=ALL-UNNAMED",
+      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
     )
   }
 }
