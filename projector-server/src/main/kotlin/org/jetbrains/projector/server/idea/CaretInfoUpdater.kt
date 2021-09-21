@@ -82,7 +82,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
       null
     } ?: return null
 
-    return dataContext.getData(CommonDataKeys.EDITOR) as? EditorImpl
+    return readAction { dataContext.getData(CommonDataKeys.EDITOR) } as? EditorImpl
   }
 
   private fun loadCaretInfo(): ServerCaretInfoChangedEvent.CaretInfoChange {
