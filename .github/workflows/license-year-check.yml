@@ -8,7 +8,7 @@ jobs:
   update-license-year:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions:checkout@v2
+      - uses: actions/checkout@v2
         with:
           fetch-dept: 0
       - uses: FantasticFiasco/action-update-license-year@v2
