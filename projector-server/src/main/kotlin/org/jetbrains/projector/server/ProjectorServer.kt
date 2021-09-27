@@ -426,11 +426,10 @@ class ProjectorServer private constructor(
           override fun getTransferDataFlavors(): Array<DataFlavor> = arrayOf(DataFlavor.stringFlavor)
         }
 
-        SwingUtilities.invokeLater {
-          when (isAgent) {
-            true -> Toolkit.getDefaultToolkit().systemClipboard.setContents(transferable, null)
-            false -> PClipboard.putContentsWithoutLastContentsUpdate(transferable)
-          }
+        // shouldn't be called in EDT since setContents calls invokeLater itself and adds extra delay
+        when (isAgent) {
+          true -> Toolkit.getDefaultToolkit().systemClipboard.setContents(transferable, null)
+          false -> PClipboard.putContentsWithoutLastContentsUpdate(transferable)
         }
       }
 
