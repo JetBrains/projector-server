@@ -73,9 +73,11 @@ import java.awt.Frame
 import java.awt.GraphicsEnvironment
 import java.awt.Rectangle
 import java.awt.Toolkit
+import java.awt.Window
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
+import java.awt.event.WindowEvent
 import java.awt.peer.ComponentPeer
 import java.beans.PropertyChangeEvent
 import java.beans.PropertyChangeListener
@@ -488,6 +490,23 @@ class ProjectorServer private constructor(
       is ClientWindowCloseEvent -> SwingUtilities.invokeLater { PWindow.getWindow(message.windowId)?.close() }
 
       is ClientWindowInterestEvent -> SwingUtilities.invokeLater { clientSettings.interestManager.processClientEvent(message) }
+
+      is ClientWindowsActivationEvent -> {
+        updateWindowsState(message.windowIds, WindowEvent.WINDOW_ACTIVATED)
+      }
+
+      is ClientWindowsDeactivationEvent -> {
+        updateWindowsState(message.windowIds, WindowEvent.WINDOW_DEACTIVATED)
+      }
+    }
+  }
+
+  private fun updateWindowsState(windowIds: List<Int>, windowEventId: Int) {
+    with(Toolkit.getDefaultToolkit().systemEventQueue) {
+      for (windowId in windowIds) {
+        val window = PWindow.getWindow(windowId)?.target as? Window ?: continue
+        postEvent(WindowEvent(window, windowEventId))
+      }
     }
   }
 
