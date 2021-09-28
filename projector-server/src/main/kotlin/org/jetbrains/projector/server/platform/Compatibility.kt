@@ -21,6 +21,8 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+@file:UseProjectorLoader(attachPackage = true)
+
 package org.jetbrains.projector.server.platform
 
 import com.intellij.openapi.application.ApplicationInfo
@@ -28,7 +30,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.BuildNumber
-import java.lang.IllegalArgumentException
+import org.jetbrains.projector.util.loading.UseProjectorLoader
 
 fun buildAtLeast(version: String): Boolean {
   val versionToCheck = BuildNumber.fromString(version) ?: throw IllegalArgumentException("Invalid version string $version")
@@ -37,7 +39,7 @@ fun buildAtLeast(version: String): Boolean {
   return currentVersion >= versionToCheck
 }
 
-private val isColorSchemeRequired: Boolean by lazy { buildAtLeast("202.6397.94")}
+private val isColorSchemeRequired: Boolean by lazy { buildAtLeast("202.6397.94") }
 
 @Suppress("DEPRECATION")
 fun RangeHighlighter.getTextAttributesCompat(colorScheme: EditorColorsScheme): TextAttributes? {

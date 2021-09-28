@@ -25,6 +25,7 @@ package org.jetbrains.projector.server
 
 import org.jetbrains.projector.server.core.classloader.ProjectorClassLoaderSetup
 import org.jetbrains.projector.server.service.ProjectorFontProvider
+import org.jetbrains.projector.util.loading.UseProjectorLoader
 import org.jetbrains.projector.util.loading.unprotect
 import java.lang.reflect.Method
 import kotlin.system.exitProcess
@@ -69,6 +70,7 @@ object ProjectorLauncher {
     return prjClassLoader.loadClass("${javaClass.name}\$Starter")
   }
 
+  @UseProjectorLoader
   private object Starter {
 
     @JvmStatic

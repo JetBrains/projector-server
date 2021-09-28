@@ -21,9 +21,12 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+@file:UseProjectorLoader(attachPackage = true)
+
 package org.jetbrains.projector.server.platform
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Computable
+import org.jetbrains.projector.util.loading.UseProjectorLoader
 
 fun <T> readAction(computable: () -> T): T = ApplicationManager.getApplication().runReadAction(Computable { computable() })

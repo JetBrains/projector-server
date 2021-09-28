@@ -42,6 +42,7 @@ import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
 import org.jetbrains.projector.server.platform.getTextAttributesCompat
 import org.jetbrains.projector.server.platform.readAction
 import org.jetbrains.projector.server.util.FontCacher
+import org.jetbrains.projector.util.loading.UseProjectorLoader
 import org.jetbrains.projector.util.logging.Logger
 import sun.awt.AWTAccessor
 import java.awt.Component
@@ -50,6 +51,7 @@ import java.awt.peer.ComponentPeer
 import java.util.concurrent.TimeoutException
 import kotlin.concurrent.thread
 
+@UseProjectorLoader
 class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEvent.CaretInfoChange) -> Unit) {
 
   private lateinit var thread: Thread

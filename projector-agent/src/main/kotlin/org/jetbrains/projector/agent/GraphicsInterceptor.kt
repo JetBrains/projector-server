@@ -33,6 +33,7 @@ import org.jetbrains.projector.server.ProjectorServer
 import org.jetbrains.projector.util.loading.unprotect
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
 import org.jetbrains.projector.server.service.ProjectorFontProvider
+import org.jetbrains.projector.util.loading.UseProjectorLoader
 import org.jetbrains.projector.util.logging.Logger
 import sun.awt.NullComponentPeer
 import sun.java2d.SunGraphics2D
@@ -42,6 +43,7 @@ import java.beans.PropertyChangeListener
 import javax.swing.JComponent
 import kotlin.collections.HashSet
 
+@UseProjectorLoader
 internal object GraphicsInterceptor {
   private var commands = mutableListOf<ServerWindowEvent>()
 
