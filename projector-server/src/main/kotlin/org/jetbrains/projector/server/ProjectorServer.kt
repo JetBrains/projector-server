@@ -64,6 +64,7 @@ import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
 import org.jetbrains.projector.server.service.ProjectorImageCacher
 import org.jetbrains.projector.server.util.*
 import org.jetbrains.projector.server.websocket.WebsocketServer
+import org.jetbrains.projector.util.loading.UseProjectorLoader
 import org.jetbrains.projector.util.logging.Logger
 import org.jetbrains.projector.util.logging.loggerFactory
 import sun.awt.AWTAccessor
@@ -90,6 +91,7 @@ import kotlin.math.roundToLong
 import kotlin.properties.Delegates
 import java.awt.Point as AwtPoint
 
+@UseProjectorLoader
 class ProjectorServer private constructor(
   private val laterInvokator: LaterInvokator,
   private val isAgent: Boolean,
