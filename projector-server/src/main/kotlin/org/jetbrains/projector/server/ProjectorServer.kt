@@ -448,8 +448,8 @@ class ProjectorServer private constructor(
       is ClientSetKeymapEvent -> {
         Do exhaustive when {
           isAgent -> logger.info { "Client keymap was ignored (agent mode)!" }
-          getProperty(ENABLE_AUTO_KEYMAP_SETTING)?.toBoolean() == false -> logger.info { "Client keymap was ignored (property specified)!" }
-          else -> KeymapSetter.setKeymap(message.keymap)
+          getProperty(ENABLE_AUTO_KEYMAP_SETTING, "true").toBoolean() -> KeymapSetter.setKeymap(message.keymap)
+          else -> logger.info { "Client keymap was ignored (property specified)!" }
         }
         Do exhaustive when {
           isAgent -> logger.info { "Don't support matching keyboard modifiers mode in agent mode yet" }
@@ -875,7 +875,7 @@ class ProjectorServer private constructor(
     const val HOST_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HOST"
     const val PORT_PROPERTY_NAME_OLD = "org.jetbrains.projector.server.port"
     const val PORT_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_PORT"
-    private const val DEFAULT_PORT = 8887
+    private const val DEFAULT_PORT = "8887"
     const val TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HANDSHAKE_TOKEN"
     const val RO_TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RO_HANDSHAKE_TOKEN"
     const val ENABLE_WS_TRANSPORT_PROPERTY = "ORG_JETBRAINS_PROJECTOR_SERVER_ENABLE_WS_TRANSPORT"
@@ -895,6 +895,6 @@ class ProjectorServer private constructor(
       return if (host != null) InetAddress.getByName(host) else getWildcardHostAddress()
     }
 
-    fun getEnvPort() = (getProperty(PORT_PROPERTY_NAME) ?: getProperty(PORT_PROPERTY_NAME_OLD))?.toIntOrNull() ?: DEFAULT_PORT
+    fun getEnvPort() = (getProperty(PORT_PROPERTY_NAME) ?: getProperty(PORT_PROPERTY_NAME_OLD, DEFAULT_PORT)).toInt()
   }
 }

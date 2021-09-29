@@ -42,7 +42,7 @@ object WebsocketServer {
     val serverId = getProperty(SERVER_ID_PROPERTY_NAME)
 
     if (relayUrl != null && serverId != null) {
-      val scheme = when (getProperty(RELAY_USE_WSS)?.toBoolean() ?: true) {
+      val scheme = when (getProperty(RELAY_USE_WSS, "true").toBoolean()) {
         false -> "ws"
         true -> "wss"
       }
