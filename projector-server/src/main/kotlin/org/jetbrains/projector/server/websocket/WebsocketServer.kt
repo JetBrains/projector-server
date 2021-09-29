@@ -27,7 +27,7 @@ import org.jetbrains.projector.common.protocol.data.ImageData
 import org.jetbrains.projector.common.protocol.data.ImageId
 import org.jetbrains.projector.common.protocol.toClient.MainWindow
 import org.jetbrains.projector.server.ProjectorServer
-import org.jetbrains.projector.server.core.util.getProperty
+import org.jetbrains.projector.server.core.util.getOption
 import org.jetbrains.projector.server.core.websocket.HttpWsClientBuilder
 import org.jetbrains.projector.server.core.websocket.HttpWsServerBuilder
 import org.jetbrains.projector.server.core.websocket.WsTransportBuilder
@@ -38,11 +38,11 @@ object WebsocketServer {
   internal fun createTransportBuilders(): List<WsTransportBuilder> {
     val builders = arrayListOf<WsTransportBuilder>()
 
-    val relayUrl = getProperty(RELAY_PROPERTY_NAME)
-    val serverId = getProperty(SERVER_ID_PROPERTY_NAME)
+    val relayUrl = getOption(RELAY_PROPERTY_NAME)
+    val serverId = getOption(SERVER_ID_PROPERTY_NAME)
 
     if (relayUrl != null && serverId != null) {
-      val scheme = when (getProperty(RELAY_USE_WSS, "true").toBoolean()) {
+      val scheme = when (getOption(RELAY_USE_WSS, "true").toBoolean()) {
         false -> "ws"
         true -> "wss"
       }

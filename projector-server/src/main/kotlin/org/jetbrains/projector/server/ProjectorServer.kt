@@ -56,7 +56,7 @@ import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshake
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshakeDecoder
 import org.jetbrains.projector.server.core.util.LaterInvokator
 import org.jetbrains.projector.server.core.util.focusOwnerOrTarget
-import org.jetbrains.projector.server.core.util.getProperty
+import org.jetbrains.projector.server.core.util.getOption
 import org.jetbrains.projector.server.core.util.getWildcardHostAddress
 import org.jetbrains.projector.server.idea.CaretInfoUpdater
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
@@ -448,13 +448,13 @@ class ProjectorServer private constructor(
       is ClientSetKeymapEvent -> {
         Do exhaustive when {
           isAgent -> logger.info { "Client keymap was ignored (agent mode)!" }
-          getProperty(ENABLE_AUTO_KEYMAP_SETTING, "true").toBoolean() -> KeymapSetter.setKeymap(message.keymap)
+          getOption(ENABLE_AUTO_KEYMAP_SETTING, "true").toBoolean() -> KeymapSetter.setKeymap(message.keymap)
           else -> logger.info { "Client keymap was ignored (property specified)!" }
         }
         Do exhaustive when {
           isAgent -> logger.info { "Don't support matching keyboard modifiers mode in agent mode yet" }
-          getProperty(MAC_KEYBOARD_MODIFIERS_MODE) != null -> {
-            val mode = getProperty(MAC_KEYBOARD_MODIFIERS_MODE)!!.toBoolean()
+          getOption(MAC_KEYBOARD_MODIFIERS_MODE) != null -> {
+            val mode = getOption(MAC_KEYBOARD_MODIFIERS_MODE)!!.toBoolean()
             logger.info { "Force keyboard modifiers to $mode (property specified)" }
             Do exhaustive when (mode) {
               true -> updateToolkitKeyboardModifiersMode(UserKeymap.MAC)
@@ -515,8 +515,8 @@ class ProjectorServer private constructor(
     val toServerHandshakeEvent = KotlinxJsonToServerHandshakeDecoder.decode(message)
 
     val hasWriteAccess = when (toServerHandshakeEvent.token) {
-      getProperty(TOKEN_ENV_NAME) -> true
-      getProperty(RO_TOKEN_ENV_NAME) -> false
+      getOption(TOKEN_ENV_NAME) -> true
+      getOption(RO_TOKEN_ENV_NAME) -> false
       else -> {
         sendHandshakeFailureEvent("Bad handshake token")
         return
@@ -570,7 +570,7 @@ class ProjectorServer private constructor(
 
     if (
       isAgent && conn.requiresConfirmation &&
-      getProperty(ENABLE_CONNECTION_CONFIRMATION)?.toBoolean() != false
+      getOption(ENABLE_CONNECTION_CONFIRMATION)?.toBoolean() != false
     ) {
       logger.info { "Asking for connection confirmation because of agent mode..." }
 
@@ -668,7 +668,7 @@ class ProjectorServer private constructor(
     updateThread = createUpdateThread()
     caretInfoUpdater.start()
 
-    if (getProperty(ENABLE_WS_TRANSPORT_PROPERTY)?.toBoolean() != false) {
+    if (getOption(ENABLE_WS_TRANSPORT_PROPERTY)?.toBoolean() != false) {
       WebsocketServer.createTransportBuilders().forEach {
         addTransport(it.attachDefaultServerEventHandlers(clientEventHandler).build())
       }
@@ -891,10 +891,10 @@ class ProjectorServer private constructor(
     const val ENABLE_CONNECTION_CONFIRMATION = "ORG_JETBRAINS_PROJECTOR_SERVER_CONNECTION_CONFIRMATION"
 
     internal fun getEnvHost(): InetAddress {
-      val host = getProperty(HOST_PROPERTY_NAME) ?: getProperty(HOST_PROPERTY_NAME_OLD)
+      val host = getOption(HOST_PROPERTY_NAME) ?: getOption(HOST_PROPERTY_NAME_OLD)
       return if (host != null) InetAddress.getByName(host) else getWildcardHostAddress()
     }
 
-    fun getEnvPort() = (getProperty(PORT_PROPERTY_NAME) ?: getProperty(PORT_PROPERTY_NAME_OLD, DEFAULT_PORT)).toInt()
+    fun getEnvPort() = (getOption(PORT_PROPERTY_NAME) ?: getOption(PORT_PROPERTY_NAME_OLD, DEFAULT_PORT)).toInt()
   }
 }
