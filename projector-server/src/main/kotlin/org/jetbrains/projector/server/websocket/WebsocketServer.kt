@@ -51,24 +51,26 @@ object WebsocketServer {
       builders.add(HttpWsClientBuilder("$scheme://$relayUrl", serverId))
     }
 
-    val host = ProjectorServer.getEnvHost()
-    val port = ProjectorServer.getEnvPort()
-    logger.info { "${ProjectorServer::class.simpleName} is starting on host $host and port $port" }
+    if (getOption(ENABLE_WS_SERVER_PROPERTY, "true").toBoolean()) {
+      val host = ProjectorServer.getEnvHost()
+      val port = ProjectorServer.getEnvPort()
+      logger.info { "${ProjectorServer::class.simpleName} is starting on host $host and port $port" }
 
-    val serverBuilder = HttpWsServerBuilder(host, port)
-    serverBuilder.getMainWindows = {
-      ProjectorServer.getMainWindows().map {
-        MainWindow(
-          title = it.title,
-          pngBase64Icon = it.icons
-            ?.firstOrNull()
-            ?.let { imageId -> ProjectorImageCacher.getImage(imageId as ImageId) as? ImageData.PngBase64 }
-            ?.pngBase64,
-        )
+      val serverBuilder = HttpWsServerBuilder(host, port)
+      serverBuilder.getMainWindows = {
+        ProjectorServer.getMainWindows().map {
+          MainWindow(
+            title = it.title,
+            pngBase64Icon = it.icons
+              ?.firstOrNull()
+              ?.let { imageId -> ProjectorImageCacher.getImage(imageId as ImageId) as? ImageData.PngBase64 }
+              ?.pngBase64,
+          )
+        }
       }
-    }
 
-    builders.add(serverBuilder)
+      builders.add(serverBuilder)
+    }
     return builders
   }
 
@@ -77,4 +79,5 @@ object WebsocketServer {
   private const val RELAY_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL"
   private const val SERVER_ID_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID"
   private const val RELAY_USE_WSS = "ORG_JETBRAINS_PROJECTOR_SERVER_RELAY_USE_WSS"
+  const val ENABLE_WS_SERVER_PROPERTY = "ORG_JETBRAINS_PROJECTOR_SERVER_ENABLE_WS_SERVER"
 }
