@@ -358,6 +358,7 @@ class ProjectorServer private constructor(
         window ?: return@invokeLater
 
         val newTouchState = calculateNewTouchState(shiftedMessage, message, clientSettings.touchState) ?: return@invokeLater
+        if (!window.isShowing) return@invokeLater
         val mouseEvent = createMouseEvent(window, shiftedMessage, clientSettings.touchState, newTouchState, clientSettings.connectionMillis)
         clientSettings.touchState = newTouchState
         laterInvokator(mouseEvent)
