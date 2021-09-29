@@ -22,20 +22,15 @@
  * if you need additional information or have any questions.
  */
 plugins {
-  kotlin("jvm")
-  `maven-publish`
+  `kotlin-dsl`
 }
 
-publishing {
-  publishOnSpace(project)
+repositories {
+  mavenCentral()
 }
 
-val kotlinVersion: String by project
-val projectorClientVersion: String by project
-val projectorClientGroup: String by project
-version = project(":projector-server").version
-
-dependencies {
-  implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
-  testImplementation(kotlin("test", kotlinVersion))
+kotlin {
+  explicitApi()
 }
+
+sourceSets.main.get().java.srcDir("src/main/kotlin")

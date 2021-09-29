@@ -21,21 +21,10 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-plugins {
-  kotlin("jvm")
-  `maven-publish`
-}
+import org.gradle.api.NamedDomainObjectProvider
+import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
 
-publishing {
-  publishOnSpace(project)
-}
-
-val kotlinVersion: String by project
-val projectorClientVersion: String by project
-val projectorClientGroup: String by project
-version = project(":projector-server").version
-
-dependencies {
-  implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
-  testImplementation(kotlin("test", kotlinVersion))
+public fun Project.inline(conf: NamedDomainObjectProvider<Configuration>): Iterable<Any> {
+  return conf.get().map { if (it.isDirectory) it else zipTree(it) }
 }
