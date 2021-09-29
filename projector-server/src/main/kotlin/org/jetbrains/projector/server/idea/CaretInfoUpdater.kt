@@ -28,6 +28,7 @@ package org.jetbrains.projector.server.idea
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorFontType
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.EditorImpl
@@ -38,6 +39,7 @@ import org.jetbrains.projector.common.protocol.data.CommonRectangle
 import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.toClient.ServerCaretInfoChangedEvent
 import org.jetbrains.projector.common.protocol.toClient.data.idea.CaretInfo
+import org.jetbrains.projector.common.protocol.toClient.data.idea.SelectionInfo
 import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
 import org.jetbrains.projector.server.platform.getTextAttributesCompat
 import org.jetbrains.projector.server.platform.readAction
@@ -122,12 +124,41 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
         val points = focusedEditor.caretModel.allCarets.map {
           val caretLocationInEditor = invokeAndWaitIfNeeded { it.editor.visualPositionToXY(it.visualPosition) }
 
+          val caretOffset = readAction { it.offset }
+          val selectionStart = readAction { it.selectionStart }
+          val selectionEnd = readAction { it.selectionEnd }
+
+          val selectionInfo = if (selectionStart == selectionEnd) {
+            null
+          } else {
+            val selectionStartPointVisual = invokeAndWaitIfNeeded { it.editor.visualPositionToXY(it.selectionStartPosition) }
+
+            val selectionStartPoint = Point(
+              x = (editorLocationInWindowX + selectionStartPointVisual.x).toDouble(),
+              y = (editorLocationInWindowY + selectionStartPointVisual.y).toDouble(),
+            )
+
+            val selectionEndPointVisual = invokeAndWaitIfNeeded { it.editor.visualPositionToXY(it.selectionEndPosition) }
+
+            val selectionEndPoint = Point(
+              x = (editorLocationInWindowX + selectionEndPointVisual.x).toDouble(),
+              y = (editorLocationInWindowY + selectionEndPointVisual.y).toDouble(),
+            )
+
+            SelectionInfo(
+              selectionStartPoint,
+              selectionStart,
+              selectionEndPoint,
+              selectionEnd,
+            )
+          }
+
           val point = Point(
             x = (editorLocationInWindowX + caretLocationInEditor.x).toDouble(),
             y = (editorLocationInWindowY + caretLocationInEditor.y).toDouble(),
           )
 
-          CaretInfo(point)
+          CaretInfo(point, caretOffset, selectionInfo)
         }
 
         val isVerticalScrollBarVisible = visibleEditorRect.height < focusedEditorComponent.height
@@ -135,6 +166,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
 
         val textColor = getTextColorBeforeCaret(focusedEditor)
         val editorFont = getFontBeforeCaret(focusedEditor)
+        val backgroundColor = getBackgroundBeforeCaret(focusedEditor)
 
         ServerCaretInfoChangedEvent.CaretInfoChange.Carets(
           points,
@@ -151,6 +183,9 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
           lineAscent = lineAscent,
           verticalScrollBarWidth = verticalScrollBarWidth,
           textColor = textColor,
+          backgroundColor = backgroundColor,
+          editorScrolled = Point(visibleEditorRect.x.toDouble(), visibleEditorRect.y.toDouble()),
+          editorId = System.identityHashCode(focusedEditor),
         )
       }
     }
@@ -175,7 +210,23 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
     return editor.colorsScheme.getFont(editorFontType)
   }
 
-  private fun getTextAttributesBeforeCaret(editor: EditorEx, filter: (TextAttributes) -> Boolean): TextAttributes? {
+  private fun getBackgroundBeforeCaret(editor: EditorEx): Int {
+    val attrs = getTextAttributesBeforeCaret(editor, {
+      if (it.priority >= 0) it.attrs else null
+    }) { it.backgroundColor != null }
+
+    val color = attrs?.backgroundColor
+                ?: editor.colorsScheme.getColor(EditorColors.CARET_ROW_COLOR)
+                ?: editor.colorsScheme.defaultBackground
+
+    return color.rgb
+  }
+
+  private fun getTextAttributesBeforeCaret(
+    editor: EditorEx,
+    mapper: (ExtendedTextAttributes) -> TextAttributes? = { it.attrs },
+    filter: (TextAttributes) -> Boolean
+  ): TextAttributes? {
 
     val caretOffset = readAction { editor.caretModel.offset }
 
@@ -194,7 +245,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
       it(editor, caretOffset, compareAndUpdate)
     }
 
-    return bestFitAttributes?.attrs
+    return bestFitAttributes?.let(mapper)
   }
 
   private fun getAttrsFromRangeHighlighters(
@@ -203,7 +254,9 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
     compareAndUpdate: (ExtendedTextAttributes) -> Unit,
   ) {
 
-    val rangeHighlighters = invokeAndWaitIfNeeded { editor.filteredDocumentMarkupModel.allHighlighters }
+    val rangeHighlighters = invokeAndWaitIfNeeded {
+      editor.filteredDocumentMarkupModel.allHighlighters + editor.markupModel.allHighlighters
+    }
 
     val startPos = caretOffset - 1
 
