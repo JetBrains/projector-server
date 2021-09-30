@@ -26,9 +26,7 @@ plugins {
   `maven-publish`
 }
 
-publishing {
-  publishOnSpace(project)
-}
+publishToSpace()
 
 val kotlinVersion: String by project
 val projectorClientVersion: String by project

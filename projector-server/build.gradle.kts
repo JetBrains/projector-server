@@ -38,9 +38,7 @@ application {
   mainClass.set(launcherClassName)
 }
 
-publishing {
-  publishOnSpace(project)
-}
+publishToSpace()
 
 configurations.all {
   // disable caching of -SNAPSHOT dependencies
