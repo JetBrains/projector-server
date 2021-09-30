@@ -36,9 +36,7 @@ application {
   mainClass.set("org.jetbrains.projector.server.ProjectorLauncher")
 }
 
-publishing {
-  publishOnSpace(project)
-}
+publishToSpace()
 
 configurations.all {
   // disable caching of -SNAPSHOT dependencies

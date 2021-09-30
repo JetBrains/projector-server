@@ -29,9 +29,7 @@ plugins {
   `maven-publish`
 }
 
-publishing {
-  publishOnSpace(project)
-}
+publishToSpace()
 
 val agentClassName = "org.jetbrains.projector.agent.MainAgent"
 val launcherClassName = "org.jetbrains.projector.agent.AgentLauncher"
