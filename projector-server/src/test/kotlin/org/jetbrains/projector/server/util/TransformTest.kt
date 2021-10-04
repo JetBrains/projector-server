@@ -33,6 +33,8 @@ import kotlin.test.assertEquals
 
 class TransformTest {
 
+  private data class InitialExpected<I, E>(val testName: String, val initial: I, val expected: E)
+
   @Test
   fun testExtractData() {
     listOf(
@@ -52,13 +54,84 @@ class TransformTest {
   }
 
   @Test
-  fun testConvertToSimpleList() {
+  fun testConvertToSimpleListAndRemoveDuplicates() {
+    val identity = ServerSetTransformEvent(listOf(1.0, 0.0, 0.0, 1.0, 0.0, 0.0))
+
+    listOf(
+      InitialExpected(
+        "no overrides should be taken",
+        listOf(
+          listOf(
+            ServerSetClipEvent(CommonRectangle(0.0, 0.0, 100.0, 100.0)),
+            identity,
+            ServerPaintRectEvent(PaintType.FILL, 10.0, 10.0, 800.0, 800.0),
+          ),
+        ),
+        listOf(
+          ServerSetClipEvent(CommonRectangle(0.0, 0.0, 100.0, 100.0)),
+          identity,
+          ServerPaintRectEvent(PaintType.FILL, 10.0, 10.0, 800.0, 800.0),
+        ),
+      ),
+      InitialExpected(
+        "same overrides should be just skipped",
+        listOf(
+          listOf(
+            ServerSetClipEvent(CommonRectangle(0.0, 0.0, 100.0, 100.0)),
+            identity,
+            ServerPaintRectEvent(PaintType.FILL, 10.0, 10.0, 800.0, 800.0),
+          ),
+          listOf(
+            ServerSetClipEvent(CommonRectangle(0.0, 0.0, 100.0, 100.0)),
+            identity,
+            ServerPaintRectEvent(PaintType.FILL, 10.0, 10.0, 800.0, 800.0),
+          ),
+        ),
+        listOf(
+          ServerSetClipEvent(CommonRectangle(0.0, 0.0, 100.0, 100.0)),
+          identity,
+          ServerPaintRectEvent(PaintType.FILL, 10.0, 10.0, 800.0, 800.0),
+          ServerPaintRectEvent(PaintType.FILL, 10.0, 10.0, 800.0, 800.0),
+        ),
+      ),
+      InitialExpected(
+        "changed overrides should be taken",
+        listOf(
+          listOf(
+            ServerSetClipEvent(CommonRectangle(0.0, 0.0, 100.0, 100.0)),
+            identity,
+            ServerPaintRectEvent(PaintType.FILL, 10.0, 10.0, 800.0, 800.0),
+          ),
+          listOf(
+            ServerSetClipEvent(CommonRectangle(1.0, 0.0, 100.0, 100.0)),
+            ServerSetTransformEvent(listOf(2.0, 0.0, 0.0, 1.0, 0.0, 0.0)),
+            ServerPaintRectEvent(PaintType.FILL, 10.0, 10.0, 800.0, 800.0),
+          ),
+        ),
+        listOf(
+          ServerSetClipEvent(CommonRectangle(0.0, 0.0, 100.0, 100.0)),
+          identity,
+          ServerPaintRectEvent(PaintType.FILL, 10.0, 10.0, 800.0, 800.0),
+          ServerSetClipEvent(CommonRectangle(1.0, 0.0, 100.0, 100.0)),
+          ServerSetTransformEvent(listOf(2.0, 0.0, 0.0, 1.0, 0.0, 0.0)),
+          ServerPaintRectEvent(PaintType.FILL, 10.0, 10.0, 800.0, 800.0),
+        ),
+      ),
+    ).forEach { (testName, initial, expected) ->
+      val actual = initial.convertToSimpleList()
+
+      assertEquals(expected, actual, "bad conversion for initial list ($testName): $initial")
+    }
+  }
+
+  @Test
+  fun testConvertToSimpleListAndRemoveInvisible() {
     // todo: move this trick somewhere near PGraphics2D but reuse in agent
     val identity = ServerSetTransformEvent(listOf(1.0, 0.0, 0.0, 1.0, 0.0, 0.0))
 
     listOf(
-      // intersecting:
-      listOf(
+      InitialExpected(
+        "intersecting clip and paint",
         listOf(
           ServerSetClipEvent(CommonRectangle(0.0, 0.0, 100.0, 100.0)),
           identity,
@@ -70,8 +143,8 @@ class TransformTest {
           ServerPaintRectEvent(PaintType.FILL, 10.0, 10.0, 800.0, 800.0),
         ),
       ),
-      // moved to right:
-      listOf(
+      InitialExpected(
+        "paint moved out to the right should be skipped",
         listOf(
           ServerSetClipEvent(CommonRectangle(0.0, 0.0, 100.0, 100.0)),
           identity,
@@ -79,8 +152,8 @@ class TransformTest {
         ),
         listOf(),
       ),
-      // moved to bottom:
-      listOf(
+      InitialExpected(
+        "paint moved out to the bottom should be skipped",
         listOf(
           ServerSetClipEvent(CommonRectangle(0.0, 0.0, 100.0, 100.0)),
           identity,
@@ -88,8 +161,8 @@ class TransformTest {
         ),
         listOf(),
       ),
-      // intersecting:
-      listOf(
+      InitialExpected(
+        "intersecting clip and string",
         listOf(
           ServerSetClipEvent(CommonRectangle(0.0, 0.0, 100.0, 100.0)),
           identity,
@@ -103,8 +176,8 @@ class TransformTest {
           ServerDrawStringEvent("abc", 10.0, 10.0, 800.0),
         ),
       ),
-      // moved to right:
-      listOf(
+      InitialExpected(
+        "string moved out to the right should be skipped",
         listOf(
           ServerSetClipEvent(CommonRectangle(0.0, 0.0, 100.0, 100.0)),
           identity,
@@ -113,8 +186,8 @@ class TransformTest {
         ),
         listOf(),
       ),
-      // moved to bottom:
-      listOf(
+      InitialExpected(
+        "string moved out to the bottom should be skipped",
         listOf(
           ServerSetClipEvent(CommonRectangle(0.0, 0.0, 100.0, 100.0)),
           identity,
@@ -123,10 +196,10 @@ class TransformTest {
         ),
         listOf(),
       ),
-    ).forEach { (initial, expected) ->
+    ).forEach { (testName, initial, expected) ->
       val actual = listOf(initial).convertToSimpleList()
 
-      assertEquals(expected, actual, "bad conversion for initial list: $initial")
+      assertEquals(expected, actual, "bad conversion for initial list ($testName): $initial")
     }
   }
 }
