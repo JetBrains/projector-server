@@ -59,6 +59,7 @@ import org.jetbrains.projector.server.core.util.focusOwnerOrTarget
 import org.jetbrains.projector.server.core.util.getOption
 import org.jetbrains.projector.server.core.util.getWildcardHostAddress
 import org.jetbrains.projector.server.idea.CaretInfoUpdater
+import org.jetbrains.projector.server.idea.configureUpdates
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
 import org.jetbrains.projector.server.service.ProjectorImageCacher
@@ -856,6 +857,8 @@ class ProjectorServer private constructor(
 
       SettingsInitializer.addTaskToInitializeIdea(PGraphics2D.defaultAa)
 
+      configureUpdates(isAgent)
+
       if (ENABLE_BIG_COLLECTIONS_CHECKS) {
         logger.info { "Currently collections will log size if it exceeds $BIG_COLLECTIONS_CHECKS_START_SIZE" }
       }
@@ -871,9 +874,9 @@ class ProjectorServer private constructor(
       private set
 
     const val ENABLE_PROPERTY_NAME = "org.jetbrains.projector.server.enable"
-    const val HOST_PROPERTY_NAME_OLD = "org.jetbrains.projector.server.host"
+    private const val HOST_PROPERTY_NAME_OLD = "org.jetbrains.projector.server.host"
     const val HOST_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HOST"
-    const val PORT_PROPERTY_NAME_OLD = "org.jetbrains.projector.server.port"
+    private const val PORT_PROPERTY_NAME_OLD = "org.jetbrains.projector.server.port"
     const val PORT_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_PORT"
     private const val DEFAULT_PORT = "8887"
     const val TOKEN_ENV_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_HANDSHAKE_TOKEN"
