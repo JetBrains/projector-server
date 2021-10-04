@@ -27,6 +27,7 @@ package org.jetbrains.projector.agent
 
 import org.jetbrains.projector.awt.PWindow
 import org.jetbrains.projector.awt.peer.PMouseInfoPeer
+import org.jetbrains.projector.awt.service.DrawEventQueue
 import org.jetbrains.projector.common.protocol.toClient.ServerDrawCommandsEvent
 import org.jetbrains.projector.server.ProjectorServer
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
@@ -54,8 +55,7 @@ internal object GraphicsInterceptor {
   private var imageGraphicsIds: HashSet<Int> = HashSet()
 
   private val pWindows = mutableMapOf<Int, PWindow>()
-  private val queues = mutableMapOf<Int, ProjectorDrawEventQueue>()
-  private var currentQueue: ProjectorDrawEventQueue? = null
+  private var currentQueue: DrawEventQueue? = null
 
   @Suppress("unused")
   private val server = ProjectorServer.startServer(isAgent = true) {
@@ -78,9 +78,7 @@ internal object GraphicsInterceptor {
     val parentWindow = getParentWindow(comp)
     val pWindow = pWindows.getOrPut(parentWindow.id()) { PWindow(parentWindow, isAgent = true) }
 
-    currentQueue = queues.getOrPut(parentWindow.id()) {
-      ProjectorDrawEventQueue.create(ServerDrawCommandsEvent.Target.Onscreen(pWindow.id))
-    }
+    currentQueue = ProjectorDrawEventQueue(ServerDrawCommandsEvent.Target.Onscreen(pWindow.id))
 
     paintingConstraint = calculateComponentPositionInsideWindow(comp, parentWindow).let {
       Point(
