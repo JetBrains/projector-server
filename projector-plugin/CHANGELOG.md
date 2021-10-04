@@ -2,6 +2,20 @@
 
 Notable changes to this project are documented in this file.
 
+# 1.7.0
+
+## Fixed
+
+- Null action workaround in fireAction.
+
+## Added
+
+- PRJ-355 PRJ-553 Support copy/paste on client when the server is started in agent mode.
+
+## Updated
+
+- Projector Server v1.4.0.
+
 # 1.6.1
 
 ## Fixed

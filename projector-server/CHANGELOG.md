@@ -1,3 +1,27 @@
+# 1.4.0
+
+## Fixed
+
+- PRJ-615 Fix NRE when creating font events
+- Fix paste keystroke key event order
+- Fix "bad cursor ID -1" warning
+- PRJ-660 PRJ-510 Fix inability to close windows opened before connection
+- PRJ-189 Fix correct content paste only after the second attempt
+- PRJ-696 Fix IME textarea refocusing in Firefox when the whole window was blurred and then focused
+- Remove logs of old mouse events creation (for already not showing windows)
+- PRJ-214 Change window ID generation to sequential (prevent potential errors, e.g. sometimes windows open without decoration/header)
+
+## Changed
+
+- Speculative typing improvements
+- Projector classloader improvements (used in agent-v1.6.1)
+- Change ImageCacher from a singleton to an instantiated class (prevent potential errors)
+- Refactor injector transformers
+
+## Added
+
+- Allow to specify external transports and to disable WebSocket server (useful when embedding Projector to other apps)
+
 # 1.3.0
 
 ## Fixed
