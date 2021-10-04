@@ -31,25 +31,20 @@ import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.server.ProjectorServer
 import org.jetbrains.projector.server.core.convert.toClient.*
-import org.jetbrains.projector.server.core.util.*
-import org.jetbrains.projector.server.util.*
+import org.jetbrains.projector.server.core.util.SizeAware
+import org.jetbrains.projector.server.util.FontCacher
+import org.jetbrains.projector.server.util.toImageEventInfo
+import org.jetbrains.projector.server.util.toPaintType
 import org.jetbrains.projector.util.logging.Logger
 import java.awt.*
 import java.awt.font.TextAttribute
-import java.lang.ref.SoftReference
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class ProjectorDrawEventQueue private constructor(val target: ServerDrawCommandsEvent.Target) : DrawEventQueue {
+class ProjectorDrawEventQueue(private val target: ServerDrawCommandsEvent.Target) : DrawEventQueue {
 
-  val commands by SizeAware(
-    ConcurrentLinkedQueue<List<ServerWindowEvent>>(),
-    if (ProjectorServer.ENABLE_BIG_COLLECTIONS_CHECKS) ProjectorServer.BIG_COLLECTIONS_CHECKS_START_SIZE else null,
-    Logger("${ProjectorDrawEventQueue::class.simpleName!!} - $target"),
-  )
+  override fun buildCommand(): DrawEventQueue.CommandBuilder = CommandBuilder(target)
 
-  override fun buildCommand(): DrawEventQueue.CommandBuilder = CommandBuilder()
-
-  private inner class CommandBuilder : DrawEventQueue.CommandBuilder {
+  private class CommandBuilder(val target: ServerDrawCommandsEvent.Target) : DrawEventQueue.CommandBuilder {
 
     private val events = mutableListOf<ServerWindowEvent>()
 
@@ -87,7 +82,10 @@ class ProjectorDrawEventQueue private constructor(val target: ServerDrawCommands
     }
 
     private fun build() {
-      commands.add(events)
+      commands.add(target to events)
+      if (events.asReversed().none { it is ServerWindowPaintEvent }) {
+        logger.info { "Performance problem detected: draw commands are added but they only change drawing state but don't draw anything" }
+      }
     }
 
     override fun drawRenderedImage() {
@@ -169,27 +167,14 @@ class ProjectorDrawEventQueue private constructor(val target: ServerDrawCommands
 
   companion object {
 
+    private val logger = Logger<ProjectorDrawEventQueue>()
+
     private fun List<Pair<Int, Int>>.toPoints() = map { (x, y) -> Point(x.toDouble(), y.toDouble()) }
 
-    private val livingQueues = mutableSetOf<SoftReference<ProjectorDrawEventQueue>>()
-
-    fun create(target: ServerDrawCommandsEvent.Target): ProjectorDrawEventQueue {
-      val newQueue = ProjectorDrawEventQueue(target)
-      livingQueues.add(SoftReference(newQueue))
-
-      return newQueue
-    }
-
-    private fun collectGarbage() {
-      livingQueues.removeAll { it.get() == null }
-    }
-
-    fun getQueues(): List<ProjectorDrawEventQueue> {
-      val result = livingQueues.mapNotNull(SoftReference<ProjectorDrawEventQueue>::get)
-
-      collectGarbage()
-
-      return result
-    }
+    val commands by SizeAware(
+      ConcurrentLinkedQueue<Pair<ServerDrawCommandsEvent.Target, List<ServerWindowEvent>>>(),
+      if (ProjectorServer.ENABLE_BIG_COLLECTIONS_CHECKS) ProjectorServer.BIG_COLLECTIONS_CHECKS_START_SIZE else null,
+      logger,
+    )
   }
 }
