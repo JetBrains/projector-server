@@ -28,12 +28,11 @@ package org.jetbrains.projector.agent
 import org.jetbrains.projector.awt.PWindow
 import org.jetbrains.projector.awt.peer.PMouseInfoPeer
 import org.jetbrains.projector.common.protocol.toClient.ServerDrawCommandsEvent
-import org.jetbrains.projector.common.protocol.toClient.ServerWindowEvent
 import org.jetbrains.projector.server.ProjectorServer
-import org.jetbrains.projector.util.loading.unprotect
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
 import org.jetbrains.projector.server.service.ProjectorFontProvider
 import org.jetbrains.projector.util.loading.UseProjectorLoader
+import org.jetbrains.projector.util.loading.unprotect
 import org.jetbrains.projector.util.logging.Logger
 import sun.awt.NullComponentPeer
 import sun.java2d.SunGraphics2D
@@ -41,12 +40,9 @@ import java.awt.*
 import java.awt.peer.ComponentPeer
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
-import kotlin.collections.HashSet
 
 @UseProjectorLoader
 internal object GraphicsInterceptor {
-  private var commands = mutableListOf<ServerWindowEvent>()
-
   private var paintToOffscreenInProgress = false
 
   // constraint in terms of SunGraphics2d: see constrainX/constrainY
@@ -157,8 +153,6 @@ internal object GraphicsInterceptor {
     if (server.isStopped()) {
       return
     }
-    currentQueue?.commands?.add(commands)
-    commands = mutableListOf()
     paintToOffscreenInProgress = false
     currentQueue = null
   }
@@ -201,8 +195,8 @@ internal object GraphicsInterceptor {
     if (paintToOffscreenInProgress) {
       val graphicsState = GraphicsState.extractFromGraphics(g as SunGraphics2D, paintingConstraint.x, paintingConstraint.y)
 
-      CommandsHandler.createServerWindowEvents(methodName, copyArgs(args), graphicsState)
-        .run(commands::addAll)
+      currentQueue?.let { CommandsHandler.createServerWindowEvents(methodName, copyArgs(args), graphicsState, it) }
+      ?: logger.debug { "currentQueue == null" }
     }
   }
 
