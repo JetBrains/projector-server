@@ -37,11 +37,13 @@ fun configureUpdates(isAgent: Boolean) {
 }
 
 private const val PLUGINS_UPDATES_GROUP = "Plugins updates"
+private const val IDE_AND_PLUGINS_UPDATES_GROUP = "IDE and Plugin Updates"
 
 private fun forbidPluginsUpdatesNotifications(ideaClassLoader: ClassLoader) {
   try {
     val notificationConfigImplClass = ideaClassLoader.loadClass("com.intellij.notification.impl.NotificationsConfigurationImpl")
     val displayTypeClass = ideaClassLoader.loadClass("com.intellij.notification.NotificationDisplayType")
+
     @Suppress("UNCHECKED_CAST")
     val displayTypeValueNone = (displayTypeClass.enumConstants as Array<Enum<*>>).first { it.name == "NONE" }
 
@@ -54,6 +56,7 @@ private fun forbidPluginsUpdatesNotifications(ideaClassLoader: ClassLoader) {
 
     val config = getInstanceMethod.invoke(null)
     changeSettingsMethod.invoke(config, PLUGINS_UPDATES_GROUP, displayTypeValueNone, false, false)
+    changeSettingsMethod.invoke(config, IDE_AND_PLUGINS_UPDATES_GROUP, displayTypeValueNone, false, false)
   }
   catch (e: ClassNotFoundException) {
 
