@@ -59,7 +59,7 @@ import org.jetbrains.projector.server.core.util.focusOwnerOrTarget
 import org.jetbrains.projector.server.core.util.getOption
 import org.jetbrains.projector.server.core.util.getWildcardHostAddress
 import org.jetbrains.projector.server.idea.CaretInfoUpdater
-import org.jetbrains.projector.server.idea.configureUpdates
+import org.jetbrains.projector.server.idea.forbidUpdates
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
 import org.jetbrains.projector.server.service.ProjectorImageCacher
@@ -159,7 +159,7 @@ class ProjectorServer private constructor(
   }
 
   @Suppress("MemberVisibilityCanBePrivate")  // used in CWM
-  val clientEventHandler : ClientEventHandler = object : ClientEventHandler {
+  val clientEventHandler: ClientEventHandler = object : ClientEventHandler {
     override fun onClientConnectionEnded(connection: ClientWrapper) {
       val clientSettings = connection.settings
       val connectionTime = (System.currentTimeMillis() - clientSettings.connectionMillis) / 1000.0
@@ -857,7 +857,9 @@ class ProjectorServer private constructor(
 
       SettingsInitializer.addTaskToInitializeIdea(PGraphics2D.defaultAa)
 
-      configureUpdates(isAgent)
+      if (!isAgent && getOption(DISABLE_IDEA_UPDATES_PROPERTY_NAME, "true").toBoolean()) {
+        forbidUpdates()
+      }
 
       if (ENABLE_BIG_COLLECTIONS_CHECKS) {
         logger.info { "Currently collections will log size if it exceeds $BIG_COLLECTIONS_CHECKS_START_SIZE" }
@@ -891,6 +893,7 @@ class ProjectorServer private constructor(
     const val ENABLE_AUTO_KEYMAP_SETTING = "ORG_JETBRAINS_PROJECTOR_SERVER_AUTO_KEYMAP"
     const val MAC_KEYBOARD_MODIFIERS_MODE = "ORG_JETBRAINS_PROJECTOR_SERVER_MAC_KEYBOARD"
     const val ENABLE_CONNECTION_CONFIRMATION = "ORG_JETBRAINS_PROJECTOR_SERVER_CONNECTION_CONFIRMATION"
+    private const val DISABLE_IDEA_UPDATES_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_DISABLE_IDEA_UPDATES"
 
     internal fun getEnvHost(): InetAddress {
       val host = getOption(HOST_PROPERTY_NAME) ?: getOption(HOST_PROPERTY_NAME_OLD)

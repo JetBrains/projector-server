@@ -25,15 +25,13 @@ package org.jetbrains.projector.server.idea
 
 import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
 
-fun configureUpdates(isAgent: Boolean) {
-  if (!isAgent) {
+fun forbidUpdates() {
     forbidPlatformUpdates()
     invokeWhenIdeaIsInitialized("Forbid platform updates and plugin update notifications",
                                 null,
                                 null) {
       forbidPluginsUpdatesNotifications(it)
     }
-  }
 }
 
 private const val PLUGINS_UPDATES_GROUP = "Plugins updates"
