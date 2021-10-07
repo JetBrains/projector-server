@@ -26,8 +26,8 @@ package org.jetbrains.projector.server.util
 import org.jetbrains.projector.common.protocol.data.CommonRectangle
 import org.jetbrains.projector.common.protocol.data.PaintType
 import org.jetbrains.projector.common.protocol.toClient.*
-import org.jetbrains.projector.server.core.convert.toClient.convertToSimpleList
 import org.jetbrains.projector.server.core.convert.toClient.extractData
+import org.jetbrains.projector.server.core.convert.toClient.shrinkEvents
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -118,9 +118,9 @@ class TransformTest {
         ),
       ),
     ).forEach { (testName, initial, expected) ->
-      val actual = initial.convertToSimpleList()
+      val actual = initial.map { ServerDrawCommandsEvent.Target.Onscreen(1) to it }.shrinkEvents()
 
-      assertEquals(expected, actual, "bad conversion for initial list ($testName): $initial")
+      assertEquals(expected, actual.singleOrNull()?.drawEvents, "bad conversion for initial list ($testName): $initial")
     }
   }
 
@@ -197,7 +197,11 @@ class TransformTest {
         listOf(),
       ),
     ).forEach { (testName, initial, expected) ->
-      val actual = listOf(initial).convertToSimpleList()
+      val shrunk = listOf(ServerDrawCommandsEvent.Target.Onscreen(1) to initial).shrinkEvents()
+      val actual = when {
+        shrunk.isEmpty() -> emptyList()
+        else -> shrunk.singleOrNull()?.drawEvents
+      }
 
       assertEquals(expected, actual, "bad conversion for initial list ($testName): $initial")
     }
