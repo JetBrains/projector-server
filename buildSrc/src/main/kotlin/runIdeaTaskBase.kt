@@ -44,6 +44,7 @@ public fun Project.createRunIdeaTask(
   val jdkHome = System.getProperty("java.home")
 
   val ideaPathsSelector = "ProjectorIntelliJIdea"
+  val prefix = getIdePrefix(ideaPath)
 
   val (classToLaunchProperty, launcherClassName) = getLaunchingSetup(isAgent)
 
@@ -65,6 +66,10 @@ public fun Project.createRunIdeaTask(
       "--add-opens=java.base/java.lang=ALL-UNNAMED",
       "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
     )
+
+    if (prefix != null) {
+      jvmArgs("-Didea.platform.prefix=$prefix") // This is required for IDE to determine proper file locations
+    }
 
     configuration()
   }
