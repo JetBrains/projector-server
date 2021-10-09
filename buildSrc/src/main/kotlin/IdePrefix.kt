@@ -21,22 +21,25 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-plugins {
-  `kotlin-dsl`
+
+import kotlinx.serialization.json.*
+import java.io.File
+
+public fun getIdePrefix(idePath: String): String? {
+  val productInfo = File("$idePath/product-info.json")
+  val jsonRoot = Json.parseToJsonElement(productInfo.readText()) as JsonObject
+  val launchConfigs = jsonRoot["launch"] as JsonArray
+  val launchConfig = launchConfigs.first() as JsonObject
+  val startScript = (launchConfig["launcherPath"] as JsonPrimitive).content
+  val startScriptFile = File("$idePath/$startScript")
+  val regex = Regex("-Didea.platform.prefix=(?<prefix>\\w+)")
+
+  startScriptFile.useLines { lines ->
+    lines.forEach {
+      val prefix = regex.find(it)?.groups?.get("prefix")?.value
+      if (prefix != null) return prefix
+    }
+  }
+
+  return null
 }
-
-repositories {
-  mavenCentral()
-}
-
-val serializationVersion: String by project
-
-dependencies {
-  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationVersion")
-}
-
-kotlin {
-  explicitApi()
-}
-
-sourceSets.main.get().java.srcDir("src/main/kotlin")
