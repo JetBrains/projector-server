@@ -32,8 +32,10 @@ plugins {
   `maven-publish`
 }
 
+val launcherClassName = "org.jetbrains.projector.server.ProjectorLauncher"
+
 application {
-  mainClass.set("org.jetbrains.projector.server.ProjectorLauncher")
+  mainClass.set(launcherClassName)
 }
 
 publishing {
@@ -92,62 +94,29 @@ if (relayURL != null && serverId != null) {
   relayArgs = listOf("-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_URL=$relayURL", "-DORG_JETBRAINS_PROJECTOR_SERVER_RELAY_SERVER_ID=$serverId")
 }
 
-val serverTargetClasspath = localProperties["projectorLauncher.targetClassPath"]
-val serverClassToLaunch = localProperties["projectorLauncher.classToLaunch"]
-println("----------- Server launch config ---------------")
-println("Classpath: $serverTargetClasspath")
-println("ClassToLaunch: $serverClassToLaunch")
-println("------------------------------------------------")
-if (serverTargetClasspath != null && serverClassToLaunch != null) {
-  task<JavaExec>("runServer") {
-    group = "projector"
-    mainClass.set("org.jetbrains.projector.server.ProjectorLauncher")
-    classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, serverTargetClasspath)
-    jvmArgs(
-      "-Dorg.jetbrains.projector.server.classToLaunch=$serverClassToLaunch",
-      "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
-      "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
-      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-    )
-    jvmArgs(relayArgs)
-  }
+fun JavaExec.setupHeadlessServer() {
+  jvmArgs(relayArgs)
 }
 
-val ideaPath = localProperties["projectorLauncher.ideaPath"]
-println("----------- Idea launch config ---------------")
-println("Idea path: $ideaPath")
-println("------------------------------------------------")
-if (ideaPath != null) {
-  val ideaLib = "$ideaPath/lib"
-  val ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar:$ideaLib/trove4j.jar"
-  val jdkHome = System.getProperty("java.home")
-  println(jdkHome)
+createRunServerTask(
+  name = "runServer",
+  isAgent = false,
+  localProperties,
+) {
+  jvmArgs(
+    "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
+    "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
+    "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
+  )
+  setupHeadlessServer()
+}
 
-  val ideaPathsSelector = "ProjectorIntelliJIdea"
-
-  task<JavaExec>("runIdeaServer") {
-    group = "projector"
-    mainClass.set("org.jetbrains.projector.server.ProjectorLauncher")
-    classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, ideaClassPath, "$jdkHome/../lib/tools.jar")
-    jvmArgs(
-      "-Dorg.jetbrains.projector.server.classToLaunch=com.intellij.idea.Main",
-      "-Didea.paths.selector=$ideaPathsSelector",
-      "-Didea.jre.check=true",
-      "-Didea.is.internal=true",
-      "--add-exports=java.base/jdk.internal.vm=ALL-UNNAMED",
-      "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
-      "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
-      "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
-      "--add-opens=java.desktop/sun.swing=ALL-UNNAMED",
-      "--add-opens=java.desktop/javax.swing=ALL-UNNAMED",
-      "--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED",
-      "--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED",
-      "--add-opens=java.base/java.lang=ALL-UNNAMED",
-      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-      "-Djdk.attach.allowAttachSelf=true",
-    )
-    jvmArgs(relayArgs)
-  }
+createRunIdeaTask(
+  name = "runIdeaServer",
+  isAgent = false,
+  localProperties,
+) {
+  setupHeadlessServer()
 }
 
 fun downloadFontsInZip(
