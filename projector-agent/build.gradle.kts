@@ -78,62 +78,27 @@ if (rootProject.file("local.properties").canRead()) {
   localProperties.load(rootProject.file("local.properties").inputStream())
 }
 
-val serverTargetClasspath = localProperties["projectorLauncher.targetClassPath"]
-val serverClassToLaunch = localProperties["projectorLauncher.classToLaunch"]
-
-// Server running tasks
-println("----------- Agent launch config ---------------")
-println("Classpath: $serverTargetClasspath")
-println("ClassToLaunch: $serverClassToLaunch")
-println("------------------------------------------------")
-if (serverTargetClasspath != null && serverClassToLaunch != null) {
-  task<JavaExec>("runWithAgent") {
-    group = "projector"
-    mainClass.set(launcherClassName)
-    classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, serverTargetClasspath)
-    jvmArgs(
-      "-Djdk.attach.allowAttachSelf=true",
-      "-Dswing.bufferPerWindow=false",
-      "-Dorg.jetbrains.projector.agent.path=${project.file("build/libs/${project.name}-${project.version}.jar")}",
-      "-Dorg.jetbrains.projector.agent.classToLaunch=$serverClassToLaunch",
-    )
-    dependsOn(tasks.jar)
-  }
+fun JavaExec.applyAgentJvmArgs() {
+  jvmArgs(
+    "-Dswing.bufferPerWindow=false",
+    "-Dorg.jetbrains.projector.agent.path=${project.file("build/libs/${project.name}-${project.version}.jar")}",
+  )
 }
 
-val ideaPath = localProperties["projectorLauncher.ideaPath"]
-println("----------- Idea launch config ---------------")
-println("Idea path: $ideaPath")
-println("------------------------------------------------")
-if (ideaPath != null) {
-  val ideaLib = "$ideaPath/lib"
-  val ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar:$ideaLib/jna.jar:$ideaPath/jbr/lib/tools.jar"
-  val jdkHome = System.getProperty("java.home")
+// Server running tasks
+createRunServerTask(
+  name = "runWithAgent",
+  isAgent = true,
+  localProperties,
+) {
+  applyAgentJvmArgs()
+  dependsOn(tasks.jar)
+}
 
-  println(jdkHome)
-
-  task<JavaExec>("runIdeaWithAgent") {
-    group = "projector"
-    mainClass.set(launcherClassName)
-    classpath(sourceSets.main.get().runtimeClasspath, tasks.jar, ideaClassPath, "$jdkHome/../lib/tools.jar")
-    jvmArgs(
-      "-Djdk.attach.allowAttachSelf=true",
-      "-Dswing.bufferPerWindow=false",
-      "-Dorg.jetbrains.projector.agent.path=${project.file("build/libs/${project.name}-${project.version}.jar")}",
-      "-Dorg.jetbrains.projector.agent.classToLaunch=com.intellij.idea.Main",
-      "-Didea.paths.selector=ProjectorIntelliJIdea2019.3",
-      "-Didea.jre.check=true",
-      "-Didea.is.internal=true",
-      "--add-exports=java.base/jdk.internal.vm=ALL-UNNAMED",
-      "--add-opens=java.desktop/java.awt=ALL-UNNAMED",
-      "--add-opens=java.desktop/sun.font=ALL-UNNAMED",
-      "--add-opens=java.desktop/sun.awt=ALL-UNNAMED",
-      "--add-opens=java.desktop/sun.swing=ALL-UNNAMED",
-      "--add-opens=java.desktop/javax.swing=ALL-UNNAMED",
-      "--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED",
-      "--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED",
-      "--add-opens=java.base/java.lang=ALL-UNNAMED",
-      "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
-    )
-  }
+createRunIdeaTask(
+  name = "runIdeaWithAgent",
+  isAgent = true,
+  localProperties,
+) {
+  applyAgentJvmArgs()
 }
