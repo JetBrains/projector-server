@@ -27,9 +27,7 @@ import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
 
 fun forbidUpdates() {
     forbidPlatformUpdates()
-    invokeWhenIdeaIsInitialized("Forbid platform updates and plugin update notifications",
-                                null,
-                                null) {
+    invokeWhenIdeaIsInitialized("Forbid platform updates and plugin update notifications") {
       forbidPluginsUpdatesNotifications(it)
     }
 }
