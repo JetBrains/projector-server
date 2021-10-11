@@ -21,43 +21,36 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+@file:UseProjectorLoader
+
 package org.jetbrains.projector.server.idea
 
+import com.intellij.notification.NotificationDisplayType
+import com.intellij.notification.impl.NotificationsConfigurationImpl
 import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
+import org.jetbrains.projector.util.loading.UseProjectorLoader
 
 fun forbidUpdates() {
-    forbidPlatformUpdates()
-    invokeWhenIdeaIsInitialized("Forbid platform updates and plugin update notifications") {
-      forbidPluginsUpdatesNotifications(it)
-    }
+  forbidPlatformUpdates()
+  invokeWhenIdeaIsInitialized("Forbid platform updates and plugin update notifications") {
+    forbidPluginsUpdatesNotifications()
+  }
 }
 
 private const val PLUGINS_UPDATES_GROUP = "Plugins updates"
 private const val IDE_AND_PLUGINS_UPDATES_GROUP = "IDE and Plugin Updates"
 
-private fun forbidPluginsUpdatesNotifications(ideaClassLoader: ClassLoader) {
-  try {
-    val notificationConfigImplClass = ideaClassLoader.loadClass("com.intellij.notification.impl.NotificationsConfigurationImpl")
-    val displayTypeClass = ideaClassLoader.loadClass("com.intellij.notification.NotificationDisplayType")
+private fun forbidPluginsUpdatesNotifications() {
+  with(NotificationsConfigurationImpl.getInstanceImpl()) {
+    changeSettings(PLUGINS_UPDATES_GROUP,
+                   NotificationDisplayType.NONE,
+                   false,
+                   false)
 
-    @Suppress("UNCHECKED_CAST")
-    val displayTypeValueNone = (displayTypeClass.enumConstants as Array<Enum<*>>).first { it.name == "NONE" }
-
-    val getInstanceMethod = notificationConfigImplClass.getMethod("getInstanceImpl")
-    val changeSettingsMethod = notificationConfigImplClass.getMethod("changeSettings",
-                                                                     String::class.java,
-                                                                     displayTypeClass,
-                                                                     Boolean::class.java,
-                                                                     Boolean::class.java)
-
-    val config = getInstanceMethod.invoke(null)
-    changeSettingsMethod.invoke(config, PLUGINS_UPDATES_GROUP, displayTypeValueNone, false, false)
-    changeSettingsMethod.invoke(config, IDE_AND_PLUGINS_UPDATES_GROUP, displayTypeValueNone, false, false)
-  }
-  catch (e: ClassNotFoundException) {
-
-  }
-  catch (e: NoSuchMethodException) {
+    changeSettings(IDE_AND_PLUGINS_UPDATES_GROUP,
+                   NotificationDisplayType.NONE,
+                   false,
+                   false)
 
   }
 }
