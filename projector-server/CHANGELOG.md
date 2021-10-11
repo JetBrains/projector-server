@@ -1,7 +1,7 @@
 # Unreleased
 
 ## Added
-- server forbids Idea platform updates and plugins updates notifications. 
+- Server forbids Idea platform updates and plugins updates notifications. 
   This behaviour can be changed via ORG_JETBRAINS_PROJECTOR_SERVER_DISABLE_IDEA_UPDATES property.
 
 # 1.4.0
