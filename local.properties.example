@@ -8,7 +8,7 @@ projectorLauncher.ideaPath=/home/<USERNAME>/.local/share/JetBrains/Toolbox/apps/
 # If you want to use local projector-client:projector-common module, define the following property:
 useLocalProjectorClient=true
 
-# Forbid IDE and plugins updates. Default true. Has no effect is agent mode.
+# Forbid IDE and plugins updates. Defaults to true. Has no effect in agent mode.
 ORG_JETBRAINS_PROJECTOR_SERVER_DISABLE_IDEA_UPDATES=true
 
 # to enable connections via relay define both next variables
