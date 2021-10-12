@@ -43,6 +43,8 @@ public fun Project.createRunIdeaTask(
   val ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar"
   val jdkHome = System.getProperty("java.home")
 
+  println("JDK home dir: $jdkHome")
+
   val ideaPathsSelector = "ProjectorIntelliJIdea"
   val prefix = getIdePrefix(ideaPath)
 
