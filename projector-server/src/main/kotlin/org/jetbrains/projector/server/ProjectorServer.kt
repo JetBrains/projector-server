@@ -190,14 +190,7 @@ class ProjectorServer private constructor(
             if (ENABLE_BIG_COLLECTIONS_CHECKS) BIG_COLLECTIONS_CHECKS_START_SIZE else null,
           )
 
-          PVolatileImage.images.forEach(PVolatileImage::invalidate)
-          PWindow.windows.forEach {
-            SwingUtilities.invokeAndWait { it.target.revalidate() }  // this solves PRJ-69
-          }
-          PWindow.windows.forEach(PWindow::repaint)
-          previousWindowEvents = emptySet()
-          caretInfoUpdater.createCaretInfoEvent()
-          PanelUpdater.updateAll()
+          makeKeyframe()
         }
 
         is ReadyClientSettings -> {
@@ -233,6 +226,8 @@ class ProjectorServer private constructor(
     }
   }
 
+  private var lastRedraw = System.currentTimeMillis()
+
   private fun createUpdateThread(): Thread = thread(isDaemon = true) {
     // TODO: remove this thread: encapsulate the logic in an extracted class and maybe even don't use threads but coroutines' channels
     logger.debug { "Daemon thread starts" }
@@ -240,6 +235,14 @@ class ProjectorServer private constructor(
       try {
         val dataToSend = createDataToSend()  // creating data even if there are no clients to avoid memory leaks
         sendPictures(dataToSend)
+
+        val keyframesInterval = getOption(KEYFRAMES_INTERVAL_MS, "5000").toInt()
+        if (keyframesInterval > 0) {
+          val now = System.currentTimeMillis()
+          if (now - lastRedraw > keyframesInterval) {
+            makeKeyframe()
+          }
+        }
 
         sleep(10)
       }
@@ -251,6 +254,19 @@ class ProjectorServer private constructor(
       }
     }
     logger.debug { "Daemon thread finishes" }
+  }
+
+  private fun makeKeyframe() {
+    PVolatileImage.images.forEach(PVolatileImage::invalidate)
+    PWindow.windows.forEach {
+      SwingUtilities.invokeAndWait { it.target.revalidate() }  // this solves PRJ-69
+    }
+    PWindow.windows.forEach(PWindow::repaint)
+    previousWindowEvents = emptySet()
+    caretInfoUpdater.createCaretInfoEvent()
+    PanelUpdater.updateAll()
+
+    lastRedraw = System.currentTimeMillis()
   }
 
   private var lastClipboardEvent: ServerClipboardEvent? = null
@@ -894,6 +910,7 @@ class ProjectorServer private constructor(
     const val MAC_KEYBOARD_MODIFIERS_MODE = "ORG_JETBRAINS_PROJECTOR_SERVER_MAC_KEYBOARD"
     const val ENABLE_CONNECTION_CONFIRMATION = "ORG_JETBRAINS_PROJECTOR_SERVER_CONNECTION_CONFIRMATION"
     private const val DISABLE_IDEA_UPDATES_PROPERTY_NAME = "ORG_JETBRAINS_PROJECTOR_SERVER_DISABLE_IDEA_UPDATES"
+    const val KEYFRAMES_INTERVAL_MS = "ORG_JETBRAINS_PROJECTOR_SERVER_KEYFRAMES_INTERVAL_MS"
 
     internal fun getEnvHost(): InetAddress {
       val host = getOption(HOST_PROPERTY_NAME) ?: getOption(HOST_PROPERTY_NAME_OLD)
