@@ -34,7 +34,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.wm.StatusBar
+import com.intellij.openapi.wm.WindowManager
 import com.intellij.util.PathUtil
 import org.jetbrains.projector.agent.AgentLauncher
 import org.jetbrains.projector.awt.PToolkit
@@ -65,6 +68,12 @@ fun getAgentVersion(): String {
 
   return result
 }
+
+fun getIdeStatusBar(project: Project): StatusBar? {
+  val frame = WindowManager.getInstance().getIdeFrame(project) ?: return null
+  return WindowManager.getInstance().getStatusBar(frame.component, project)
+}
+
 
 private fun loadVersionsContent() = ProjectorService::class.java.getResource(VERSIONS_FILE_PATH)!!.readText()
 
