@@ -41,7 +41,7 @@ class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
       override fun install(descriptor: IdeaPluginDescriptor) {}
 
       override fun uninstall(descriptor: IdeaPluginDescriptor) {
-        removeUI()
+        removeUI(project)
         ProjectorService.autostart = false
 
         if (isProjectorRunning()) {
@@ -50,7 +50,7 @@ class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
       }
     })
 
-    installUI()
+    installUI(project)
     ProjectorService.autostartIfRequired()
   }
 }

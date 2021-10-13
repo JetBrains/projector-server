@@ -28,7 +28,6 @@ import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 
-
 private fun getNotificationGroup(): NotificationGroup? {
   val cls = NotificationGroup::class.java
 
@@ -58,3 +57,4 @@ fun displayNotification(title: String, subtitle: String, content: String) {
   msg?.setTitle(title, subtitle)
   msg?.notify(null)
 }
+

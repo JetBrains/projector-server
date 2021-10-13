@@ -25,15 +25,18 @@
 package org.jetbrains.projector.plugin.ui
 
 import com.intellij.ide.DataManager
+import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
+import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.util.Consumer
 import org.jetbrains.projector.plugin.*
 import org.jetbrains.projector.plugin.actions.*
@@ -44,7 +47,7 @@ import java.beans.PropertyChangeListener
 import javax.swing.Icon
 import javax.swing.SwingUtilities
 
-class ProjectorStatusWidget(private val myStatusBar: StatusBar)
+class ProjectorStatusWidget(private val myStatusBar: StatusBar?)
   : DumbAware,
     StatusBarWidget.MultipleTextValuesPresentation,
     StatusBarWidget.Multiframe,
@@ -83,7 +86,7 @@ class ProjectorStatusWidget(private val myStatusBar: StatusBar)
   }
 
   fun update() {
-    myStatusBar.updateWidget(ID())
+    myStatusBar?.updateWidget(ID())
   }
 
   override fun stateChanged() {
@@ -144,7 +147,8 @@ class ProjectorStatusWidget(private val myStatusBar: StatusBar)
       val ctx = DataManager.getInstance().getDataContext(myStatusBar as Component)
       val event = AnActionEvent.createFromAnAction(action, null, "", ctx)
       action.actionPerformed(event)
-    } else {
+    }
+    else {
       logger.error("Unable to get action with ID = $actionId")
     }
   }
@@ -156,8 +160,23 @@ class ProjectorStatusWidget(private val myStatusBar: StatusBar)
     }
   }
 
+  class Factory : StatusBarWidgetFactory, LightEditCompatible {
+    override fun getId() = ID
+
+    override fun getDisplayName() = DISPLAY_NAME
+
+    override fun isAvailable(project: Project) = true
+
+    override fun createWidget(project: Project) = ProjectorStatusWidget(getIdeStatusBar(project))
+
+    override fun disposeWidget(widget: StatusBarWidget) = widget.dispose()
+
+    override fun canBeEnabledOn(statusBar: StatusBar) = statusBar.getWidget(ID) == null
+  }
+
   companion object {
     val ID: String by lazy { ProjectorStatusWidget::class.java.name }
+    const val DISPLAY_NAME = "Projector Widget"
     private fun getIcon(path: String): Icon = IconLoader.getIcon(path, ProjectorStatusWidget::class.java)
     private val ACTIVATION_NEEDED_SIGN: Icon by lazy { getIcon("/META-INF/activationNeededSign.svg") }
     private val RUNNING_SIGN: Icon by lazy { getIcon("/META-INF/runningSign.svg") }

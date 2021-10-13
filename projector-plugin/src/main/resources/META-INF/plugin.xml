@@ -47,6 +47,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="org.jetbrains.projector.plugin.ProjectorService"/>
     <postStartupActivity implementation="org.jetbrains.projector.plugin.RegisterPluginInstallerStateListener"/>
+    <statusBarWidgetFactory implementation="org.jetbrains.projector.plugin.ui.ProjectorStatusWidget$Factory"/>
   </extensions>
 
   <actions>
