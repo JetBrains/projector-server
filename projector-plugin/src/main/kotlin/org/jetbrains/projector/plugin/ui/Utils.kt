@@ -28,6 +28,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import org.jetbrains.projector.plugin.getIdeStatusBar
+import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.impl.ProjectFrameHelper
+import javax.swing.JComponent
+
 
 private fun isWidgetFactoryAvailable(): Boolean {
   val cls = try {
@@ -60,9 +64,11 @@ fun installProjectorWidgetIfRequired(project: Project) {
   }
 
   method?.let {
-    val widget = ProjectorStatusWidget(statusBar)
+    val widget = ProjectorStatusWidget(project, statusBar)
     it.invoke(statusBar, widget, StatusBar.Anchors.DEFAULT_ANCHOR)
     widget.update()
+
+    widget.showGotItMessage("I'm here!")
   }
 }
 
@@ -81,5 +87,13 @@ fun removeProjectorWidgetIfRequired(project: Project) {
   }
 
   method?.invoke(statusBar, ProjectorStatusWidget.ID)
+}
+
+fun getWidgetJComponent(project: Project, widgetID: String): JComponent? {
+  val window = WindowManager.getInstance().suggestParentWindow(project) ?: return null
+  val projectFrameHelper = ProjectFrameHelper.getFrameHelper(window) ?: return null
+  val statusImpl = projectFrameHelper.statusBar ?: return null
+
+  return statusImpl.getWidgetComponent(widgetID)
 }
 
