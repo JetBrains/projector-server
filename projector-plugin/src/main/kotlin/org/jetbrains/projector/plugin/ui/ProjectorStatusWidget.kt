@@ -30,23 +30,28 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import java.beans.PropertyChangeListener
+
+import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
 import com.intellij.openapi.wm.StatusBarWidgetFactory
+import com.intellij.ui.GotItMessage
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Consumer
 import org.jetbrains.projector.plugin.*
 import org.jetbrains.projector.plugin.actions.*
 import java.awt.Component
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
-import java.beans.PropertyChangeListener
 import javax.swing.Icon
 import javax.swing.SwingUtilities
 
-class ProjectorStatusWidget(private val myStatusBar: StatusBar?)
+
+class ProjectorStatusWidget(private val project: Project, private val myStatusBar: StatusBar?)
   : DumbAware,
     StatusBarWidget.MultipleTextValuesPresentation,
     StatusBarWidget.Multiframe,
@@ -57,7 +62,7 @@ class ProjectorStatusWidget(private val myStatusBar: StatusBar?)
 
   override fun ID(): String = ID
 
-  override fun copy(): StatusBarWidget = ProjectorStatusWidget(myStatusBar)
+  override fun copy(): StatusBarWidget = ProjectorStatusWidget(project, myStatusBar)
 
   override fun getPopupStep(): ListPopup? {
     onClick()
@@ -97,6 +102,7 @@ class ProjectorStatusWidget(private val myStatusBar: StatusBar?)
   }
 
   private fun updateIcon(): Icon {
+    showGotItMessage("I'm here!")
     return when {
       isActivationNeeded() -> ACTIVATION_NEEDED_SIGN
       isProjectorRunning() -> RUNNING_SIGN
@@ -166,12 +172,19 @@ class ProjectorStatusWidget(private val myStatusBar: StatusBar?)
 
     override fun isAvailable(project: Project) = true
 
-    override fun createWidget(project: Project) = ProjectorStatusWidget(getIdeStatusBar(project))
+    override fun createWidget(project: Project) = ProjectorStatusWidget(project, getIdeStatusBar(project))
 
     override fun disposeWidget(widget: StatusBarWidget) = widget.dispose()
 
     override fun canBeEnabledOn(statusBar: StatusBar) = statusBar.getWidget(ID) == null
   }
+
+  fun showGotItMessage(message: String) {
+    val component = getWidgetJComponent(project, ID) ?: return
+    val gotItMessage = GotItMessage.createMessage("Projector", message).setDisposable(this)
+    gotItMessage.show(RelativePoint.getCenterOf(component), Balloon.Position.above)
+  }
+
 
   companion object {
     val ID: String by lazy { ProjectorStatusWidget::class.java.name }
