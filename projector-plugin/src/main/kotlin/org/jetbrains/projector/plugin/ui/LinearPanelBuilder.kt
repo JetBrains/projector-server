@@ -27,6 +27,7 @@ package org.jetbrains.projector.plugin.ui
 import java.awt.*
 import javax.swing.JPanel
 
+
 class LinearPanelBuilder(private var panel: JPanel) {
   private val constraints = GridBagConstraints()
 
@@ -56,3 +57,4 @@ class LinearPanelBuilder(private var panel: JPanel) {
     return this
   }
 }
+
