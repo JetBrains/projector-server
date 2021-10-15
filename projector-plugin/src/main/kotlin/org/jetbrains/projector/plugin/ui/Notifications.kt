@@ -22,36 +22,42 @@
  * if you need additional information or have any questions.
  */
 
-package org.jetbrains.projector.plugin
+package org.jetbrains.projector.plugin.ui
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor
-import com.intellij.ide.plugins.PluginInstaller
-import com.intellij.ide.plugins.PluginStateListener
-import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.startup.StartupActivity
-import org.jetbrains.projector.plugin.ui.installProjectorWidgetIfRequired
-import org.jetbrains.projector.plugin.ui.removeProjectorWidgetIfRequired
+import com.intellij.notification.NotificationDisplayType
+import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationType
+import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.ui.GotItMessage
+import com.intellij.ui.awt.RelativePoint
 
 
-class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
+private fun getNotificationGroup(): NotificationGroup? {
+  val cls = NotificationGroup::class.java
 
-  override fun runActivity(project: Project) {
-    PluginInstaller.addStateListener(object : PluginStateListener, DumbAware {
-      override fun install(descriptor: IdeaPluginDescriptor) {}
-
-      override fun uninstall(descriptor: IdeaPluginDescriptor) {
-        removeProjectorWidgetIfRequired(project)
-        ProjectorInstallStateKeeper.getInstance().removeFirstRunMark()
-        ProjectorService.autostart = false
-
-        if (isProjectorRunning()) {
-          ProjectorService.disable()
-        }
-      }
-    })
-
-    installProjectorWidgetIfRequired(project)
-    ProjectorService.autostartIfRequired()
+  val constr = try {
+    cls.getConstructor(String::class.java, NotificationDisplayType::class.java, Boolean::class.java)
   }
+  catch (e: NoSuchMethodException) {
+    return null
+  }
+  catch (e: SecurityException) {
+    return null
+  }
+
+  return try {
+    constr.newInstance("projector.notification.group", NotificationDisplayType.STICKY_BALLOON, true) as NotificationGroup
+  }
+  catch (e: ReflectiveOperationException) {
+    null
+  }
+  catch (e: RuntimeException) {
+    null
+  }
+}
+
+fun displayNotification(title: String, subtitle: String, content: String) {
+  val msg = getNotificationGroup()?.createNotification(content, NotificationType.INFORMATION)
+  msg?.setTitle(title, subtitle)
+  msg?.notify(null)
 }

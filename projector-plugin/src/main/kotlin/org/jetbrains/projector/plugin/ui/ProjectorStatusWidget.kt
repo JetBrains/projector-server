@@ -41,7 +41,6 @@ import com.intellij.ui.GotItMessage
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
-import com.intellij.util.Alarm
 import com.intellij.util.Consumer
 import org.jetbrains.projector.plugin.*
 import org.jetbrains.projector.plugin.actions.*
@@ -59,8 +58,6 @@ class ProjectorStatusWidget(private val project: Project, private val myStatusBa
     StatusBarWidget.Multiframe,
     ProjectorStateListener,
     PropertyChangeListener {
-
-  val alarm = Alarm()
 
   private var clients = 0
 
@@ -92,7 +89,7 @@ class ProjectorStatusWidget(private val project: Project, private val myStatusBa
   override fun install(statusBar: StatusBar) {
     ProjectorService.subscribe(this)
     update()
-    alarm.addRequest({showActivationWarning()}, 1000)
+    HelloTooltip().sayHelloIfRequired()
   }
 
   override fun dispose() {
