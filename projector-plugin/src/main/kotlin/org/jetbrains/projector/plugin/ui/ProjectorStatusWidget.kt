@@ -159,7 +159,7 @@ class ProjectorStatusWidget(private val myStatusBar: StatusBar)
   companion object {
     val ID: String by lazy { ProjectorStatusWidget::class.java.name }
     private fun getIcon(path: String): Icon = IconLoader.getIcon(path, ProjectorStatusWidget::class.java)
-    private val ACTIVATION_NEEDED_SIGN: Icon by lazy { getIcon("/META-INF/activationNeeded.svg") }
+    private val ACTIVATION_NEEDED_SIGN: Icon by lazy { getIcon("/META-INF/activationNeededSign.svg") }
     private val RUNNING_SIGN: Icon by lazy { getIcon("/META-INF/runningSign.svg") }
     private val STARTING_SIGN: Icon by lazy { getIcon("/META-INF/startingSign.svg") }
     private val DISABLED_SIGN: Icon by lazy { getIcon("/META-INF/disabledSign.svg") }
