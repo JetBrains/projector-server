@@ -229,8 +229,8 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     fun getClientList(): Array<Array<String?>> = AgentLauncher.getClientList()
     fun disconnectAll() = AgentLauncher.disconnectAll()
     fun disconnectByIp(ip: String) = AgentLauncher.disconnectByIp(ip)
-    fun addClientsObserver(listener: PropertyChangeListener) = AgentLauncher.addClientsObserver(listener)
-    fun removeClientsObserver(listener: PropertyChangeListener) = AgentLauncher.removeClientsObserver(listener)
+    fun addObserver(listener: PropertyChangeListener) = AgentLauncher.addObserver(listener)
+    fun removeObserver(listener: PropertyChangeListener) = AgentLauncher.removeObserver(listener)
     fun autostartIfRequired() {
       if (!isHeadlessProjectorDetected() && !isProjectorRunning()) {
         with(ProjectorService) {

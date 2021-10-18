@@ -120,7 +120,7 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
         .startNextLine().addNextComponent(JScrollPane(clientTable))
         .startNextLine().addNextComponent(buttonPanel, topGap = 5)
 
-      ProjectorService.addClientsObserver(this)
+      ProjectorService.addObserver(this)
 
       update()
     }
@@ -161,6 +161,11 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
   }
 
   override fun propertyChange(event: PropertyChangeEvent?) {
-    update()
+    event?.let {
+      if (event.propertyName == "clientsCount") {
+        update()
+      }
+
+    }
   }
 }

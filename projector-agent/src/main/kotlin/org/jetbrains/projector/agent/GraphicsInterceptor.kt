@@ -145,11 +145,11 @@ internal object GraphicsInterceptor {
 
   @Suppress("unused")
   @JvmStatic
-  fun addClientsObserver(listener: PropertyChangeListener) = server.addClientsObserver(listener)
+  fun addObserver(listener: PropertyChangeListener) = server.addObserver(listener)
 
   @Suppress("unused")
   @JvmStatic
-  fun removeClientsObserver(listener: PropertyChangeListener) = server.removeClientsObserver(listener)
+  fun removeObserver(listener: PropertyChangeListener) = server.removeObserver(listener)
 
   @Suppress("unused")
   @JvmStatic

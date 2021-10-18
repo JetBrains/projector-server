@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.wm.WindowManager
 import org.jetbrains.projector.plugin.getIdeStatusBar
 
 private fun isWidgetFactoryAvailable(): Boolean {
@@ -81,4 +82,9 @@ fun removeProjectorWidgetIfRequired(project: Project) {
   }
 
   method?.invoke(statusBar, ProjectorStatusWidget.ID)
+}
+
+fun getStatusBar(project: Project?): StatusBar? {
+  val frame = WindowManager.getInstance().getIdeFrame(project) ?: return null
+  return WindowManager.getInstance().getStatusBar(frame.component, null)
 }

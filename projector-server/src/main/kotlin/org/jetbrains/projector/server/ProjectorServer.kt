@@ -220,15 +220,19 @@ class ProjectorServer private constructor(
     }
   }
 
-  private val clientsObservers = Collections.synchronizedList(mutableListOf<PropertyChangeListener>())
-  fun addClientsObserver(listener: PropertyChangeListener) = clientsObservers.add(listener)
-  fun removeClientsObserver(listener: PropertyChangeListener) = clientsObservers.remove(listener)
+  private val observers = Collections.synchronizedList(mutableListOf<PropertyChangeListener>())
+  fun addObserver(listener: PropertyChangeListener) = observers.add(listener)
+  fun removeObserver(listener: PropertyChangeListener) = observers.remove(listener)
 
   private val clientsCountLock = ReentrantLock()
   private var clientsCount: Int by Delegates.observable(0) { _, _, newValue ->
-    clientsObservers.forEach { listener ->
-      listener.propertyChange(PropertyChangeEvent(this, "clientsCount", null, newValue))
-    }
+    notifyObservers(PropertyChangeEvent(this, "clientsCount", null, newValue))
+  }
+
+  private fun notifyObservers(event: PropertyChangeEvent) = observers.forEach { it.propertyChange(event) }
+
+  private fun sendMacLocalConnectionWarning(address: InetAddress) {
+    notifyObservers(PropertyChangeEvent(this, "macLocalConnection", null, address))
   }
 
   private fun createUpdateThread(): Thread = thread(isDaemon = true) {
@@ -615,8 +619,18 @@ class ProjectorServer private constructor(
         sendHandshakeFailureEvent("Other user has disallowed this connection.")
         return
       }
+
       logger.info { "User has allowed this connection..." }
     }
+
+    if (isAgent) {
+      val remoteIp = conn.confirmationRemoteIp
+
+      if ( isMac && remoteIp != null && isLocalAddress(remoteIp)) {
+        sendMacLocalConnectionWarning(remoteIp)
+      }
+    }
+
 
     val successEvent = ToClientHandshakeSuccessEvent(
       toClientCompression = toClientCompressor.compressionType,
@@ -922,5 +936,11 @@ class ProjectorServer private constructor(
     }
 
     fun getEnvPort() = (getOption(PORT_PROPERTY_NAME) ?: getOption(PORT_PROPERTY_NAME_OLD, DEFAULT_PORT)).toInt()
+
+    private val LOCAL_ADDRESSES = getLocalAddresses().map { it.address }
+
+    fun isLocalAddress(address: InetAddress) = address in LOCAL_ADDRESSES
+
+    private val isMac = System.getProperty("os.name").startsWith("Mac OS")
   }
 }
