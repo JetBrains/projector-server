@@ -23,6 +23,7 @@
  */
 package org.jetbrains.projector.plugin.ui
 
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.GotItMessage
 import com.intellij.ui.awt.RelativePoint
@@ -32,13 +33,15 @@ import org.jetbrains.projector.plugin.ProjectorInstallStateKeeper
 // This function shows tooltip message above Projector status bar widget.
 // It can fail if widget was not added to status bar yet.
 // Caller can check it, by analyzing return value
-private fun showMessage(header: String, message: String): Boolean {
 
+internal fun showMessage(project: Project, header: String, message: String): Boolean {
+  val sb = getStatusBar(project) ?: return false
+  val widget = sb.getWidget(ProjectorStatusWidget.ID) ?: return false
 
   return true
 }
 
-class HelloTooltip {
+class HelloMessage(private val project: Project) {
   private val alarm = Alarm()
   private val installStateKeeper = ProjectorInstallStateKeeper.getInstance()
 
@@ -58,7 +61,7 @@ class HelloTooltip {
   }
 
   private fun show() {
-    val shown = showMessage("Hello!",
+    val shown = showMessage(project, "Hello!",
                             "To start using the Projector plugin,\nclick the widget below")
 
     if (!shown) {

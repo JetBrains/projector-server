@@ -21,39 +21,22 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+package org.jetbrains.projector.server.util
 
-package org.jetbrains.projector.plugin.ui
+import java.net.Inet6Address
+import java.net.InterfaceAddress
+import java.net.NetworkInterface
 
-import com.intellij.notification.NotificationDisplayType
-import com.intellij.notification.NotificationGroup
-import com.intellij.notification.NotificationType
+private val dockerVendor = byteArrayOf(0x02.toByte(), 0x42.toByte())
 
-private fun getNotificationGroup(): NotificationGroup? {
-  val cls = NotificationGroup::class.java
-
-  val constr = try {
-    cls.getConstructor(String::class.java, NotificationDisplayType::class.java, Boolean::class.java)
-  }
-  catch (e: NoSuchMethodException) {
-    return null
-  }
-  catch (e: SecurityException) {
-    return null
-  }
-
-  return try {
-    constr.newInstance("projector.notification.group", NotificationDisplayType.STICKY_BALLOON, true) as NotificationGroup
-  }
-  catch (e: ReflectiveOperationException) {
-    null
-  }
-  catch (e: RuntimeException) {
-    null
-  }
-}
-
-fun displayNotification(title: String, subtitle: String, content: String) {
-  val msg = getNotificationGroup()?.createNotification(content, NotificationType.INFORMATION)
-  msg?.setTitle(title, subtitle)
-  msg?.notify(null)
-}
+// Note: Avoid calling getLocalAddresses too often - on Windows NetworkInterface.getNetworkInterfaces()
+// can take a lot of time: https://bugs.java.com/bugdatabase/view_bug.do?bug_id=7039343
+fun getLocalAddresses() : List<InterfaceAddress> = NetworkInterface.getNetworkInterfaces()
+  .asSequence()
+  .filterNotNull()
+  .filterNot {
+    it.hardwareAddress != null && it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor)
+  } // drop docker
+  .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
+  .filterNot { it.address is Inet6Address } // drop IP v 6
+  .toList()

@@ -116,22 +116,22 @@ public object AgentLauncher {
   }
 
   @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")  // KTIJ-18982
-  private val addClientsObserverMethod by lazy { getHandlerClass().getMethod("addClientsObserver", PropertyChangeListener::class.java)!! }
+  private val addObserverMethod by lazy { getHandlerClass().getMethod("addObserver", PropertyChangeListener::class.java)!! }
 
   @JvmStatic
-  public fun addClientsObserver(listener: PropertyChangeListener) {
-    addClientsObserverMethod.invoke(null, listener)
+  public fun addObserver(listener: PropertyChangeListener) {
+    addObserverMethod.invoke(null, listener)
   }
 
   @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")  // KTIJ-18982
-  private val removeClientsObserverMethod by lazy {
-    getHandlerClass().getMethod("removeClientsObserver", PropertyChangeListener::class.java)!!
+  private val removeObserverMethod by lazy {
+    getHandlerClass().getMethod("removeObserver", PropertyChangeListener::class.java)!!
   }
 
   @JvmStatic
-  public fun removeClientsObserver(listener: PropertyChangeListener) {
+  public fun removeObserver(listener: PropertyChangeListener) {
     try {
-      removeClientsObserverMethod.invoke(null, listener)
+      removeObserverMethod.invoke(null, listener)
     }
     catch (e: ClassNotFoundException) {
       println("Class GraphicsInterceptor not found: agent wasn't injected.")

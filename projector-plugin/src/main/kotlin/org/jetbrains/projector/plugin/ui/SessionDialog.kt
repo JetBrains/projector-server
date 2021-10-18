@@ -35,13 +35,12 @@ import org.jetbrains.projector.server.ProjectorServer
 import org.jetbrains.projector.server.util.AsyncHostResolver
 import org.jetbrains.projector.server.util.Host
 import org.jetbrains.projector.server.util.ResolvedHostSubscriber
+import org.jetbrains.projector.server.util.getLocalAddresses
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import java.net.Inet6Address
 import java.net.InetAddress
-import java.net.NetworkInterface
 import javax.swing.*
 import kotlin.random.Random
 
@@ -331,17 +330,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
   companion object {
     private val ALL_HOSTS = Host("0.0.0.0", "all addresses")
-    private val ADDRESSES = NetworkInterface.getNetworkInterfaces()
-      .asSequence()
-      .filterNotNull()
-      .filterNot {
-        it.hardwareAddress != null && it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor)
-      } // drop docker
-      .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
-      .filterNot { it.address is Inet6Address } // drop IP v 6
-      .toList()
-
-    private val dockerVendor = byteArrayOf(0x02.toByte(), 0x42.toByte())
+    private val LOCAL_ADDRESSES = getLocalAddresses()
     private const val MAX_HOSTS_ROW_COUNT = 15
     private const val RANDOM_PASSWORD_LEN = 11
 
@@ -353,6 +342,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         .joinToString("")
     }
 
-    private fun getHostList(toHost: (ip: InetAddress) -> Host) : List<Host> = ADDRESSES.map { toHost(it.address) }
+    private fun getHostList(toHost: (ip: InetAddress) -> Host) : List<Host> = LOCAL_ADDRESSES.map { toHost(it.address) }
   }
 }
