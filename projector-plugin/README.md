@@ -15,6 +15,18 @@ restart is needed after installation).
 New widget `Projector` will appear in the toolbar. 
 If toolbar widget can't be installed menu `Projector` will appear next to the `Help` menu.
 
+### Messages
+To attract user attention to something plugin can display a message. Message can be disposed by pressing "Got It" button.
+
+The following messages are used:
+  - Greeting message - displayed for each new plugin installation (but not oftener once per day) 
+  to attract user attention to the widget. Plugin updates do not trigger the message.
+    
+  - Mac local connection warning message - alerts the user about [keyboard input issue](https://youtrack.jetbrains.com/issue/PRJ-321) when connected locally on Mac once per local connection.
+  
+
+
+
 ## Building from sources
 
 This will give you a zip file with IntelliJ plugin:
