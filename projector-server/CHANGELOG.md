@@ -3,6 +3,7 @@
 ## Added
 - Server forbids Idea platform updates and plugins updates notifications. 
   This behaviour can be changed via ORG_JETBRAINS_PROJECTOR_SERVER_DISABLE_IDEA_UPDATES property.
+- Support WINDOW_ACTIVATED and WINDOW_DEACTIVATED events which are required for file sync in IDE
 
 # 1.4.0
 
