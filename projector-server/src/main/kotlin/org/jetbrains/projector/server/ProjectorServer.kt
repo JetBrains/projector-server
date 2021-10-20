@@ -82,12 +82,9 @@ import java.net.InetAddress
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedQueue
-import java.util.concurrent.locks.ReentrantLock
 import javax.swing.SwingUtilities
 import kotlin.concurrent.thread
-import kotlin.concurrent.withLock
 import kotlin.math.roundToLong
-import kotlin.properties.Delegates
 import java.awt.Point as AwtPoint
 
 @UseProjectorLoader
@@ -215,19 +212,13 @@ class ProjectorServer private constructor(
 
     override fun updateClientsCount() {
       val count = transports.sumOf { it.clientCount }
-
-      clientsCountLock.withLock { clientsCount = count }
+      notifyObservers(PropertyChangeEvent(this, "clientsCount", null, count))
     }
   }
 
   private val observers = Collections.synchronizedList(mutableListOf<PropertyChangeListener>())
   fun addObserver(listener: PropertyChangeListener) = observers.add(listener)
   fun removeObserver(listener: PropertyChangeListener) = observers.remove(listener)
-
-  private val clientsCountLock = ReentrantLock()
-  private var clientsCount: Int by Delegates.observable(0) { _, _, newValue ->
-    notifyObservers(PropertyChangeEvent(this, "clientsCount", null, newValue))
-  }
 
   private fun notifyObservers(event: PropertyChangeEvent) = observers.forEach { it.propertyChange(event) }
 
