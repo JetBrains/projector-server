@@ -1,9 +1,27 @@
 version: 1.0
 profile:
-  name: qodana.recomended
+  name: qodana.recommended
+include:
+  - name: Reformat
 inspections:
   LicenseAudit:
+    rules:
+      - key:
+          - "PROPRIETARY-LICENSE"
+        prohibited:
+          - "Apache-2.0"
+        allowed:
+          - "GPL-2.0-with-classpath-exception"
+          - "MIT"
+
     dependencyScopes:
       - type: "gradle"
         scopes:
           - "runtime"
+
+  CloneFinder:
+    failThreshold: 100
+      licenseRules:
+          - source: GPL-2.0-with-classpath-exception
+            target: ISC
+            compatible: true
