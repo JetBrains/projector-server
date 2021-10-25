@@ -157,7 +157,7 @@ internal object GraphicsInterceptor {
     if (server.isStopped()) {
       return
     }
-    currentQueue?.commands?.add(commands) ?: logger.debug { "currentQueue == null" }
+    currentQueue?.commands?.add(commands)
     commands = mutableListOf()
     paintToOffscreenInProgress = false
     currentQueue = null
