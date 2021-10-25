@@ -3,7 +3,12 @@
 ## Added
 - Server forbids Idea platform updates and plugins updates notifications. 
   This behaviour can be changed via ORG_JETBRAINS_PROJECTOR_SERVER_DISABLE_IDEA_UPDATES property.
-- Support WINDOW_ACTIVATED and WINDOW_DEACTIVATED events which are required for file sync in IDE
+- PRJ-157 Support WINDOW_ACTIVATED and WINDOW_DEACTIVATED events which are required for file sync in IDE
+- PRJ-226 PRJ-530 Support for displaying markdown preview with plugin versions 203-212
+- Support for displaying markdown preview in headless mode when JavaFX and Jcef are not available
+
+## Fixed
+- PRJ-684 Exception when opening markdown files
 
 # 1.4.0
 
