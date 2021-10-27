@@ -22,6 +22,7 @@
 - PRJ-696 Fix IME textarea refocusing in Firefox when the whole window was blurred and then focused
 - Remove logs of old mouse events creation (for already not showing windows)
 - PRJ-214 Change window ID generation to sequential (prevent potential errors, e.g. sometimes windows open without decoration/header)
+- PRJ-547 Fix agent failed to start
 
 ## Changed
 
