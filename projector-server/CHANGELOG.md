@@ -6,9 +6,11 @@
 - PRJ-157 Support WINDOW_ACTIVATED and WINDOW_DEACTIVATED events which are required for file sync in IDE
 - PRJ-226 PRJ-530 Support for displaying markdown preview with plugin versions 203-212
 - Support for displaying markdown preview in headless mode when JavaFX and Jcef are not available
+- Composition symbols are now styled as real symbols before them
 
 ## Fixed
 - PRJ-684 Exception when opening markdown files
+- PRJ-679 Fix "Read access is allowed from inside read-action" when getting Editor of diagram's view
 
 # 1.4.0
 
