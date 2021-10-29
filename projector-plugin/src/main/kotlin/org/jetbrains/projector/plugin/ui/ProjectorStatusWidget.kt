@@ -25,7 +25,6 @@
 package org.jetbrains.projector.plugin.ui
 
 import com.intellij.ide.DataManager
-import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
@@ -160,7 +159,7 @@ class ProjectorStatusWidget(private val myStatusBar: StatusBar?)
     }
   }
 
-  class Factory : StatusBarWidgetFactory, LightEditCompatible {
+  class Factory : StatusBarWidgetFactory {
     override fun getId() = ID
 
     override fun getDisplayName() = DISPLAY_NAME
