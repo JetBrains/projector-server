@@ -42,10 +42,25 @@ fun installMenu() {
                       "Use Projector menu to manage plugin")
 }
 
+fun isExistWidgetFactory(): Boolean {
+  val cls = try {
+    Class.forName("com.intellij.openapi.wm.StatusBarWidgetFactory",
+                  false,
+                  ProjectorStatusWidget::class.java.classLoader)
+  }
+  catch (e: ClassNotFoundException) {
+    null
+  }
+
+  return cls != null
+}
+
 fun installProjectorWidget(project: Project): Boolean {
+  if (isExistWidgetFactory()) return true
+
   val statusBar = getIdeStatusBar(project) ?: return false
 
-  if (statusBar.getWidget(ProjectorStatusWidget.ID) != null) return true // already installed
+  if (statusBar.getWidget(ProjectorStatusWidget.ID) != null) return true
 
   val method = try {
     StatusBar::class.java.getMethod("addWidget", StatusBarWidget::class.java, String::class.java)
