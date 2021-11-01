@@ -24,15 +24,12 @@
 
 package org.jetbrains.projector.server.util
 
-import com.intellij.util.io.toByteArray
 import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.concurrent.thread
 import org.jetbrains.projector.server.core.util.getHostName
 import java.net.InetAddress
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import javax.swing.SwingUtilities
 
 class Host(val address: String, name: String) {
