@@ -23,15 +23,17 @@
  */
 package org.jetbrains.projector.server.util
 
+import com.intellij.util.io.toByteArray
 import java.net.Inet6Address
 import java.net.InterfaceAddress
 import java.net.NetworkInterface
+import java.nio.ByteBuffer
 
 private val dockerVendor = byteArrayOf(0x02.toByte(), 0x42.toByte())
 
 // Note: Avoid calling getLocalAddresses too often - on Windows NetworkInterface.getNetworkInterfaces()
 // can take a lot of time: https://bugs.java.com/bugdatabase/view_bug.do?bug_id=7039343
-fun getLocalAddresses() : List<InterfaceAddress> = NetworkInterface.getNetworkInterfaces()
+fun getLocalAddresses(): List<InterfaceAddress> = NetworkInterface.getNetworkInterfaces()
   .asSequence()
   .filterNotNull()
   .filterNot {
@@ -40,3 +42,47 @@ fun getLocalAddresses() : List<InterfaceAddress> = NetworkInterface.getNetworkIn
   .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
   .filterNot { it.address is Inet6Address } // drop IP v 6
   .toList()
+
+fun ipString2Bytes(src: String): ByteArray {
+  return when {
+    isIp4String(src) -> ip4String2Bytes(src)
+    isIp6String(src) -> ip6String2Bytes(src)
+    else -> error("Invalid ip address string representation: $src")
+  }
+}
+
+private fun isIp4String(address: String): Boolean {
+  val parts = address.split('.').filter { it.isNotEmpty() }
+  return parts.size == 4 && address.all { it.isDigit() || it == '.' }
+}
+
+private fun Char.isHexDigit(): Boolean {
+  val c = this.uppercaseChar()
+  return c.isDigit() || c in 'A'..'Z'
+}
+
+private fun isIp6String(address: String): Boolean {
+  val parts = address.split(':').filter { it.isNotEmpty() }
+  return parts.size == 8 && address.all { it.isHexDigit() || it == ':' }
+}
+
+private fun ip4String2Bytes(src: String) = src.split('.')
+  .filter { it.isNotEmpty() }
+  .map { it.toInt() }
+  .map { it.toByte() }
+  .toByteArray()
+
+private fun ShortArray.toByteArray(): ByteArray {
+  val bytes = ByteBuffer.allocate(this.size * 2)
+  this.forEach { bytes.putShort(it) }
+  return bytes.toByteArray()
+}
+
+private fun ip6String2Bytes(src: String): ByteArray {
+  return src.split(':')
+    .filter { it.isNotEmpty() }
+    .map { it.toInt(16) }
+    .map { it.toShort() }
+    .toShortArray()
+    .toByteArray()
+}
