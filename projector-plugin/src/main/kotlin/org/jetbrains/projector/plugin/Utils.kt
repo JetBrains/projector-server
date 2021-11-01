@@ -124,7 +124,7 @@ fun isProjectorDisabled(): Boolean {
 fun isProjectorStopped() = ProjectorService.enabled == EnabledState.STOPPED
 
 fun confirmRestart(messageString: String): Boolean {
-  val title = "Restart is needed..."
+  val title = "Restart Is Needed..."
   val message = Function<String, String> { messageString }
   return PluginManagerConfigurable.showRestartDialog(title, message) == Messages.YES
 }
