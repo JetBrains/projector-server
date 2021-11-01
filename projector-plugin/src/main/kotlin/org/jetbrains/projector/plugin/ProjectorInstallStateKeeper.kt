@@ -35,12 +35,12 @@ class ProjectorInstallStateKeeper {
   val isFirstRun = checkFirstRun()
 
   private fun checkFirstRun(): Boolean {
-    val res = getFirstRunMark() == null
-    if (res) {
+    val isFirstRun = getFirstRunMark() == null
+    if (isFirstRun) {
       setFirstRunMark()
     }
 
-    return res
+    return isFirstRun
   }
 
   private fun nowUtc(): OffsetDateTime = OffsetDateTime.now(ZoneOffset.UTC)
