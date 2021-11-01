@@ -178,10 +178,10 @@ class ProjectorStatusWidget(private val project: Project, private val myStatusBa
         }
 
         event.isMacLocalConnectionMessage() -> {
-          val message = "Locally connected client on Mac detected " +
-                        "(${(event.newValue as InetAddress).toString().substring(1)})\n" +
-                        "Keyboard input for such clients is unsupported yet"
-          SwingUtilities.invokeLater { showMessage(project, "Warning!", message) }
+          val message = "You just connected to your Mac from " +
+                        "(${(event.newValue as InetAddress).toString().substring(1)}).\n" +
+                        "If it is connection from local computer you may experience issues with keyboard input."
+          SwingUtilities.invokeLater { showMessage(project, "Warning", message) }
         }
       }
     }
