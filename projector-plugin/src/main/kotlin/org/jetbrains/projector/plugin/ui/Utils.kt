@@ -27,22 +27,9 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
-import org.jetbrains.projector.plugin.actions.ProjectorActionGroup
 import org.jetbrains.projector.plugin.getIdeStatusBar
 
-fun installUI(project: Project) {
-  if (!installProjectorWidget(project)) {
-    installMenu()
-  }
-}
-
-fun installMenu() {
-  ProjectorActionGroup.show()
-  displayNotification("Warning", "Can't display status bar widget",
-                      "Use Projector menu to manage plugin")
-}
-
-fun isExistWidgetFactory(): Boolean {
+private fun isExistWidgetFactory(): Boolean {
   val cls = try {
     Class.forName("com.intellij.openapi.wm.StatusBarWidgetFactory",
                   false,
@@ -55,12 +42,13 @@ fun isExistWidgetFactory(): Boolean {
   return cls != null
 }
 
-fun installProjectorWidget(project: Project): Boolean {
-  if (isExistWidgetFactory()) return true
+// Platform 193 compatibility functions
+fun installProjectorWidgetIfRequired(project: Project) {
+  if (isExistWidgetFactory()) return
 
-  val statusBar = getIdeStatusBar(project) ?: return false
+  val statusBar = getIdeStatusBar(project) ?: return
 
-  if (statusBar.getWidget(ProjectorStatusWidget.ID) != null) return true
+  if (statusBar.getWidget(ProjectorStatusWidget.ID) != null) return
 
   val method = try {
     StatusBar::class.java.getMethod("addWidget", StatusBarWidget::class.java, String::class.java)
@@ -71,23 +59,16 @@ fun installProjectorWidget(project: Project): Boolean {
     null
   }
 
-  val ret = method != null
-
   method?.let {
     val widget = ProjectorStatusWidget(statusBar)
     it.invoke(statusBar, widget, StatusBar.Anchors.DEFAULT_ANCHOR)
     widget.update()
   }
-
-  return ret
 }
 
-fun removeUI(project: Project) {
-  ProjectorActionGroup.hide()
-  removeProjectorWidget(project)
-}
+fun removeProjectorWidgetIfRequired(project: Project) {
+  if (isExistWidgetFactory()) return
 
-private fun removeProjectorWidget(project: Project) {
   val statusBar = getIdeStatusBar(project) ?: return
 
   val method = try {
