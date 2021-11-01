@@ -44,6 +44,8 @@ import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.util.Consumer
 import org.jetbrains.projector.plugin.*
 import org.jetbrains.projector.plugin.actions.*
+import org.jetbrains.projector.server.util.isClientsCountMessage
+import org.jetbrains.projector.server.util.isMacLocalConnectionMessage
 import java.awt.Component
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
@@ -169,19 +171,18 @@ class ProjectorStatusWidget(private val project: Project, private val myStatusBa
 
   override fun propertyChange(event: PropertyChangeEvent?) {
     event?.let {
-      when (event.propertyName) {
-        "clientsCount" -> {
+      when {
+        event.isClientsCountMessage() -> {
           clients = event.newValue as Int
           SwingUtilities.invokeLater { update() }
         }
 
-        "macLocalConnection" -> {
+        event.isMacLocalConnectionMessage() -> {
           val message = "Locally connected client on Mac detected " +
                         "(${(event.newValue as InetAddress).toString().substring(1)})\n" +
                         "Keyboard input for such clients is unsupported yet"
           SwingUtilities.invokeLater { showMessage(project, "Warning!", message) }
         }
-        else -> Unit
       }
     }
   }
