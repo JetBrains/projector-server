@@ -15,17 +15,14 @@ restart is needed after installation).
 New widget `Projector` will appear in the toolbar. 
 If toolbar widget can't be installed menu `Projector` will appear next to the `Help` menu.
 
-### Messages
-To attract user attention to something plugin can display a message. Message can be disposed by pressing "Got It" button.
+### Notifications
+To attract user's attention to something, the plugin can display a notification. A notification can be easily closed by pressing the "Got It" button.
 
-The following messages are used:
-  - Greeting message - displayed for each new plugin installation (but not oftener once per day) 
-  to attract user attention to the widget. Plugin updates do not trigger the message.
+The following notifications are used (please note that we do our best to avoid showing any of them often):
+  - **Greeting message** - displayed for each new plugin installation (but no more than once a day) 
+  to attract user's attention to the widget. Plugin updates do not trigger the notification.
     
-  - Mac local connection warning message - alerts the user about [keyboard input issue](https://youtrack.jetbrains.com/issue/PRJ-321) when connected locally on Mac once per local connection.
-  
-
-
+  - **Mac local connection warning message** - alerts the user about [keyboard input issue](https://youtrack.jetbrains.com/issue/PRJ-321) when connected locally on Mac once per local connection.
 
 ## Building from sources
 
