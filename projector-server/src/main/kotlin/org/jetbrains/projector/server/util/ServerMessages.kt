@@ -23,7 +23,6 @@
  */
 package org.jetbrains.projector.server.util
 
-import org.jetbrains.projector.server.ProjectorServer
 import java.beans.PropertyChangeEvent
 import java.net.InetAddress
 
