@@ -25,7 +25,6 @@
 package org.jetbrains.projector.plugin
 
 import com.intellij.diagnostic.VMOptions
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
@@ -211,7 +210,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   }
 
   companion object {
-    private val instance: ProjectorService by lazy { ApplicationManager.getApplication().getService(ProjectorService::class.java)!! }
+    private val instance: ProjectorService by lazy { service() }
 
     fun subscribe(l: ProjectorStateListener) = instance.subscribe(l)
 
