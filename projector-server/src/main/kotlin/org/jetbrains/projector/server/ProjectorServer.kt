@@ -928,7 +928,7 @@ class ProjectorServer private constructor(
 
     fun getEnvPort() = (getOption(PORT_PROPERTY_NAME) ?: getOption(PORT_PROPERTY_NAME_OLD, DEFAULT_PORT)).toInt()
 
-    private val LOCAL_ADDRESSES get() = getLocalAddresses().map { it.address }
+    private val LOCAL_ADDRESSES get() = getLocalAddresses(keepIpv6 = true).map { it.address }
 
     fun isLocalAddress(address: InetAddress) = address in LOCAL_ADDRESSES
 
