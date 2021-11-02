@@ -24,7 +24,7 @@
 package org.jetbrains.projector.server.util
 
 import com.intellij.util.io.toByteArray
-import java.net.Inet6Address
+import java.net.Inet4Address
 import java.net.InterfaceAddress
 import java.net.NetworkInterface
 import java.nio.ByteBuffer
@@ -33,14 +33,14 @@ private val dockerVendor = byteArrayOf(0x02.toByte(), 0x42.toByte())
 
 // Note: Avoid calling getLocalAddresses too often - on Windows NetworkInterface.getNetworkInterfaces()
 // can take a lot of time: https://bugs.java.com/bugdatabase/view_bug.do?bug_id=7039343
-fun getLocalAddresses(): List<InterfaceAddress> = NetworkInterface.getNetworkInterfaces()
+fun getLocalAddresses(keepIpv6: Boolean = false): List<InterfaceAddress> = NetworkInterface.getNetworkInterfaces()
   .asSequence()
   .filterNotNull()
   .filterNot {
     it.hardwareAddress != null && it.hardwareAddress.sliceArray(0..1).contentEquals(dockerVendor)
   } // drop docker
   .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
-  .filterNot { it.address is Inet6Address } // drop IP v 6
+  .filter { keepIpv6 || it.address is Inet4Address }
   .toList()
 
 fun ipString2Bytes(src: String): ByteArray {
