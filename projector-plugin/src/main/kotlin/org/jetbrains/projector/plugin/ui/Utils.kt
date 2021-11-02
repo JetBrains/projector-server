@@ -29,7 +29,7 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import org.jetbrains.projector.plugin.getIdeStatusBar
 
-private fun isExistWidgetFactory(): Boolean {
+private fun isWidgetFactoryAvailable(): Boolean {
   val cls = try {
     Class.forName("com.intellij.openapi.wm.StatusBarWidgetFactory",
                   false,
