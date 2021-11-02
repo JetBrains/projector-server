@@ -178,13 +178,13 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   }
 
   private fun getVMOptions(): Pair<String, File>? {
-    fun getVMOptionsWriteFile(): File? {
+    fun getVMOptionsWriteFile(): File? = try { // for 2020.3 and later
+      val path: Path? = VMOptions.getWriteFile()
+      path?.toUri()?.let(::File)
+    }
+    catch (e: NoSuchMethodError) { // for < 2020.3
       val writeFileMethod = VMOptions::class.java.getMethod("getWriteFile")
-      return when (writeFileMethod.returnType) {
-        File::class.java -> writeFileMethod.invoke(null) as File? // Pre 2020.3
-        Path::class.java -> (writeFileMethod.invoke(null) as Path?)?.toUri()?.let(::File) // 2020.3
-        else -> error("Unsupported IDEA version. Can't recognize signature of method VMOptions.getWriteFile.")
-      }
+      writeFileMethod.invoke(null) as File?
     }
 
     val writeFile = getVMOptionsWriteFile()
