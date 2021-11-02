@@ -44,7 +44,7 @@ private fun isWidgetFactoryAvailable(): Boolean {
 
 // Platform 193 compatibility functions
 fun installProjectorWidgetIfRequired(project: Project) {
-  if (isExistWidgetFactory()) return
+  if (isWidgetFactoryAvailable()) return
 
   val statusBar = getIdeStatusBar(project) ?: return
 
@@ -67,7 +67,7 @@ fun installProjectorWidgetIfRequired(project: Project) {
 }
 
 fun removeProjectorWidgetIfRequired(project: Project) {
-  if (isExistWidgetFactory()) return
+  if (isWidgetFactoryAvailable()) return
 
   val statusBar = getIdeStatusBar(project) ?: return
 
