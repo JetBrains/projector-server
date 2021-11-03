@@ -185,16 +185,19 @@ val downloadDefaultFonts by tasks.creating<Task> {
   }
 }
 
+val jetbrainsMonoVersion: String by project
+
 val downloadMonoFonts by tasks.creating<Task> {
   doLast {
+    println("jetbrainsMonoVersion: $jetbrainsMonoVersion")
     downloadFontsInZip(
       "mono",
-      "https://download.jetbrains.com/fonts/JetBrainsMono-1.0.3.zip",
+      "https://download.jetbrains.com/fonts/JetBrainsMono-$jetbrainsMonoVersion.zip",
       mapOf(
-        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Regular.ttf" to "Mono-R.ttf",
-        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Italic.ttf" to "Mono-RI.ttf",
-        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Bold.ttf" to "Mono-B.ttf",
-        "JetBrainsMono-1.0.3/ttf/JetBrainsMono-Bold-Italic.ttf" to "Mono-BI.ttf",
+        "fonts/ttf/JetBrainsMono-Regular.ttf" to "Mono-R.ttf",
+        "fonts/ttf/JetBrainsMono-Italic.ttf" to "Mono-RI.ttf",
+        "fonts/ttf/JetBrainsMono-Bold.ttf" to "Mono-B.ttf",
+        "fonts/ttf/JetBrainsMono-BoldItalic.ttf" to "Mono-BI.ttf",
       ),
     )
   }
