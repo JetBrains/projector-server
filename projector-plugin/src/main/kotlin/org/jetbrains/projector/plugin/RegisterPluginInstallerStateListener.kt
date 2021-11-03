@@ -30,9 +30,6 @@ import com.intellij.ide.plugins.PluginStateListener
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import org.jetbrains.projector.plugin.ui.installProjectorWidgetIfRequired
-import org.jetbrains.projector.plugin.ui.removeProjectorWidgetIfRequired
-
 
 class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
 
@@ -41,7 +38,6 @@ class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
       override fun install(descriptor: IdeaPluginDescriptor) {}
 
       override fun uninstall(descriptor: IdeaPluginDescriptor) {
-        removeProjectorWidgetIfRequired(project)
         ProjectorInstallStateKeeper.getInstance().removeFirstRunMark()
         ProjectorService.autostart = false
 
@@ -51,7 +47,6 @@ class RegisterPluginInstallerStateListener : StartupActivity, DumbAware {
       }
     })
 
-    installProjectorWidgetIfRequired(project)
     ProjectorService.autostartIfRequired()
   }
 }

@@ -26,7 +26,7 @@
   <name>Projector</name>
   <vendor email="support@jetbrains.org" url="https://www.jetbrains.org">JetBrains</vendor>
 
-  <idea-version since-build="193"/>
+  <idea-version since-build="201"/>
 
   <description><![CDATA[
     <p>Share the IDE window using the <a href="https://github.com/JetBrains/projector-server">Projector server</a>.</p>
@@ -51,17 +51,14 @@
   </extensions>
 
   <actions>
-    <group id="projector.menu" class="org.jetbrains.projector.plugin.actions.ProjectorActionGroup"  text="Projector" description="Projector menu">
-      <add-to-group group-id="MainMenu" anchor="last"/>
-      <action id="projector.enable" class="org.jetbrains.projector.plugin.actions.EnableAction" text="Start Remote Access to IDE" description="Enable projector"/>
-      <action id="projector.disable" class="org.jetbrains.projector.plugin.actions.DisableAction" text="Stop Remote Access to IDE" description="Disable projector"/>
-      <action id="projector.session" class="org.jetbrains.projector.plugin.actions.SessionAction" text="Current Session" description="Current session parameters"/>
-      <action id="projector.activate" class="org.jetbrains.projector.plugin.actions.ActivateAction" text="Activate Remote Access to IDE (First Time Setup)"
-              description="Activate projector"/>
-      <action id="projector.starting" class="org.jetbrains.projector.plugin.actions.WaitForStartAction" text="Projector Is Starting ..."
-              description="Waiting for Projector start"/>
-      <action id="projector.headless" class="org.jetbrains.projector.plugin.actions.HeadlessProjectorAction" text= "Headless Projector Detected. Plugin Is Disabled"
-              description="Plugin is disabled"/>
-    </group>
+    <action id="projector.enable" class="org.jetbrains.projector.plugin.actions.EnableAction" text="Start Remote Access to IDE" description="Enable projector"/>
+    <action id="projector.disable" class="org.jetbrains.projector.plugin.actions.DisableAction" text="Stop Remote Access to IDE" description="Disable projector"/>
+    <action id="projector.session" class="org.jetbrains.projector.plugin.actions.SessionAction" text="Current Session" description="Current session parameters"/>
+    <action id="projector.activate" class="org.jetbrains.projector.plugin.actions.ActivateAction" text="Activate Remote Access to IDE (First Time Setup)"
+            description="Activate projector"/>
+    <action id="projector.starting" class="org.jetbrains.projector.plugin.actions.WaitForStartAction" text="Projector Is Starting ..."
+            description="Waiting for Projector start"/>
+    <action id="projector.headless" class="org.jetbrains.projector.plugin.actions.HeadlessProjectorAction" text= "Headless Projector Detected. Plugin Is Disabled"
+            description="Plugin is disabled"/>
   </actions>
 </idea-plugin>

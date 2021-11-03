@@ -2,6 +2,11 @@
 
 Notable changes to this project are documented in this file.
 
+# Unreleased
+
+## Updated
+- PRJ-717 Support for platform 193 dropped
+
 # 1.8.0
 
 ## Fixed

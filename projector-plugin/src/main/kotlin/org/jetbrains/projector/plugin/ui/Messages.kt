@@ -29,19 +29,19 @@ import com.intellij.ui.GotItMessage
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
 import org.jetbrains.projector.plugin.ProjectorInstallStateKeeper
+import org.jetbrains.projector.plugin.getIdeStatusBar
 
 
 // This function shows tooltip message above Projector status bar widget.
 // It can fail if widget was not added to status bar yet.
 // Caller can check it, by analyzing return value
 internal fun showMessage(project: Project, header: String, message: String): Boolean {
-  val sb = getStatusBar(project) ?: return false
+  val sb = getIdeStatusBar(project) ?: return false
   val widget = sb.getWidget(ProjectorStatusWidget.ID) ?: return false
 
   if (widget is ProjectorStatusWidget) {
-    val component = widget.getComponent() ?: return false
     val gotItMessage = GotItMessage.createMessage(header, message).setDisposable(widget)
-    gotItMessage.show(RelativePoint.getCenterOf(component), Balloon.Position.above)
+    gotItMessage.show(RelativePoint.getCenterOf(widget.component), Balloon.Position.above)
   }
 
   return true

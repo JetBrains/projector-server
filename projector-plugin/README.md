@@ -13,7 +13,6 @@ restart is needed after installation).
 ## Usage
 
 New widget `Projector` will appear in the toolbar. 
-If toolbar widget can't be installed menu `Projector` will appear next to the `Help` menu.
 
 ### Notifications
 To attract user's attention to something, the plugin can display a notification. A notification can be easily closed by pressing the "Got It" button.
