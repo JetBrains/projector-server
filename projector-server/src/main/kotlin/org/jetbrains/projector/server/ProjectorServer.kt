@@ -69,11 +69,7 @@ import org.jetbrains.projector.util.loading.UseProjectorLoader
 import org.jetbrains.projector.util.logging.Logger
 import org.jetbrains.projector.util.logging.loggerFactory
 import sun.awt.AWTAccessor
-import java.awt.Frame
-import java.awt.GraphicsEnvironment
-import java.awt.Rectangle
-import java.awt.Toolkit
-import java.awt.Window
+import java.awt.*
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 import java.awt.datatransfer.UnsupportedFlavorException
@@ -264,7 +260,13 @@ class ProjectorServer private constructor(
     val clipboardEvent = when (isAgent) {
       false -> PClipboard.extractLastContents()?.toServerClipboardEvent().let(::listOfNotNull)
       true -> {
-        val clipboardEvent = Toolkit.getDefaultToolkit().systemClipboard.getContents(null)?.toServerClipboardEvent()
+        val systemClipboard = Toolkit.getDefaultToolkit().systemClipboard
+        val clipboardEvent = try {
+          systemClipboard.getContents(null)
+        }
+        catch (e: IllegalStateException) {
+          null  // https://youtrack.jetbrains.com/issue/PRJ-744
+        }?.toServerClipboardEvent()
 
         if (isClipboardChanged(clipboardEvent)) {
           lastClipboardEvent = clipboardEvent
