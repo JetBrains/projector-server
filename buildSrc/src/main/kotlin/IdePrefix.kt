@@ -27,6 +27,7 @@ import java.io.File
 
 public fun getIdePrefix(idePath: String): String? {
   val productInfo = File("$idePath/product-info.json")
+  if (!productInfo.exists()) return null
   val jsonRoot = Json.parseToJsonElement(productInfo.readText()) as JsonObject
   val launchConfigs = jsonRoot["launch"] as JsonArray
   val launchConfig = launchConfigs.first() as JsonObject
