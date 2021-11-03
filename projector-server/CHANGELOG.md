@@ -3,6 +3,7 @@
 ## Fixed
 
 - Support mono fonts without "mono" in their names (useful when building Projector with fonts other than JB Mono)
+- PRJ-443 Remove "Allow popups for this site" alert when allowance is not needed
 
 ## Changed
 
