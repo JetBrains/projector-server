@@ -2,6 +2,12 @@
 
 Notable changes to this project are documented in this file.
 
+# Unreleased
+
+## Fixed
+
+- PRJ-744 Get rid of "java.lang.IllegalStateException: cannot open system clipboard" logging
+
 # 1.7.0
 
 ## Fixed
