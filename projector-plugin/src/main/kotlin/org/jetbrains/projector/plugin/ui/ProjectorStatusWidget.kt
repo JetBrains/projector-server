@@ -37,8 +37,6 @@ import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
 import com.intellij.openapi.wm.StatusBarWidgetFactory
-import com.intellij.ui.GotItMessage
-import com.intellij.ui.awt.RelativePoint
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.impl.ProjectFrameHelper
 import com.intellij.util.Consumer
@@ -82,12 +80,6 @@ class ProjectorStatusWidget(private val project: Project, private val myStatusBa
   override fun getPresentation(): WidgetPresentation = this
 
   override fun getIcon() = updateIcon()
-
-  private fun showActivationWarning() {
-    if (isActivationNeeded()) {
-
-    }
-  }
 
   override fun install(statusBar: StatusBar) {
     ProjectorService.subscribe(this)

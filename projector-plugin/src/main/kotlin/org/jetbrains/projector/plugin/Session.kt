@@ -24,8 +24,6 @@
 
 package org.jetbrains.projector.plugin
 
-import com.intellij.openapi.project.Project
-
 class Session(
   host: String,
   port: String,
