@@ -160,8 +160,8 @@ fun migrateTokensToSecureStorage() {
     removeTokensFromXmlStorage()
   }
   catch (e: Exception) {
-    // Something wrong is happened: broken XML, locked file, etc
-    // We can't recover such error - just log it and try migrate tokens next time
+    // Something wrong is happened: broken XML, locked file, etc.
+    // We can't recover such error - just log it and try to migrate tokens next time
     val logger = Logger.getInstance("migrateTokensToSecureStorage")
     logger.warn("Can't migrate tokens to secure storage: $e")
   }
