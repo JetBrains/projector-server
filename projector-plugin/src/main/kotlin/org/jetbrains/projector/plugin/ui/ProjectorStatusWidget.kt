@@ -30,23 +30,19 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import java.beans.PropertyChangeListener
-import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.IconLoader
-import com.intellij.openapi.wm.StatusBar
-import com.intellij.openapi.wm.StatusBarWidget
+import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.StatusBarWidget.WidgetPresentation
-import com.intellij.openapi.wm.StatusBarWidgetFactory
-import com.intellij.openapi.wm.WindowManager
-import com.intellij.openapi.wm.impl.ProjectFrameHelper
-import com.intellij.util.Consumer
+import com.intellij.openapi.wm.impl.status.TextPanel
 import org.jetbrains.projector.plugin.*
 import org.jetbrains.projector.plugin.actions.*
 import org.jetbrains.projector.server.util.isClientsCountMessage
 import org.jetbrains.projector.server.util.isMacLocalConnectionMessage
 import java.awt.Component
+import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
+import java.beans.PropertyChangeListener
 import java.net.InetAddress
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -55,31 +51,29 @@ import javax.swing.SwingUtilities
 
 class ProjectorStatusWidget(private val project: Project, private val myStatusBar: StatusBar?)
   : DumbAware,
-    StatusBarWidget.MultipleTextValuesPresentation,
+    CustomStatusBarWidget,
     StatusBarWidget.Multiframe,
     ProjectorStateListener,
     PropertyChangeListener {
+
+  private val myComponent = TextPanel.WithIconAndArrows().apply {
+    border = StatusBarWidget.WidgetBorder.WIDE
+    addMouseListener(object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent?) {
+        onClick()
+      }
+    })
+  }
 
   private var clients = 0
 
   override fun ID(): String = ID
 
+  override fun getPresentation(): WidgetPresentation? = null
+
   override fun copy(): StatusBarWidget = ProjectorStatusWidget(project, myStatusBar)
 
-  override fun getPopupStep(): ListPopup? {
-    onClick()
-    return null
-  }
-
-  override fun getTooltipText(): String = updateTooltip()
-
-  override fun getClickConsumer(): Consumer<MouseEvent>? = null
-
-  override fun getSelectedValue(): String = updateText()
-
-  override fun getPresentation(): WidgetPresentation = this
-
-  override fun getIcon() = updateIcon()
+  override fun getComponent(): JComponent = myComponent
 
   override fun install(statusBar: StatusBar) {
     ProjectorService.subscribe(this)
@@ -93,6 +87,9 @@ class ProjectorStatusWidget(private val project: Project, private val myStatusBa
   }
 
   fun update() {
+    myComponent.text = updateText()
+    myComponent.icon = updateIcon()
+    myComponent.toolTipText = updateTooltip()
     myStatusBar?.updateWidget(ID())
   }
 
@@ -191,17 +188,6 @@ class ProjectorStatusWidget(private val project: Project, private val myStatusBa
     override fun disposeWidget(widget: StatusBarWidget) = widget.dispose()
 
     override fun canBeEnabledOn(statusBar: StatusBar) = statusBar.getWidget(ID) == null
-  }
-
-  // Note - we are not implementing CustomStatusBarWidget interface!
-  // This method just provides the way to get widget JComponent after add it to
-  // statusBar
-  fun getComponent(): JComponent? {
-    val window = WindowManager.getInstance().suggestParentWindow(project) ?: return null
-    val projectFrameHelper = ProjectFrameHelper.getFrameHelper(window) ?: return null
-    val statusImpl = projectFrameHelper.statusBar ?: return null
-
-    return statusImpl.getWidgetComponent(ID)
   }
 
   companion object {
