@@ -96,6 +96,16 @@ object ProjectorFontProvider : FontProvider {
     ).map(Font2D::toFont)
   }
 
+  private val allMonoFontNames by lazy {
+
+    sequenceOf(
+      monoRegularFont,
+      monoRegularItalicFont,
+      monoBoldFont,
+      monoBoldItalicFont,
+    ).map { it.getFamilyName(null) }.toSet()
+  }
+
   override val installedFonts get() = allInstalledFonts
 
   override val defaultPhysicalFont: PhysicalFont get() = defaultRegularFont
@@ -142,7 +152,7 @@ object ProjectorFontProvider : FontProvider {
   }
 
   private fun isMonospacedFont(name: String): Boolean {
-    return "mono" in name.lowercase() || name.lowercase() == "menlo"
+    return "mono" in name.lowercase() || name.lowercase() == "menlo" || name in allMonoFontNames
   }
 
   private fun createFontFile(fontName: String, fontPath: String): File {
