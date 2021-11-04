@@ -94,8 +94,9 @@ class ProjectorStatusWidget(private val project: Project, private val myStatusBa
   }
 
   override fun stateChanged() {
-    if (isProjectorRunning()) {
-      ProjectorService.addObserver(this)
+    when {
+      isProjectorRunning() -> ProjectorService.addObserver(this)
+      isProjectorStopped() -> ProjectorService.removeObserver(this)
     }
 
     update()
