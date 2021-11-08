@@ -8,6 +8,10 @@ Notable changes to this project are documented in this file.
 
 - PRJ-744 Get rid of "java.lang.IllegalStateException: cannot open system clipboard" logging
 
+## Changed
+
+- Big refactoring of agent internal logic to make it closer to Projector AWT
+
 # 1.7.0
 
 ## Fixed
