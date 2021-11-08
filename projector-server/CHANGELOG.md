@@ -9,6 +9,9 @@
 - Composition symbols are now styled as real symbols before them
 - PRJ-332 Disable IDE restarts. 
 
+## Changed
+- Update JetBrains Mono to v2.242
+
 ## Fixed
 - PRJ-684 Exception when opening markdown files
 - PRJ-679 Fix "Read access is allowed from inside read-action" when getting Editor of diagram's view
