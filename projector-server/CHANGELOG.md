@@ -7,6 +7,7 @@
 - PRJ-226 PRJ-530 Support for displaying markdown preview with plugin versions 203-212
 - Support for displaying markdown preview in headless mode when JavaFX and Jcef are not available
 - Composition symbols are now styled as real symbols before them
+- PRJ-332 Disable IDE restarts. 
 
 ## Fixed
 - PRJ-684 Exception when opening markdown files
