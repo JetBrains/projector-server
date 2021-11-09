@@ -1,4 +1,4 @@
-# Unreleased
+# 1.4.1
 
 ## Added
 - Server forbids Idea platform updates and plugins updates notifications. 
