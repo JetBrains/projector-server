@@ -2,7 +2,7 @@
 
 Notable changes to this project are documented in this file.
 
-# Unreleased
+# 1.7.1
 
 ## Fixed
 
@@ -11,6 +11,10 @@ Notable changes to this project are documented in this file.
 ## Changed
 
 - Big refactoring of agent internal logic to make it closer to Projector AWT
+
+## Updated
+
+- Projector Server v1.4.1.
 
 # 1.7.0
 
