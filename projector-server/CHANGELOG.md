@@ -1,5 +1,9 @@
 # Unreleased
 
+## Added
+
+- PRJ-20 Synchronization between drawing to different surfaces
+
 ## Fixed
 
 - Support mono fonts without "mono" in their names (useful when building Projector with fonts other than JB Mono)
