@@ -2,7 +2,7 @@
 
 Notable changes to this project are documented in this file.
 
-# 1.7.1
+# 1.8.0
 
 ## Fixed
 
