@@ -71,10 +71,10 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
 
   private fun getToggleButtonIcon() = if (isProjectorStopped()) getMenuOpenIcon() else AllIcons.Actions.Exit
 
-  private fun getMenuOpenIcon(): Icon = try { // <= 202  compatibility
+  private fun getMenuOpenIcon(): Icon = try {  // for 2020.3 and later
     AllIcons.Actions.MenuOpen
   }
-  catch (e: NoSuchFieldError) {
+  catch (e: NoSuchFieldError) {  // for < 2020.3
     val field = try {
       AllIcons.Actions::class.java.getField("Menu_open")
     }
