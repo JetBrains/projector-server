@@ -14,7 +14,7 @@ Notable changes to this project are documented in this file.
 
 ## Updated
 
-- Projector Server v1.4.1.
+- Projector Server v1.5.0.
 
 # 1.7.0
 
