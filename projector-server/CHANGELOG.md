@@ -1,4 +1,4 @@
-# 1.4.1
+# 1.5.0
 
 ## Added
 - Server forbids Idea platform updates and plugins updates notifications. 
