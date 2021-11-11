@@ -24,15 +24,10 @@
 
 package org.jetbrains.projector.plugin
 
-import com.intellij.diagnostic.VMOptions
 import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.projector.agent.AgentLauncher
 import org.jetbrains.projector.server.ProjectorServer
 import java.beans.PropertyChangeListener
-import java.io.File
-import java.nio.file.Path
 import javax.swing.JOptionPane
 import javax.swing.SwingUtilities
 
@@ -103,7 +98,6 @@ interface ProjectorStateListener {
 @State(name = "Projector", storages = [Storage(ProjectorConfig.STORAGE_NAME)])
 class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   private var config: ProjectorConfig = ProjectorConfig()
-  private val logger = Logger.getInstance(ProjectorService::class.java)
   private val listeners = arrayListOf<ProjectorStateListener>()
 
   private var currentSession: Session? = null
@@ -137,24 +131,21 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
   fun activate() {
     if (confirmRestart(
         "Before enabling Projector for the first time, some run arguments (VM properties) should be set. Can I set them and restart the IDE now?")) {
-      getVMOptions()?.let { (content, writeFile) ->
-        content
-          .lineSequence()
-          .filterNot { it.startsWith("-Dswing.bufferPerWindow") || it.startsWith("-Djdk.attach.allowAttachSelf") }
-          .plus("-Dswing.bufferPerWindow=false")
-          .plus("-Djdk.attach.allowAttachSelf=true")
-          .joinToString(separator = System.lineSeparator())
-          .let { FileUtil.writeToFile(writeFile, it) }
 
+      try {
+        addRequiredOptions()
         stateChanged()
         restartIde()
-      } ?: SwingUtilities.invokeLater {
-        JOptionPane.showMessageDialog(
-          null,
-          "Can't change VM options. Please see logs to understand the error",
-          "Can't set up...",
-          JOptionPane.ERROR_MESSAGE,
-        )
+      }
+      catch (e: NoSuchMethodError) {
+        SwingUtilities.invokeLater {
+          JOptionPane.showMessageDialog(
+            null,
+            "Unsupported IDEA version. Can't change VM options. Please see logs to understand the error",
+            "Can't set up...",
+            JOptionPane.ERROR_MESSAGE,
+          )
+        }
       }
     }
   }
@@ -175,38 +166,6 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     }
     enabled = EnabledState.HAS_VM_OPTIONS_AND_ENABLED
     stateChanged()
-  }
-
-  private fun getVMOptions(): Pair<String, File>? {
-    fun getVMOptionsWriteFile(): File? = try { // for 2020.3 and later
-      val path: Path? = VMOptions.getWriteFile()
-      path?.toUri()?.let(::File)
-    }
-    catch (e: NoSuchMethodError) { // for < 2020.3
-      val writeFileMethod = VMOptions::class.java.getMethod("getWriteFile")
-      writeFileMethod.invoke(null) as File?
-    }
-
-    val writeFile = getVMOptionsWriteFile()
-    if (writeFile == null) {
-      logger.warn("VM options file not configured")
-      return null
-    }
-
-    val templateFile = VMOptions.read()
-    if (templateFile == null) {
-      logger.warn("VM options file not configured")
-      return null
-    }
-
-    val s = if (writeFile.exists()) {
-      writeFile.readText()
-    }
-    else {
-      templateFile
-    }
-
-    return Pair(s, writeFile)
   }
 
   companion object {
