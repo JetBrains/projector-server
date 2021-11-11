@@ -1,3 +1,9 @@
+# Unreleased
+
+## Fixed
+
+- Support mono fonts without "mono" in their names (useful when building Projector with fonts other than JB Mono)
+
 # 1.5.0
 
 ## Added
