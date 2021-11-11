@@ -27,6 +27,7 @@ package org.jetbrains.projector.plugin
 import com.intellij.credentialStore.CredentialAttributes
 import com.intellij.credentialStore.Credentials
 import com.intellij.credentialStore.generateServiceName
+import com.intellij.diagnostic.VMOptions
 import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.openapi.application.ApplicationInfo
@@ -87,9 +88,27 @@ private fun parseVersions(content: String): Map<String, String> {
 
 fun isHeadlessProjectorDetected() = Toolkit.getDefaultToolkit()::class.toString() == PToolkit::class.toString()
 
+const val BUFFER_PER_WINDOW_OPTION = "swing.bufferPerWindow"
+const val ALLOW_ATTACH_SELF_OPTION = "jdk.attach.allowAttachSelf"
+
 fun areRequiredVmOptionsPresented(): Boolean {
-  return System.getProperty("swing.bufferPerWindow")?.toBoolean() == false &&
-         System.getProperty("jdk.attach.allowAttachSelf")?.toBoolean() == true
+  return System.getProperty(BUFFER_PER_WINDOW_OPTION)?.toBoolean() == false &&
+         System.getProperty(ALLOW_ATTACH_SELF_OPTION)?.toBoolean() == true
+}
+
+fun addRequiredOptions() {
+  try { // // for 2021.3 and later
+    VMOptions.setProperty(BUFFER_PER_WINDOW_OPTION, "false")
+    VMOptions.setProperty(ALLOW_ATTACH_SELF_OPTION, "true")
+  }
+  catch (e: NoSuchMethodError) { // for < 2021.3
+    val method = VMOptions::class.java.getMethod("writeOption",
+                                                 String::class.java,
+                                                 String::class.java,
+                                                 String::class.java)
+    method.invoke(null, BUFFER_PER_WINDOW_OPTION, "=", "false")
+    method.invoke(null, ALLOW_ATTACH_SELF_OPTION, "=", "true")
+  }
 }
 
 fun setSystemProperty(name: String, value: String?) {

@@ -38,7 +38,7 @@ dependencies {
 }
 
 intellij {
-  version.set("2021.2")
+  version.set("213-EAP-SNAPSHOT")
   updateSinceUntilBuild.set(false)
 }
 
