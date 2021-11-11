@@ -4,6 +4,10 @@
 
 - Support mono fonts without "mono" in their names (useful when building Projector with fonts other than JB Mono)
 
+## Changed
+
+- Remove green decoration of the web browser
+
 # 1.5.0
 
 ## Added
