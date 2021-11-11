@@ -24,7 +24,10 @@
 
 package org.jetbrains.projector.plugin
 
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import org.jetbrains.projector.agent.AgentLauncher
 import org.jetbrains.projector.server.ProjectorServer
 import java.beans.PropertyChangeListener
@@ -137,7 +140,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
         stateChanged()
         restartIde()
       }
-      catch (e: NoSuchMethodError) {
+      catch (e: NoSuchMethodException) {
         SwingUtilities.invokeLater {
           JOptionPane.showMessageDialog(
             null,
