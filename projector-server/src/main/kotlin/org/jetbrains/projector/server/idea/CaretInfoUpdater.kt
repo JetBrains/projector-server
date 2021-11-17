@@ -39,11 +39,12 @@ import org.jetbrains.projector.common.protocol.data.CommonRectangle
 import org.jetbrains.projector.common.protocol.data.Point
 import org.jetbrains.projector.common.protocol.toClient.ServerCaretInfoChangedEvent
 import org.jetbrains.projector.common.protocol.toClient.data.idea.CaretInfo
-import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
+import org.jetbrains.projector.util.loading.state.invokeWhenIdeaIsAtState
 import org.jetbrains.projector.server.platform.getTextAttributesCompat
 import org.jetbrains.projector.server.platform.readAction
 import org.jetbrains.projector.server.util.FontCacher
 import org.jetbrains.projector.util.loading.UseProjectorLoader
+import org.jetbrains.projector.util.loading.state.IdeaState
 import org.jetbrains.projector.util.logging.Logger
 import sun.awt.AWTAccessor
 import java.awt.Component
@@ -263,7 +264,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
   }
 
   fun start() {
-    invokeWhenIdeaIsInitialized("search for editors") {
+    invokeWhenIdeaIsAtState("search for editors", IdeaState.COMPONENTS_LOADED) {
       thread = thread(isDaemon = true) {
         while (!Thread.currentThread().isInterrupted) {
           try {

@@ -27,12 +27,12 @@ package org.jetbrains.projector.server.idea
 
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.impl.NotificationsConfigurationImpl
-import org.jetbrains.projector.server.core.ij.invokeWhenIdeaIsInitialized
+import org.jetbrains.projector.util.loading.state.invokeWhenIdeaIsAtState
 import org.jetbrains.projector.util.loading.UseProjectorLoader
 
 fun forbidUpdates() {
   forbidPlatformUpdates()
-  invokeWhenIdeaIsInitialized("Forbid platform updates and plugin update notifications") {
+  invokeWhenIdeaIsAtState("Forbid platform updates and plugin update notifications") {
     forbidPluginsUpdatesNotifications()
   }
 }
