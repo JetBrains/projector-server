@@ -23,8 +23,8 @@
  */
 package org.jetbrains.projector.server
 
-import org.jetbrains.projector.server.core.classloader.ProjectorClassLoaderSetup
 import org.jetbrains.projector.server.service.ProjectorFontProvider
+import org.jetbrains.projector.util.loading.ProjectorClassLoaderSetup
 import org.jetbrains.projector.util.loading.UseProjectorLoader
 import org.jetbrains.projector.util.loading.unprotect
 import java.lang.reflect.Method

@@ -26,7 +26,7 @@ package org.jetbrains.projector.agent
 
 import javassist.ClassPool
 import javassist.LoaderClassPath
-import org.jetbrains.projector.server.core.classloader.ProjectorClassLoaderSetup
+import org.jetbrains.projector.util.loading.ProjectorClassLoaderSetup
 import org.jetbrains.projector.util.loading.UseProjectorLoader
 import org.jetbrains.projector.util.loading.unprotect
 import org.jetbrains.projector.util.logging.Logger
