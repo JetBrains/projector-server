@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, JetBrains s.r.o. and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,33 +21,38 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+package org.jetbrains.projector.plugin.ui
 
-package org.jetbrains.projector.plugin
+import org.jetbrains.projector.server.ProjectorServer
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.JTextField
 
-class Session(
-  secureConnection: Boolean,
-  host: String,
-  port: String,
-  rwToken: String,
-  roToken: String,
-  confirmConnection: Boolean,
-  autostart: Boolean,
-) {
-  var secureConnection by ProjectorService.Companion::secureConnection
-  var host by ProjectorService.Companion::host
-  var port by ProjectorService.Companion::port
-  var rwToken by ProjectorService.Companion::rwToken
-  var roToken by ProjectorService.Companion::roToken
-  var confirmConnection by ProjectorService.Companion::confirmConnection
-  var autostart by ProjectorService.Companion::autostart
+internal class PortEditor(portValue: String) : JPanel() {
+  private val title = JLabel("Port:")
+  private val port: JTextField = JTextField(4).apply {
+    text = portValue.takeIf(String::isNotEmpty) ?: ProjectorServer.getEnvPort().toString()
+
+    addKeyListener(object : KeyAdapter() {
+      override fun keyReleased(e: KeyEvent) {
+        onChange?.invoke()
+      }
+    })
+  }
 
   init {
-    ProjectorService.secureConnection = secureConnection
-    ProjectorService.host = host
-    ProjectorService.port = port
-    ProjectorService.rwToken = rwToken
-    ProjectorService.roToken = roToken
-    ProjectorService.confirmConnection = confirmConnection
-    ProjectorService.autostart = autostart
+    LinearPanelBuilder(this)
+      .addNextComponent(title, gridWidth = 2)
+      .addNextComponent(port)
+  }
+
+  var onChange: (() -> Unit)? = null
+  val value get() = port.text ?: ""
+
+  override fun setEnabled(enabled: Boolean) {
+    super.setEnabled(enabled)
+    port.isEnabled = enabled
   }
 }

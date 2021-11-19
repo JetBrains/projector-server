@@ -4,6 +4,9 @@ Notable changes to this project are documented in this file.
 
 # 1.9.0
 
+## Added
+- HTTPs support
+
 ## Updated
 - PRJ-717 Support for platform 193 dropped
 - Projector Server v1.6.0

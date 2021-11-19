@@ -29,11 +29,10 @@ import javax.swing.JOptionPane
 
 class ConfirmConnection private constructor(private val accessType: String)
   : JLabel(), ResolvedHostSubscriber {
-  private val resolver = AsyncHostResolver()
 
   constructor(ip: InetAddress?, accessType: String) : this(accessType) {
     text = if (ip != null) {
-      resolver.resolve(this, ip)
+      AsyncHostResolver.resolve(this, ip)
       getMessage(ip.hostAddress)
     }
     else {

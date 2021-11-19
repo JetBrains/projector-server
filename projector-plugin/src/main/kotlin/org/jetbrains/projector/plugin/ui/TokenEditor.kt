@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, JetBrains s.r.o. and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,33 +21,41 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+package org.jetbrains.projector.plugin.ui
 
-package org.jetbrains.projector.plugin
+import com.intellij.icons.AllIcons
+import org.jetbrains.projector.plugin.RANDOM_PASSWORD_LEN
+import org.jetbrains.projector.plugin.generatePassword
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
+import javax.swing.JButton
+import javax.swing.JLabel
+import javax.swing.JTextField
 
-class Session(
-  secureConnection: Boolean,
-  host: String,
-  port: String,
-  rwToken: String,
-  roToken: String,
-  confirmConnection: Boolean,
-  autostart: Boolean,
-) {
-  var secureConnection by ProjectorService.Companion::secureConnection
-  var host by ProjectorService.Companion::host
-  var port by ProjectorService.Companion::port
-  var rwToken by ProjectorService.Companion::rwToken
-  var roToken by ProjectorService.Companion::roToken
-  var confirmConnection by ProjectorService.Companion::confirmConnection
-  var autostart by ProjectorService.Companion::autostart
-
-  init {
-    ProjectorService.secureConnection = secureConnection
-    ProjectorService.host = host
-    ProjectorService.port = port
-    ProjectorService.rwToken = rwToken
-    ProjectorService.roToken = roToken
-    ProjectorService.confirmConnection = confirmConnection
-    ProjectorService.autostart = autostart
+internal class TokenEditor(title: String, token: String?) {
+  val label = JLabel(title)
+  val tokenTextField: JTextField = JTextField(token ?: generatePassword()).apply {
+    columns = RANDOM_PASSWORD_LEN
+    addKeyListener(object : KeyAdapter() {
+      override fun keyReleased(e: KeyEvent) {
+        onChange?.invoke()
+      }
+    })
   }
+
+  val refreshButton = JButton(AllIcons.Actions.Refresh).apply {
+    toolTipText = "Generate random password"
+    addActionListener {
+      tokenTextField.text = generatePassword()
+      onChange?.invoke()
+    }
+  }
+
+  var onChange: (() -> Unit)? = null
+
+  var token: String
+    get() = tokenTextField.text
+    set(value) {
+      tokenTextField.text = value
+    }
 }

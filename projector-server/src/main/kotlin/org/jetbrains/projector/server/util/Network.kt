@@ -25,6 +25,7 @@ package org.jetbrains.projector.server.util
 
 import com.intellij.util.io.toByteArray
 import java.net.Inet4Address
+import java.net.InetAddress
 import java.net.InterfaceAddress
 import java.net.NetworkInterface
 import java.nio.ByteBuffer
@@ -42,6 +43,10 @@ fun getLocalAddresses(keepIpv6: Boolean = false): List<InterfaceAddress> = Netwo
   .flatMap { it.interfaceAddresses?.asSequence()?.filterNotNull() ?: emptySequence() }
   .filter { keepIpv6 || it.address is Inet4Address }
   .toList()
+
+val LOCAL_ADDRESSES = getLocalAddresses()
+
+fun getHostsList(toHost: (ip: InetAddress) -> Host): List<Host> = LOCAL_ADDRESSES.map { toHost(it.address) }
 
 fun ipString2Bytes(src: String): ByteArray {
   return when {
