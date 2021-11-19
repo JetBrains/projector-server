@@ -1,0 +1,63 @@
+/*
+ * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
+ * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+ *
+ * This code is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License version 2 only, as
+ * published by the Free Software Foundation. JetBrains designates this
+ * particular file as subject to the "Classpath" exception as provided
+ * by Oracle in the LICENSE file that accompanied this code.
+ *
+ * This code is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License
+ * version 2 for more details (a copy is included in the LICENSE file that
+ * accompanied this code).
+ *
+ * You should have received a copy of the GNU General Public License version
+ * 2 along with this work; if not, write to the Free Software Foundation,
+ * Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+ *
+ * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
+ * if you need additional information or have any questions.
+ */
+package org.jetbrains.projector.plugin
+
+import com.intellij.openapi.options.Configurable
+import org.jetbrains.projector.plugin.ui.ProjectorSettingsComponent
+import javax.swing.JComponent
+
+class ProjectorSettingsConfigurable : Configurable {
+  val component = ProjectorSettingsComponent()
+
+  override fun getDisplayName() = "Projector Configuration Parameters"
+
+  override fun createComponent(): JComponent = component.getPanel()
+
+  override fun isModified(): Boolean {
+    var ret = false
+    with(ProjectorService.instance.config) {
+      ret = ret || secureConnection != component.secureConnection
+      ret = ret || host != component.host
+      ret = ret || port != component.port
+      ret = ret || confirmConnection != component.confirmConnection
+      ret = ret || autostart != component.autostart
+      ret = ret || rwToken != component.rwToken
+      ret = ret || roToken != component.roToken
+    }
+
+    return ret
+  }
+
+  override fun apply() {
+    with(ProjectorService.instance.config) {
+      secureConnection = component.secureConnection
+      host = component.host
+      port = component.port
+      confirmConnection = component.confirmConnection
+      autostart = component.autostart
+      rwToken = component.rwToken
+      roToken = component.roToken
+    }
+  }
+}

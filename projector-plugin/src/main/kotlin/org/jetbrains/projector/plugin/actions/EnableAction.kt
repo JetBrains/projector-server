@@ -43,7 +43,8 @@ class EnableAction : DumbAwareAction() {
     sessionDialog.show()
 
     if (sessionDialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
-      ProjectorService.enable(Session(sessionDialog.listenAddress,
+      ProjectorService.enable(Session(sessionDialog.useSecureConnection,
+                                      sessionDialog.listenAddress,
                                       sessionDialog.listenPort,
                                       sessionDialog.rwToken,
                                       sessionDialog.roToken,

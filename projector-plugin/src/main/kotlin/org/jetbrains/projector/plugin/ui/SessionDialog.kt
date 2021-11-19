@@ -25,37 +25,34 @@
 package org.jetbrains.projector.plugin.ui
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.ui.components.Link
 import org.jetbrains.projector.plugin.ProjectorService
+import org.jetbrains.projector.plugin.ProjectorSettingsConfigurable
 import org.jetbrains.projector.plugin.isProjectorStopped
 import org.jetbrains.projector.plugin.productName
-import org.jetbrains.projector.server.ProjectorServer
-import org.jetbrains.projector.server.util.AsyncHostResolver
-import org.jetbrains.projector.server.util.Host
-import org.jetbrains.projector.server.util.ResolvedHostSubscriber
-import org.jetbrains.projector.server.util.getLocalAddresses
+import org.jetbrains.projector.server.util.*
+import org.jetbrains.projector.server.util.getHostsList
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
-import java.awt.event.KeyAdapter
-import java.awt.event.KeyEvent
-import java.net.InetAddress
 import javax.swing.*
-import kotlin.random.Random
 
 class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val description = JLabel()
-  private val resolver: AsyncHostResolver = AsyncHostResolver()
   private val myHostsList: HostsList = HostsList("Host:", ProjectorService.host)
-  private val urlHostsList = HostsList("URL: ", null)
-  private val connectionPanel = ConnectionPanel(resolver)
+  private val urlHostsList = HostsList("URL: ", "")
   private val portEditor = PortEditor(ProjectorService.port)
-  private val rwTokenEditor = TokenEditor("Password for read-write access:",
-                                          ProjectorService.rwToken ?: generatePassword())
-  private val roTokenEditor = TokenEditor("Password for read-only  access:",
-                                          ProjectorService.roToken ?: generatePassword())
+  private val rwTokenEditor = TokenEditor("Password for read-write access:", ProjectorService.rwToken)
+  private val roTokenEditor = TokenEditor("Password for read-only  access:", ProjectorService.roToken)
   private val requireConnectConfirmation: JCheckBox = JCheckBox("Require connection confirmation", ProjectorService.confirmConnection)
+  private val secureConnection: JCheckBox = JCheckBox("Use HTTPS", ProjectorService.secureConnection).apply {
+    addActionListener {
+      updateInvitationLinks()
+    }
+  }
   private val autostartProjector: JCheckBox = JCheckBox("Start Projector automatically when ${productName()} starts",
                                                         ProjectorService.autostart)
   private val rwInvitationLink = InvitationLink("Read/Write Link:")
@@ -68,6 +65,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   val confirmConnection: Boolean get() = requireConnectConfirmation.isSelected
   val autostart: Boolean get() = autostartProjector.isSelected
   private val urlAddress: String get() = urlHostsList.selected?.address ?: ""
+  val useSecureConnection: Boolean get() = secureConnection.isSelected
 
   init {
 
@@ -78,6 +76,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
       portEditor.isEnabled = false
       myHostsList.isEnabled = false
+      secureConnection.isEnabled = false
     }
     else {
       title = "Start Remote Access to IDE"
@@ -93,7 +92,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     updateURLList()
     updateInvitationLinks()
-    setResizable(false)
+    isResizable = false
     init()
   }
 
@@ -117,6 +116,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .addNextComponent(roTokenEditor.refreshButton, gridWidth = 1)
 
       .startNextLine().addNextComponent(requireConnectConfirmation, topGap = 5, bottomGap = 5)
+      .startNextLine().addNextComponent(secureConnection, topGap = 5, bottomGap = 5)
 
       .startNextLine()
       .addNextComponent(autostartProjector, topGap = 5, bottomGap = 5)
@@ -131,18 +131,26 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .startNextLine().addNextComponent(roInvitationLink, gridWidth = 7)
       .addNextComponent(roInvitationLink.copyButton, gridWidth = 1)
 
-      .startNextLine().addNextComponent(connectionPanel, gridWidth = 8)
+      .startNextLine().addNextComponent(ConnectionPanel(), gridWidth = 8)
+      .startNextLine().addNextComponent(Link("Settings") { openSettings() })
+
 
     return panel
   }
 
+  private fun openSettings() {
+    val project = ProjectManager.getInstance().defaultProject
+    ShowSettingsUtil.getInstance().editConfigurable(project, ProjectorSettingsConfigurable())
+  }
+
   private fun updateInvitationLinks() {
-    rwInvitationLink.update(urlAddress, listenPort, rwTokenEditor.token)
-    roInvitationLink.update(urlAddress, listenPort, roTokenEditor.token)
+    val scheme = if (useSecureConnection) "https" else "http"
+    rwInvitationLink.update(scheme, urlAddress, listenPort, rwTokenEditor.token)
+    roInvitationLink.update(scheme, urlAddress, listenPort, roTokenEditor.token)
   }
 
   fun cancelResolverRequests() {
-    resolver.cancelPendingRequests()
+    AsyncHostResolver.cancelPendingRequests()
   }
 
   private fun updateURLList() {
@@ -152,7 +160,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       host == ALL_HOSTS -> {
         urlHostsList.tooltip = null
         val oldValue = urlHostsList.selected
-        val hostList = getHostList { ip -> resolver.resolve(urlHostsList, ip) }
+        val hostList = getHostsList { ip -> AsyncHostResolver.resolve(urlHostsList, ip) }
         urlHostsList.setItems(hostList)
         urlHostsList.selected = oldValue
         urlHostsList.isEnabled = hostList.size > 1
@@ -162,8 +170,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         urlHostsList.setItems(listOf(host))
         urlHostsList.selected = host
         urlHostsList.isEnabled = false
-        resolver.resolve(myHostsList, host.address)
-        resolver.resolve(urlHostsList, host.address)
+        AsyncHostResolver.resolve(myHostsList, host.address)
+        AsyncHostResolver.resolve(urlHostsList, host.address)
       }
       else -> {
         urlHostsList.tooltip = null
@@ -203,145 +211,8 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
         .addNextComponent(link)
     }
 
-
-    fun update(host: String, port: String, token: String?) {
-      link.text = "http://${host}:${port}" + if (token.isNullOrEmpty()) "" else "/?token=${token}"
+    fun update(scheme: String, host: String, port: String, token: String?) {
+      link.text = "${scheme}://${host}:${port}" + if (token.isNullOrEmpty()) "" else "/?token=${token}"
     }
-  }
-
-  private class TokenEditor(title: String, token: String) {
-    val label = JLabel(title)
-    val tokenTextField: JTextField = JTextField(token).apply {
-      columns = RANDOM_PASSWORD_LEN
-      addKeyListener(object : KeyAdapter() {
-        override fun keyReleased(e: KeyEvent) {
-          onChange?.invoke()
-        }
-      })
-    }
-
-    val refreshButton = JButton(AllIcons.Actions.Refresh).apply {
-      toolTipText = "Generate random password"
-      addActionListener {
-        tokenTextField.text = generatePassword()
-        onChange?.invoke()
-      }
-    }
-
-    var onChange: (() -> Unit)? = null
-
-    var token: String
-      get() = tokenTextField.text
-      set(value) {
-        tokenTextField.text = value
-      }
-  }
-
-  private inner class HostsList(label: String, selectedHost: String?) : JPanel(), ResolvedHostSubscriber {
-    private val title = JLabel(label)
-    private val hosts: JComboBox<Host> = ComboBox<Host>().apply {
-      val hosts = listOf(ALL_HOSTS) + getHostList { ip -> resolver.resolve(this@HostsList, ip) }
-
-      hosts.forEach(::addItem)
-      selectedHost?.let { selectedHost ->
-        selectedItem = hosts.find { it.address == selectedHost }
-      }
-
-      maximumRowCount = MAX_HOSTS_ROW_COUNT
-
-      addActionListener { onChange?.invoke() }
-    }
-
-    fun clear() = hosts.removeAllItems()
-
-    fun addItems(values: List<Host>) = values.forEach { hosts.addItem(it) }
-
-    fun setItems(values: List<Host>) {
-      clear()
-      addItems(values)
-    }
-
-    init {
-      hosts.prototypeDisplayValue = Host("255.255.255.255", "long.host.name.com")
-      LinearPanelBuilder(this)
-        .addNextComponent(title)
-        .addNextComponent(hosts)
-    }
-
-    var onChange: (() -> Unit)? = null
-
-    var selected
-      get() = hosts.selectedItem as? Host
-      set(value) {
-        hosts.selectedItem = value
-      }
-
-    override fun setEnabled(enabled: Boolean) {
-      super.setEnabled(enabled)
-      hosts.isEnabled = enabled
-    }
-
-    var tooltip: String?
-      get() = hosts.toolTipText
-      set(value) {
-        hosts.toolTipText = value
-      }
-
-    override fun resolved(host: Host) {
-      val oldSelection = hosts.selectedIndex
-      for (i in 1 until hosts.itemCount) {
-        val item = hosts.getItemAt(i)
-        if (item.address == host.address) {
-          hosts.removeItemAt(i)
-          hosts.insertItemAt(host, i)
-        }
-      }
-
-      hosts.selectedIndex = oldSelection
-    }
-  }
-
-  private class PortEditor(portValue: String?) : JPanel() {
-    private val title = JLabel("Port:")
-    private val port: JTextField = JTextField().apply {
-      text = portValue?.takeIf(String::isNotEmpty) ?: ProjectorServer.getEnvPort().toString()
-
-      addKeyListener(object : KeyAdapter() {
-        override fun keyReleased(e: KeyEvent) {
-          onChange?.invoke()
-        }
-      })
-    }
-
-    init {
-      LinearPanelBuilder(this)
-        .addNextComponent(title, gridWidth = 2)
-        .addNextComponent(port)
-    }
-
-    var onChange: (() -> Unit)? = null
-    val value get() = port.text ?: ""
-
-    override fun setEnabled(enabled: Boolean) {
-      super.setEnabled(enabled)
-      port.isEnabled = enabled
-    }
-  }
-
-  companion object {
-    private val ALL_HOSTS = Host("0.0.0.0", "all addresses")
-    private val LOCAL_ADDRESSES = getLocalAddresses()
-    private const val MAX_HOSTS_ROW_COUNT = 15
-    private const val RANDOM_PASSWORD_LEN = 11
-
-    private fun generatePassword(): String {
-      val charPool: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
-      return (1..RANDOM_PASSWORD_LEN)
-        .map { Random.nextInt(0, charPool.size) }
-        .map(charPool::get)
-        .joinToString("")
-    }
-
-    private fun getHostList(toHost: (ip: InetAddress) -> Host) : List<Host> = LOCAL_ADDRESSES.map { toHost(it.address) }
   }
 }

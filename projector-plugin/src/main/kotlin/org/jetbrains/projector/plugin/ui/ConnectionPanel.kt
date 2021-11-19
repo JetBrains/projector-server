@@ -38,9 +38,9 @@ import java.beans.PropertyChangeListener
 import javax.swing.*
 import javax.swing.table.DefaultTableModel
 
-class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
-                                                                 ResolvedHostSubscriber,
-                                                                 PropertyChangeListener {
+class ConnectionPanel : JPanel(),
+                        ResolvedHostSubscriber,
+                        PropertyChangeListener {
   private val title = JLabel("Current connections:")
   private val disconnectButton = JButton("Disconnect Selected", AllIcons.Actions.Close).apply {
     addActionListener {
@@ -130,7 +130,7 @@ class ConnectionPanel(private val resolver: AsyncHostResolver) : JPanel(),
 
     for (i in 0 until model.rowCount) {
       val addr = model.getValueAt(i, 0).toString()
-      val host = resolver.resolve(this, addr)
+      val host = AsyncHostResolver.resolve(this, addr)
       model.setValueAt(host.name, i, 1)
     }
   }

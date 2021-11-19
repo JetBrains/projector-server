@@ -49,11 +49,13 @@ class Host(val address: String, name: String) {
   }
 }
 
+val ALL_HOSTS = Host("0.0.0.0", "all addresses")
+
 interface ResolvedHostSubscriber {
   fun resolved(host: Host)
 }
 
-class AsyncHostResolver {
+object AsyncHostResolver {
   class Request(val client: ResolvedHostSubscriber, val ip: InetAddress)
 
   private val address2Name = Collections.synchronizedMap(HashMap<InetAddress, String>())

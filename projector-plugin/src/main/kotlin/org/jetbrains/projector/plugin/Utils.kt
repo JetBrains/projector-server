@@ -53,6 +53,7 @@ import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
+import kotlin.random.Random
 
 fun productName(): String = ApplicationInfo.getInstance().versionName
 
@@ -161,15 +162,25 @@ private const val SUBSYSTEM = "PROJECTOR_SERVICE_CONFIG"
 const val PROJECTOR_RW_TOKEN_KEY = "PROJECTOR_RW_TOKEN"
 const val PROJECTOR_RO_TOKEN_KEY = "PROJECTOR_RO_TOKEN"
 
-fun loadToken(key: String): String? {
+fun safeLoad(key: String): String? {
   val credentialAttributes = createCredentialAttributes(key)
   return PasswordSafe.instance.getPassword(credentialAttributes)
 }
 
-fun storeToken(key: String, value: String?) {
+fun safeStore(key: String, value: String?) {
   val attributes = createCredentialAttributes(key)
   val credentials = Credentials(user = key, password = value)
   PasswordSafe.instance.set(attributes, credentials)
+}
+
+const val RANDOM_PASSWORD_LEN = 11
+
+fun generatePassword(): String {
+  val charPool: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+  return (1..RANDOM_PASSWORD_LEN)
+    .map { Random.nextInt(0, charPool.size) }
+    .map(charPool::get)
+    .joinToString("")
 }
 
 fun migrateTokensToSecureStorage() {
@@ -244,7 +255,7 @@ private fun removeTokensFromXmlStorage() {
 private fun copyTokenToSecureStorage(key: String, tokenName: String) {
   val token = loadTokenFromXmlStorage(tokenName)
   token?.let {
-    storeToken(key, it)
+    safeStore(key, it)
   }
 }
 

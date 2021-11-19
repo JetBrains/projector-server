@@ -48,6 +48,9 @@
     <applicationService serviceImplementation="org.jetbrains.projector.plugin.ProjectorService"/>
     <postStartupActivity implementation="org.jetbrains.projector.plugin.RegisterPluginInstallerStateListener"/>
     <statusBarWidgetFactory implementation="org.jetbrains.projector.plugin.ui.ProjectorStatusWidget$Factory"/>
+    <applicationConfigurable parentId="tools" instance="org.jetbrains.projector.plugin.ProjectorSettingsConfigurable"
+                             id="org.jetbrains.projector.plugin.ProjectorSettingsConfigurable"
+                             displayName="Projector Settings"/>
   </extensions>
 
   <actions>
