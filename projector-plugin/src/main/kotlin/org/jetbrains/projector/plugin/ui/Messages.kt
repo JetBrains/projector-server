@@ -43,15 +43,12 @@ internal fun showMessage(project: Project, header: String, message: String): Boo
   if (widget is ProjectorStatusWidget) {
     val gotItMessage = GotItMessage.createMessage(header, message).setDisposable(widget)
 
-    with(widget.component) {
-      gotItMessage.show(
-        object : PositionTracker<Balloon?>(this) {
-          override fun recalculateLocation(baloon: Balloon): RelativePoint {
-            return RelativePoint.getCenterOf(this@with)
-          }
-        },
-        Balloon.Position.above)
-    }
+    gotItMessage.show(
+      object : PositionTracker<Balloon?>(widget.component) {
+        override fun recalculateLocation(baloon: Balloon) = RelativePoint.getCenterOf(widget.component)
+      },
+      Balloon.Position.above,
+    )
 
   }
 
