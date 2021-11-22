@@ -28,8 +28,10 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.ui.GotItMessage
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.util.Alarm
+import com.intellij.util.ui.PositionTracker
 import org.jetbrains.projector.plugin.ProjectorInstallStateKeeper
 import org.jetbrains.projector.plugin.getIdeStatusBar
+import java.awt.Point
 
 
 // This function shows tooltip message above Projector status bar widget.
@@ -41,7 +43,18 @@ internal fun showMessage(project: Project, header: String, message: String): Boo
 
   if (widget is ProjectorStatusWidget) {
     val gotItMessage = GotItMessage.createMessage(header, message).setDisposable(widget)
-    gotItMessage.show(RelativePoint.getCenterOf(widget.component), Balloon.Position.above)
+
+    with(widget.component) {
+      gotItMessage.show(
+        object : PositionTracker<Balloon?>(this) {
+          override fun recalculateLocation(baloon: Balloon): RelativePoint {
+            return RelativePoint(widget.component, Point(this@with.size.width / 2,
+                                                         this@with.size.height / 2))
+          }
+        },
+        Balloon.Position.above)
+    }
+
   }
 
   return true
