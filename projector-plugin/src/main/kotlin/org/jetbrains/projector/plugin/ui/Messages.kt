@@ -44,7 +44,7 @@ internal fun showMessage(project: Project, header: String, message: String): Boo
     val gotItMessage = GotItMessage.createMessage(header, message).setDisposable(widget)
 
     gotItMessage.show(
-      object : PositionTracker<Balloon?>(widget.component) {
+      object : PositionTracker<Balloon>(widget.component) {
         override fun recalculateLocation(baloon: Balloon) = RelativePoint.getCenterOf(widget.component)
       },
       Balloon.Position.above,
