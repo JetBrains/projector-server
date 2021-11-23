@@ -639,9 +639,11 @@ class ProjectorServer private constructor(
 
     if (hasWriteAccess) {
       PGraphicsEnvironment.clientDoesWindowManagement = toServerHandshakeEvent.clientDoesWindowManagement
-      PGraphicsEnvironment.setupDisplays(
-        toServerHandshakeEvent.displays.map { Rectangle(it.x, it.y, it.width, it.height) to it.scaleFactor })
-      with(toServerHandshakeEvent.displays[0]) { resize(width, height) }
+      SwingUtilities.invokeAndWait {
+        PGraphicsEnvironment.setupDisplays(
+          toServerHandshakeEvent.displays.map { Rectangle(it.x, it.y, it.width, it.height) to it.scaleFactor })
+        with(toServerHandshakeEvent.displays[0]) { resize(width, height) }
+      }
     }
 
     clientEventHandler.updateClientsCount()
