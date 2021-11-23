@@ -101,15 +101,11 @@ class ProjectorServer private constructor(
 
   private lateinit var updateThread: Thread
 
-  private val caretInfoQueue = ConcurrentLinkedQueue<ServerCaretInfoChangedEvent.CaretInfoChange>()
+  private val commonQueue = ConcurrentLinkedQueue<ServerEvent>()
 
   private val caretInfoUpdater = CaretInfoUpdater { caretInfo ->
-    caretInfoQueue.add(caretInfo)
+    commonQueue.add(ServerCaretInfoChangedEvent(caretInfo))
   }
-
-  private val markdownQueue = ConcurrentLinkedQueue<ServerMarkdownEvent>()
-
-  private val baseQueue = ConcurrentLinkedQueue<ServerEvent>()
 
   private var windowColorsEvent: ServerWindowColorsEvent? = null
 
@@ -119,16 +115,16 @@ class ProjectorServer private constructor(
 
   init {
     PanelUpdater.showCallback = { id, show ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownShowEvent(id, show))
+      commonQueue.add(ServerMarkdownEvent.ServerMarkdownShowEvent(id, show))
     }
     PanelUpdater.resizeCallback = { id, size ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownResizeEvent(id, size.toCommonIntSize()))
+      commonQueue.add(ServerMarkdownEvent.ServerMarkdownResizeEvent(id, size.toCommonIntSize()))
     }
     PanelUpdater.moveCallback = { id, point ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownMoveEvent(id, point.shift(PGraphicsEnvironment.defaultDevice.clientShift)))
+      commonQueue.add(ServerMarkdownEvent.ServerMarkdownMoveEvent(id, point.shift(PGraphicsEnvironment.defaultDevice.clientShift)))
     }
     PanelUpdater.disposeCallback = { id ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownDisposeEvent(id))
+      commonQueue.add(ServerMarkdownEvent.ServerMarkdownDisposeEvent(id))
     }
     PanelUpdater.placeToWindowCallback = { id, rootComponent ->
       rootComponent?.let {
@@ -138,20 +134,20 @@ class ProjectorServer private constructor(
           return@let
         }
 
-        markdownQueue.add(ServerMarkdownEvent.ServerMarkdownPlaceToWindowEvent(id, peer.pWindow.id))
+        commonQueue.add(ServerMarkdownEvent.ServerMarkdownPlaceToWindowEvent(id, peer.pWindow.id))
       }
     }
     PanelUpdater.setHtmlCallback = { id, html ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownSetHtmlEvent(id, html))
+      commonQueue.add(ServerMarkdownEvent.ServerMarkdownSetHtmlEvent(id, html))
     }
     PanelUpdater.setCssCallback = { id, css ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownSetCssEvent(id, css))
+      commonQueue.add(ServerMarkdownEvent.ServerMarkdownSetCssEvent(id, css))
     }
     PanelUpdater.scrollCallback = { id, offset ->
-      markdownQueue.add(ServerMarkdownEvent.ServerMarkdownScrollEvent(id, offset))
+      commonQueue.add(ServerMarkdownEvent.ServerMarkdownScrollEvent(id, offset))
     }
     PDesktopPeer.browseUriCallback = { link ->
-      baseQueue.add(ServerBrowseUriEvent(link))
+      commonQueue.add(ServerBrowseUriEvent(link))
     }
   }
 
@@ -313,23 +309,16 @@ class ProjectorServer private constructor(
 
     val newImagesCopy = extractData(ProjectorImageCacher.newImages)
 
-    val caretInfoEvents = extractData(caretInfoQueue).map(::ServerCaretInfoChangedEvent)
+    val commonEvents = extractData(commonQueue)
 
-    val markdownEvents = extractData(markdownQueue)
-
-    val baseEvents = extractData(baseQueue)
-
-    val commandsCount = caretInfoEvents.size + newImagesCopy.size + clipboardEvent.size + drawCommands.size + windowSetChangedEvent.size +
-                        markdownEvents.size + baseEvents.size + 1
+    val commandsCount = commonEvents.size + newImagesCopy.size + clipboardEvent.size + drawCommands.size + windowSetChangedEvent.size + 1
 
     val allEvents = buildList(commandsCount) {
-      addAll(caretInfoEvents)
+      addAll(commonEvents)
       addAll(newImagesCopy)
       addAll(clipboardEvent)
       addAll(drawCommands)
       addAll(windowSetChangedEvent)
-      addAll(markdownEvents)
-      addAll(baseEvents)
       windowColorsEvent?.let { add(it); windowColorsEvent = null }
     }
 
