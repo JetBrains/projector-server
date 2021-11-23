@@ -289,7 +289,11 @@ class ProjectorServer private constructor(
           resizable = window.resizable,
           modal = window.modal,
           undecorated = window.undecorated,
-          windowType = window.windowType
+          windowType = window.windowType,
+          windowClass = window.windowClass,
+          autoRequestFocus = window.autoRequestFocus,
+          isAlwaysOnTop = window.isAlwaysOnTop,
+          parentId = window.parentWindow?.id
         )
       }
 

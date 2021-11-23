@@ -31,9 +31,13 @@ import org.jetbrains.projector.awt.data.AwtPaintType
 import org.jetbrains.projector.awt.data.Direction
 import org.jetbrains.projector.common.protocol.data.ImageEventInfo
 import org.jetbrains.projector.common.protocol.data.PaintType
+import org.jetbrains.projector.common.protocol.toClient.WindowClass
 import org.jetbrains.projector.common.protocol.toClient.WindowType
 import org.jetbrains.projector.common.protocol.toServer.ResizeDirection
+import java.awt.Dialog
+import java.awt.Frame
 import java.awt.Window
+import javax.swing.JWindow
 
 fun AwtPaintType.toPaintType() = when (this) {
   AwtPaintType.DRAW -> PaintType.DRAW
@@ -56,6 +60,14 @@ val PWindow.windowType: WindowType
     "IdeFrameImpl" in target::class.java.simpleName -> WindowType.IDEA_WINDOW
     target.let { it is Window && it.type == Window.Type.POPUP } -> WindowType.POPUP
     else -> WindowType.WINDOW
+  }
+
+val PWindow.windowClass: WindowClass
+  get() = when (target) {
+    is Frame -> WindowClass.FRAME
+    is Dialog -> WindowClass.DIALOG
+    is JWindow -> WindowClass.JWINDOW
+    else -> WindowClass.OTHER
   }
 
 fun ResizeDirection.toDirection() = when (this) {
