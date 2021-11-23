@@ -79,15 +79,17 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     else -> false
   }
 
-  val isAlwaysOnTop: Boolean = when(target) {
-    is Window -> target.isAlwaysOnTop
-    else -> false
-  }
+  val isAlwaysOnTop: Boolean
+    get() = when (target) {
+      is Window -> target.isAlwaysOnTop
+      else -> false
+    }
 
-  val parentWindow: PWindow? = when(target) {
-    is Window -> (AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(target.owner) as? PWindowPeer)?.pWindow
-    else -> null
-  }
+  val parentWindow: PWindow?
+    get() = when (target) {
+      is Window -> target.owner?.let { (AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(it) as? PWindowPeer)?.pWindow }
+      else -> null
+    }
 
   /** ImageIds of icons. */
   var icons: List<Any>? = null
