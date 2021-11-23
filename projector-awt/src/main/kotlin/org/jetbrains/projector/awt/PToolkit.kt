@@ -321,6 +321,10 @@ class PToolkit : SunToolkit(), KeyboardFocusManagerPeerProvider, ComponentFactor
     return true
   }
 
+  override fun getNumberOfButtons(): Int {
+    return 5 // this is cached in MouseEvent, so support at least mice with two side buttons
+  }
+
   private fun getImageFromHash(filename: String): Image? {
     synchronized(imgCache) {
       var img: Image? = imgCache[filename] as Image?
