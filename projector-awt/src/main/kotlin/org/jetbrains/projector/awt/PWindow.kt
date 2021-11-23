@@ -28,12 +28,14 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.projector.awt.data.Direction
 import org.jetbrains.projector.awt.image.PGraphics2D
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
+import org.jetbrains.projector.awt.peer.PWindowPeer
 import org.jetbrains.projector.awt.peer.PWindowPeer.Companion.getVisibleWindowBoundsIfNeeded
 import org.jetbrains.projector.awt.service.ImageCacher
 import org.jetbrains.projector.util.logging.Logger
 import sun.awt.AWTAccessor
 import java.awt.*
 import java.awt.event.ComponentEvent
+import java.awt.peer.ComponentPeer
 import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -70,6 +72,21 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     is Frame -> target.isUndecorated
     is Dialog -> target.isUndecorated
     else -> true
+  }
+
+  val autoRequestFocus: Boolean = when(target) {
+    is Window -> target.isAutoRequestFocus
+    else -> false
+  }
+
+  val isAlwaysOnTop: Boolean = when(target) {
+    is Window -> target.isAlwaysOnTop
+    else -> false
+  }
+
+  val parentWindow: PWindow? = when(target) {
+    is Window -> (AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(target.owner) as? PWindowPeer)?.pWindow
+    else -> null
   }
 
   /** ImageIds of icons. */
