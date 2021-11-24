@@ -1,0 +1,37 @@
+name: Qodana
+
+on:
+  pull_request:
+    types: [ assigned, opened, synchronize, reopened ]
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  qodana:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Cache Qodana dependencies
+        uses: actions/cache@v2
+        with:
+          path: ~/work/_temp/_github_home/qodana-cache
+          key: ${{ runner.os }}-qodana-${{ github.ref }}
+          restore-keys: |
+            ${{ runner.os }}-qodana-${{ github.ref }}
+            ${{ runner.os }}-qodana-
+
+      - name: Qodana - Code Inspection
+        uses: JetBrains/qodana-action@v3.2.1
+        with:
+          linter: qodana-jvm-community
+
+      - uses: actions/upload-artifact@v2
+        with:
+          path: ${{ github.workspace }}/qodana
+
+      - uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: ${{ github.workspace }}/qodana/qodana.sarif.json
