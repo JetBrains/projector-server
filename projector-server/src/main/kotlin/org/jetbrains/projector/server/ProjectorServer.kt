@@ -232,6 +232,15 @@ class ProjectorServer private constructor(
         val dataToSend = createDataToSend()  // creating data even if there are no clients to avoid memory leaks
         sendPictures(dataToSend)
 
+        PWindow.windows.forEach {
+          // todo: get rid of blocking inside `PWindow.windows` and then move `PWindow.windows.forEach` inside `invokeLater`
+          SwingUtilities.invokeLater {
+            // create a FLUSH command: we can flush for sure when no other painting is in progress,
+            // and seems like it's when all operations in EDT are finished and a new one is started
+            ProjectorDrawEventQueue.commands.add(ServerDrawCommandsEvent.Target.Onscreen(it.id) to listOf(Flush))
+          }
+        }
+
         sleep(10)
       }
       catch (ex: InterruptedException) {
