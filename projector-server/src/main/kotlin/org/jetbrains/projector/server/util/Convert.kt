@@ -33,7 +33,7 @@ import org.jetbrains.projector.common.protocol.data.ImageEventInfo
 import org.jetbrains.projector.common.protocol.data.PaintType
 import org.jetbrains.projector.common.protocol.toClient.WindowType
 import org.jetbrains.projector.common.protocol.toServer.ResizeDirection
-import javax.swing.Popup
+import java.awt.Window
 
 fun AwtPaintType.toPaintType() = when (this) {
   AwtPaintType.DRAW -> PaintType.DRAW
@@ -54,7 +54,7 @@ fun AwtImageInfo.toImageEventInfo() = when (this) {
 val PWindow.windowType: WindowType
   get() = when {
     "IdeFrameImpl" in target::class.java.simpleName -> WindowType.IDEA_WINDOW
-    target is Popup -> WindowType.POPUP
+    target.let { it is Window && it.type == Window.Type.POPUP } -> WindowType.POPUP
     else -> WindowType.WINDOW
   }
 
