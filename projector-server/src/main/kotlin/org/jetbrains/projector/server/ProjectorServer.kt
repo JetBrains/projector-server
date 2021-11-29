@@ -54,10 +54,7 @@ import org.jetbrains.projector.server.core.ij.md.PanelUpdater
 import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshakeEncoder
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToServerHandshakeDecoder
-import org.jetbrains.projector.server.core.util.LaterInvokator
-import org.jetbrains.projector.server.core.util.focusOwnerOrTarget
-import org.jetbrains.projector.server.core.util.getOption
-import org.jetbrains.projector.server.core.util.getWildcardHostAddress
+import org.jetbrains.projector.server.core.util.*
 import org.jetbrains.projector.server.idea.CaretInfoUpdater
 import org.jetbrains.projector.server.idea.forbidUpdates
 import org.jetbrains.projector.server.service.ProjectorAwtInitializer
@@ -232,14 +229,16 @@ class ProjectorServer private constructor(
         val dataToSend = createDataToSend()  // creating data even if there are no clients to avoid memory leaks
         sendPictures(dataToSend)
 
-        PWindow.windows.forEach {
-          // todo: get rid of blocking inside `PWindow.windows` and then move `PWindow.windows.forEach` inside `invokeLater`
-          SwingUtilities.invokeLater {
-            // create a FLUSH command: we can flush for sure when no other painting is in progress,
-            // and seems like it's when all operations in EDT are finished and a new one is started
-            ProjectorDrawEventQueue.commands.add(ServerDrawCommandsEvent.Target.Onscreen(it.id) to listOf(Flush))
+        dataToSend
+          .distinctUpdatedOnscreenSurfaces()
+          .map { it to listOf(Flush) }
+          .let {
+            SwingUtilities.invokeLater {
+              // create FLUSH commands: we can flush for sure when no other painting is in progress,
+              // and seems like it's when all operations in EDT are finished and a new one is started
+              ProjectorDrawEventQueue.commands.addAll(it)
+            }
           }
-        }
 
         sleep(10)
       }
