@@ -291,7 +291,7 @@ class ProjectorServer private constructor(
           undecorated = window.undecorated,
           windowType = window.windowType,
           windowClass = window.windowClass,
-          autoRequestFocus = window.autoRequestFocus,
+          isAutoRequestFocus = window.isAutoRequestFocus,
           isAlwaysOnTop = window.isAlwaysOnTop,
           parentId = window.parentWindow?.id,
         )
