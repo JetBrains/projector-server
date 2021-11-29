@@ -74,7 +74,7 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     else -> true
   }
 
-  val autoRequestFocus: Boolean = when(target) {
+  val isAutoRequestFocus: Boolean = when(target) {
     is Window -> target.isAutoRequestFocus
     else -> false
   }
