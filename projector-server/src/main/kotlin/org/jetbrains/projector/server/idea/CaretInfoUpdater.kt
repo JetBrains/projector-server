@@ -43,7 +43,7 @@ import org.jetbrains.projector.server.platform.getTextAttributesCompat
 import org.jetbrains.projector.server.platform.readAction
 import org.jetbrains.projector.server.util.FontCacher
 import org.jetbrains.projector.util.loading.UseProjectorLoader
-import org.jetbrains.projector.util.loading.state.IdeaState
+import org.jetbrains.projector.util.loading.state.IdeState
 import org.jetbrains.projector.util.loading.state.whenOccurred
 import org.jetbrains.projector.util.logging.Logger
 import sun.awt.AWTAccessor
@@ -264,7 +264,7 @@ class CaretInfoUpdater(private val onCaretInfoChanged: (ServerCaretInfoChangedEv
   }
 
   fun start() {
-    IdeaState.COMPONENTS_LOADED.whenOccurred("search for editors") {
+    IdeState.COMPONENTS_LOADED.whenOccurred("search for editors") {
       thread = thread(isDaemon = true) {
         while (!Thread.currentThread().isInterrupted) {
           try {
