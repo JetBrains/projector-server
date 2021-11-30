@@ -83,6 +83,7 @@ class ProjectorDrawEventQueue(private val target: ServerDrawCommandsEvent.Target
 
     private fun build() {
       commands.add(target to events)
+      // asReversed: optimization. We expect that the last element is ServerWindowPaintEvent most of the time
       if (events.asReversed().none { it is ServerWindowPaintEvent }) {
         logger.info { "Performance problem detected: draw commands are added but they only change drawing state but don't draw anything" }
       }
