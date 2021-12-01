@@ -25,7 +25,7 @@
 
 package org.jetbrains.projector.awt.peer
 
-import org.jetbrains.projector.awt.PToolkit
+import org.jetbrains.projector.awt.PToolkitUtils
 import org.jetbrains.projector.awt.PWindow
 import org.jetbrains.projector.awt.image.PVolatileImage
 import sun.awt.PaintEventDispatcher
@@ -39,13 +39,12 @@ import java.awt.event.ComponentEvent
 import java.awt.event.FocusEvent
 import java.awt.event.PaintEvent
 import java.awt.image.ColorModel
-import java.awt.image.ImageObserver
 import java.awt.image.ImageProducer
 import java.awt.image.VolatileImage
 import java.awt.peer.ComponentPeer
 import java.awt.peer.ContainerPeer
 
-abstract class PComponentPeer(target: Component, private val isFocusable: Boolean = false) : ComponentPeer, DropTargetPeer {
+abstract class PComponentPeerBase(target: Component, private val isFocusable: Boolean = false) : ComponentPeer, DropTargetPeer {
 
   private val toolkit: Toolkit
     get() = Toolkit.getDefaultToolkit()
@@ -54,7 +53,7 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
   private var myGraphicsConfiguration: GraphicsConfiguration? = null
 
   override fun dispose() {
-    PToolkit.targetDisposedPeer(pWindow.target, this)
+    PToolkitUtils.targetDisposedPeer(pWindow.target, this)
     pWindow.dispose()
   }
 
@@ -192,24 +191,12 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
 
   override fun isFocusable() = isFocusable
 
-  override fun createImage(producer: ImageProducer): Image {
-    return ToolkitImage(producer)
-  }
-
   override fun createImage(width: Int, height: Int): Image {
     return PVolatileImage(width, height)
   }
 
   override fun createVolatileImage(width: Int, height: Int): VolatileImage {
     return PVolatileImage(width, height)
-  }
-
-  override fun prepareImage(img: Image, w: Int, h: Int, o: ImageObserver?): Boolean {
-    return toolkit.prepareImage(img, w, h, o)
-  }
-
-  override fun checkImage(img: Image, w: Int, h: Int, o: ImageObserver?): Int {
-    return toolkit.checkImage(img, w, h, o)
   }
 
   override fun getGraphicsConfiguration(): GraphicsConfiguration {

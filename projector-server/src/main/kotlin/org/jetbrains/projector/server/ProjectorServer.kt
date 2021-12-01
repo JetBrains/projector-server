@@ -31,6 +31,7 @@ import com.intellij.notification.Notifications
 import org.jetbrains.projector.awt.PClipboard
 import org.jetbrains.projector.awt.PToolkit
 import org.jetbrains.projector.awt.PWindow
+import org.jetbrains.projector.awt.extensions.parentWindow
 import org.jetbrains.projector.awt.font.PFontManager
 import org.jetbrains.projector.awt.image.PGraphics2D
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
