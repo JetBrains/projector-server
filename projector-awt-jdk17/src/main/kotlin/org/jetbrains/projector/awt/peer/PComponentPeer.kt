@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, JetBrains s.r.o. and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,25 +21,13 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-plugins {
-  kotlin("jvm")
-  `maven-publish`
-}
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
-publishToSpace()
+package org.jetbrains.projector.awt.peer
 
-val kotlinVersion: String by project
-val projectorClientVersion: String by project
-val projectorClientGroup: String by project
-version = project(":projector-server").version
+import sun.awt.image.ToolkitImage
+import java.awt.*
+import java.awt.image.ImageObserver
+import java.awt.image.ImageProducer
 
-val jdkDependentProject = if (JavaVersion.current() >= JavaVersion.VERSION_17) {
-  project(":projector-awt-jdk17")
-}else {
-  project(":projector-awt-jdk11")
-}
-
-dependencies {
-  api(jdkDependentProject)
-  testImplementation(kotlin("test", kotlinVersion))
-}
+abstract class PComponentPeer(target: Component, isFocusable: Boolean = false) : PComponentPeerBase(target, isFocusable)
