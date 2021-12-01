@@ -232,7 +232,10 @@ class ProjectorServer private constructor(
         dataToSend
           .distinctUpdatedOnscreenSurfaces()
           .map { it to listOf(Flush) }
-          .let {
+          // don't call SwingUtilities.invokeLater when unneeded. also, we shouldn't touch EDT too early because it's overridden by IJ and
+          // this results in multiple EDT living at the same time, creating nasty exceptions like "no ComponentUI class for":
+          .takeIf { it.isNotEmpty() }
+          ?.let {
             SwingUtilities.invokeLater {
               // create FLUSH commands: we can flush for sure when no other painting is in progress,
               // and seems like it's when all operations in EDT are finished and a new one is started
