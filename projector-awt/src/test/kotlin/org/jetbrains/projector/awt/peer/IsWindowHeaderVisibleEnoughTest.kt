@@ -23,6 +23,7 @@
  */
 package org.jetbrains.projector.awt.peer
 
+import org.jetbrains.projector.awt.PWindowUtils
 import java.awt.Rectangle
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -36,7 +37,7 @@ class IsWindowHeaderVisibleEnoughTest {
     val windowBounds = Rectangle(0, 3, 200, 200)
     val screenBounds = Rectangle(0, 0, 1600, 900)
 
-    assertTrue(PWindowPeer.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
+    assertTrue(PWindowUtils.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
   }
 
   @Test
@@ -46,7 +47,7 @@ class IsWindowHeaderVisibleEnoughTest {
       val windowBounds = Rectangle(-150, 100, 200, 200)
       val screenBounds = Rectangle(0, 0, 1600, 900)
 
-      assertFalse(PWindowPeer.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
+      assertFalse(PWindowUtils.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
     }
 
     run {
@@ -54,7 +55,7 @@ class IsWindowHeaderVisibleEnoughTest {
       val windowBounds = Rectangle(-50, 100, 200, 200)
       val screenBounds = Rectangle(0, 0, 1600, 900)
 
-      assertTrue(PWindowPeer.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
+      assertTrue(PWindowUtils.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
     }
   }
 
@@ -65,7 +66,7 @@ class IsWindowHeaderVisibleEnoughTest {
       val windowBounds = Rectangle(100, 5, 200, 200)
       val screenBounds = Rectangle(0, 0, 1600, 900)
 
-      assertFalse(PWindowPeer.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
+      assertFalse(PWindowUtils.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
     }
 
     run {
@@ -73,7 +74,7 @@ class IsWindowHeaderVisibleEnoughTest {
       val windowBounds = Rectangle(100, 15, 200, 200)
       val screenBounds = Rectangle(0, 0, 1600, 900)
 
-      assertTrue(PWindowPeer.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
+      assertTrue(PWindowUtils.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
     }
   }
 
@@ -84,7 +85,7 @@ class IsWindowHeaderVisibleEnoughTest {
       val windowBounds = Rectangle(1550, 100, 200, 200)
       val screenBounds = Rectangle(0, 0, 1600, 900)
 
-      assertFalse(PWindowPeer.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
+      assertFalse(PWindowUtils.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
     }
 
     run {
@@ -92,7 +93,7 @@ class IsWindowHeaderVisibleEnoughTest {
       val windowBounds = Rectangle(1450, 100, 200, 200)
       val screenBounds = Rectangle(0, 0, 1600, 900)
 
-      assertTrue(PWindowPeer.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
+      assertTrue(PWindowUtils.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
     }
   }
 
@@ -104,7 +105,7 @@ class IsWindowHeaderVisibleEnoughTest {
       val windowBounds = Rectangle(100, 915, 200, 200)
       val screenBounds = Rectangle(0, 0, 1600, 900)
 
-      assertFalse(PWindowPeer.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
+      assertFalse(PWindowUtils.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
     }
 
     run {
@@ -112,7 +113,7 @@ class IsWindowHeaderVisibleEnoughTest {
       val windowBounds = Rectangle(100, 905, 200, 200)
       val screenBounds = Rectangle(0, 0, 1600, 900)
 
-      assertTrue(PWindowPeer.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
+      assertTrue(PWindowUtils.isWindowHeaderVisibleEnough(headerHeight, windowBounds, screenBounds))
     }
   }
 }

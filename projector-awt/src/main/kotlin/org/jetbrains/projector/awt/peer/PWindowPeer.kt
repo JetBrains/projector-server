@@ -26,14 +26,11 @@
 package org.jetbrains.projector.awt.peer
 
 import org.jetbrains.projector.awt.PWindow
+import org.jetbrains.projector.awt.PWindowUtils
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
-import org.jetbrains.projector.util.logging.Logger
 import java.awt.Dialog
-import java.awt.Point
-import java.awt.Rectangle
 import java.awt.Window
 import java.awt.peer.WindowPeer
-import kotlin.math.roundToInt
 
 open class PWindowPeer(target: Window) : PContainerPeer(target), WindowPeer {
 
@@ -94,80 +91,6 @@ open class PWindowPeer(target: Window) : PContainerPeer(target), WindowPeer {
       return
     }
 
-    getVisibleWindowBoundsIfNeeded(x, y, width, height)?.let { pWindow.target.bounds = it }
-  }
-
-  companion object {
-
-    fun getVisibleWindowBoundsIfNeeded(x: Int, y: Int, width: Int, height: Int): Rectangle? {
-      val newBounds = Rectangle(x, y, width, height)
-      val screenBounds = PGraphicsEnvironment.defaultDevice.clientScreenBounds
-
-      if (isWindowHeaderVisibleEnough(HEADER_VISIBLE_HEIGHT_PX, windowBounds = newBounds, screenBounds = screenBounds)) {
-        return null
-      }
-
-      val visibleWindowBounds = createVisibleWindowBounds(
-        HEADER_VISIBLE_HEIGHT_PX,
-        targetWindowBounds = newBounds,
-        screenBounds = screenBounds,
-      )
-
-      if (isWindowHeaderVisibleEnough(HEADER_VISIBLE_HEIGHT_PX, windowBounds = visibleWindowBounds, screenBounds = screenBounds)) {
-        return visibleWindowBounds
-      }
-
-      logger.error { "Can't create visible window bounds... ($HEADER_VISIBLE_HEIGHT_PX, $newBounds, $screenBounds)" }
-      return null
-    }
-
-    fun isWindowHeaderVisibleEnough(headerVisibleHeightPx: Int, windowBounds: Rectangle, screenBounds: Rectangle): Boolean {
-      val headerBounds = Rectangle(
-        windowBounds.x,
-        windowBounds.y - headerVisibleHeightPx,
-        windowBounds.width,
-        headerVisibleHeightPx
-      )
-
-      if (headerBounds.centerY.roundToInt() !in screenBounds.y..(screenBounds.y + screenBounds.height)) {
-        return false
-      }
-
-      return headerBounds.centerX.roundToInt() in screenBounds.x..(screenBounds.x + screenBounds.width)
-    }
-
-    fun createVisibleWindowBounds(headerVisibleHeightPx: Int, targetWindowBounds: Rectangle, screenBounds: Rectangle): Rectangle {
-      val headerBounds = Rectangle(
-        targetWindowBounds.x,
-        targetWindowBounds.y - headerVisibleHeightPx,
-        targetWindowBounds.width,
-        headerVisibleHeightPx
-      )
-
-      val visibleWindowBounds = Rectangle(targetWindowBounds)
-      val visibleHeaderPoint = Point(headerBounds.centerX.roundToInt(), headerBounds.centerY.roundToInt())
-
-      if (visibleHeaderPoint.x > screenBounds.x + screenBounds.width) {
-        visibleWindowBounds.x -= visibleHeaderPoint.x - (screenBounds.x + screenBounds.width)
-      }
-
-      if (visibleHeaderPoint.y > screenBounds.y + screenBounds.height) {
-        visibleWindowBounds.y -= visibleHeaderPoint.y - (screenBounds.y + screenBounds.height)
-      }
-
-      if (visibleHeaderPoint.x < screenBounds.x) {
-        visibleWindowBounds.x += screenBounds.x - visibleHeaderPoint.x
-      }
-
-      if (visibleHeaderPoint.y < screenBounds.y) {
-        visibleWindowBounds.y += screenBounds.y - visibleHeaderPoint.y
-      }
-
-      return visibleWindowBounds
-    }
-
-    private const val HEADER_VISIBLE_HEIGHT_PX = 10
-
-    private val logger = Logger<PWindowPeer>()
+    PWindowUtils.getVisibleWindowBoundsIfNeeded(x, y, width, height)?.let { pWindow.target.bounds = it }
   }
 }

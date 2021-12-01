@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2022, JetBrains s.r.o. and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,14 +25,25 @@
 
 package org.jetbrains.projector.awt.peer
 
-import java.awt.MenuItem
-import java.awt.peer.MenuPeer
+import sun.awt.image.ToolkitImage
+import java.awt.*
+import java.awt.image.ImageObserver
+import java.awt.image.ImageProducer
 
-open class PMenuPeer : PMenuItemPeer(), MenuPeer {
+abstract class PComponentPeer(target: Component, isFocusable: Boolean = false) : PComponentPeerBase(target, isFocusable) {
 
-  override fun addSeparator() {}
+  private val toolkit: Toolkit
+    get() = Toolkit.getDefaultToolkit()
 
-  override fun addItem(item: MenuItem) {}
+  override fun createImage(producer: ImageProducer): Image {
+    return ToolkitImage(producer)
+  }
 
-  override fun delItem(index: Int) {}
+  override fun prepareImage(img: Image, w: Int, h: Int, o: ImageObserver?): Boolean {
+    return toolkit.prepareImage(img, w, h, o)
+  }
+
+  override fun checkImage(img: Image, w: Int, h: Int, o: ImageObserver?): Int {
+    return toolkit.checkImage(img, w, h, o)
+  }
 }

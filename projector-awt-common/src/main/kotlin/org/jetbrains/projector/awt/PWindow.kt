@@ -28,8 +28,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.projector.awt.data.Direction
 import org.jetbrains.projector.awt.image.PGraphics2D
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
-import org.jetbrains.projector.awt.peer.PWindowPeer
-import org.jetbrains.projector.awt.peer.PWindowPeer.Companion.getVisibleWindowBoundsIfNeeded
 import org.jetbrains.projector.awt.service.ImageCacher
 import org.jetbrains.projector.util.logging.Logger
 import sun.awt.AWTAccessor
@@ -84,12 +82,6 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     get() = when (target) {
       is Window -> target.isAlwaysOnTop
       else -> false
-    }
-
-  val parentWindow: PWindow?
-    get() = when (target) {
-      is Window -> target.owner?.let { (AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(it) as? PWindowPeer)?.pWindow }
-      else -> null
     }
 
   /** ImageIds of icons. */
@@ -149,7 +141,7 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
       AWTAccessor.getComponentAccessor().setSize(target, width, height)
     }
     else {
-      val visibleBounds = getVisibleWindowBoundsIfNeeded(x, y, width, height)
+      val visibleBounds = PWindowUtils.getVisibleWindowBoundsIfNeeded(x, y, width, height)
 
       if (visibleBounds == null) {
         AWTAccessor.getComponentAccessor().setLocation(target, x, y)

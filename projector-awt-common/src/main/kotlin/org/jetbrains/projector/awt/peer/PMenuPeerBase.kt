@@ -21,25 +21,16 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-plugins {
-  kotlin("jvm")
-  `maven-publish`
-}
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
-publishToSpace()
+package org.jetbrains.projector.awt.peer
 
-val kotlinVersion: String by project
-val projectorClientVersion: String by project
-val projectorClientGroup: String by project
-version = project(":projector-server").version
+import java.awt.MenuItem
+import java.awt.peer.MenuPeer
 
-val jdkDependentProject = if (JavaVersion.current() >= JavaVersion.VERSION_17) {
-  project(":projector-awt-jdk17")
-}else {
-  project(":projector-awt-jdk11")
-}
+abstract class PMenuPeerBase : PMenuItemPeer(), MenuPeer {
 
-dependencies {
-  api(jdkDependentProject)
-  testImplementation(kotlin("test", kotlinVersion))
+  override fun addItem(item: MenuItem) {}
+
+  override fun delItem(index: Int) {}
 }
