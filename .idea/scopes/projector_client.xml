@@ -1,0 +1,3 @@
+<component name="DependencyValidationManager">
+  <scope name="projector-client" pattern="file[projector-client*]:*//*||file[projector-client]:*/" />
+</component>

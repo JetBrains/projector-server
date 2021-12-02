@@ -4,6 +4,7 @@
 !.idea/codeStyles/
 !.idea/copyright/
 !.idea/runConfigurations/
+!.idea/scopes/
 build/
 out/
 local.properties
