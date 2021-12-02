@@ -14,6 +14,7 @@
 ## Changed
 
 - Remove green decoration of the web browser
+- PRJ-199 Support native double buffering
 
 # 1.5.0
 
