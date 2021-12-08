@@ -7,6 +7,9 @@ Notable changes to this project are documented in this file.
 ## Updated
 - PRJ-717 Support for platform 193 dropped
 
+## Fixed
+- PRJ-770 Update GotIt message position if widget is moved
+
 # 1.8.0
 
 ## Fixed
