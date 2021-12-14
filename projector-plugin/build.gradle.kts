@@ -44,7 +44,7 @@ intellij {
 
 tasks.publishPlugin {
   token.set(System.getenv("IDE_PLUGIN_PUBLISH_TOKEN"))
-  channels.set(listOf("beta"))
+  channels.set(listOf("stable"))
 }
 
 (tasks["runIde"] as JavaExec).apply {

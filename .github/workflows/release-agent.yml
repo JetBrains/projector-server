@@ -46,3 +46,7 @@ jobs:
           asset_path: projector-plugin/build/distributions/projector-plugin.zip
           asset_name: projector-plugin-${{ steps.tag_name.outputs.SOURCE_TAG }}.zip
           asset_content_type: application/zip
+      - name: Upload plugin on Marketplace
+        env:
+          IDE_PLUGIN_PUBLISH_TOKEN: ${{ secrets.IDE_PLUGIN_PUBLISH_TOKEN }}
+        run: ./gradlew publishPlugin
