@@ -42,6 +42,11 @@ intellij {
   updateSinceUntilBuild.set(false)
 }
 
+tasks.publishPlugin {
+  token.set(System.getenv("IDE_PLUGIN_PUBLISH_TOKEN"))
+  channels.set(listOf("beta"))
+}
+
 (tasks["runIde"] as JavaExec).apply {
   jvmArgs = jvmArgs.orEmpty() + listOf("-Djdk.attach.allowAttachSelf=true", "-Dswing.bufferPerWindow=false")
 }
