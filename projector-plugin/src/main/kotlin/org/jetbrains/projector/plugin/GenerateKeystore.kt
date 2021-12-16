@@ -25,6 +25,7 @@
 
 package org.jetbrains.projector.plugin
 
+import com.intellij.openapi.application.PathManager
 import org.jetbrains.projector.server.core.util.*
 import org.jetbrains.projector.server.util.Host
 import org.jetbrains.projector.server.util.getHostsList
@@ -73,7 +74,7 @@ fun recreateKeystoreFiles() {
   createKeystoreFiles()
 }
 
-fun getPathToPluginSSLDir() = Paths.get(File(getPathToPluginDir()).parentFile.path, "ssl").toString().replace('\\', '/')
+fun getPathToPluginSSLDir() = Paths.get(PathManager.getOptionsPath(), "ssl").toString().replace('\\', '/')
 
 fun getPathToSSLPropertiesFile() = Paths.get(getPathToPluginSSLDir(), SSL_PROPERTIES_FILE).toString().replace('\\', '/')
 
