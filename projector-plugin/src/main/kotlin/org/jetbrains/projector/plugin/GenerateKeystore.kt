@@ -28,6 +28,8 @@ package org.jetbrains.projector.plugin
 import org.jetbrains.projector.server.core.util.*
 import org.jetbrains.projector.server.util.Host
 import org.jetbrains.projector.server.util.getHostsList
+import org.jetbrains.projector.server.util.isIp4String
+import org.jetbrains.projector.server.util.isIp6String
 import sun.security.pkcs10.PKCS10
 import sun.security.tools.keytool.CertAndKeyGen
 import sun.security.util.SignatureUtil
@@ -35,6 +37,7 @@ import sun.security.x509.*
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import java.net.UnknownHostException
 import java.security.*
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
@@ -167,7 +170,20 @@ private fun signCertificate(csr: ByteArray, caPrivateKey: PrivateKey, signerCert
 
 private fun getGeneralNames(): GeneralNames {
   val result = GeneralNames()
-  getHostsList { Host(it, "") }.map { GeneralName(IPAddressName(it.toString())) }.forEach { result.add(it) }
+  val ips = getHostsList { Host(it, "") }.map { it.address }
+
+  for (ip in ips) {
+    try {
+      if ( isIp4String(ip) || isIp6String(ip)) {
+        val gn = GeneralName(IPAddressName(ip))
+        result.add(gn)
+      }
+    }
+    catch (e: UnknownHostException) {
+      continue
+    }
+  }
+
   return result
 }
 
