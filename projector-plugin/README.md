@@ -7,8 +7,11 @@ Projector doesn't support that.
 
 ## Downloading from Plugins Marketplace
 
-The plugin is published here: <https://plugins.jetbrains.com/plugin/16015-projector>. So you can find it in IDE and install it (manual IDE
-restart is needed after installation).
+The plugin is published here:
+
+* **[Get from Marketplace](https://plugins.jetbrains.com/plugin/16015-projector)!**
+
+You can also find it in your IDE (the plugin is named as "Projector") and install it.
 
 ## Usage
 
@@ -38,8 +41,7 @@ This command creates a zip file in the `projector-plugin/build/distributions` di
 
 ## Downloading zip file from releases
 
-Alternatively, you can download the zip file from [releases](https://github.com/JetBrains/projector-server/releases/). Please search for the
-latest release starting with `agent-...` and find the plugin in Assets there.
+Beside downloading the plugin from the Marketplace as described above, you can download the zip file from [releases](https://github.com/JetBrains/projector-server/releases/). Please search for the latest release starting with `agent-...` and find the plugin in Assets there.
 
 ## Installing zip file
 
