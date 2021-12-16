@@ -38,6 +38,8 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.net.UnknownHostException
+import java.nio.file.Path
+import java.nio.file.Paths
 import java.security.*
 import java.security.cert.Certificate
 import java.security.cert.X509Certificate
@@ -71,11 +73,11 @@ fun recreateKeystoreFiles() {
   createKeystoreFiles()
 }
 
-fun getPathToPluginSSLDir() = "${File(getPathToPluginDir()).parentFile}/ssl"
+fun getPathToPluginSSLDir() = Paths.get(File(getPathToPluginDir()).parentFile.path, "ssl").toString().replace('\\', '/')
 
-fun getPathToSSLPropertiesFile() = "${getPathToPluginSSLDir()}/${SSL_PROPERTIES_FILE}"
+fun getPathToSSLPropertiesFile() = Paths.get(getPathToPluginSSLDir(), SSL_PROPERTIES_FILE).toString().replace('\\', '/')
 
-private fun getPathToCACertificateFile() = "${getPathToPluginSSLDir()}/${CA_CRT_FILE_NAME}"
+private fun getPathToCACertificateFile() = Paths.get(getPathToPluginSSLDir(), CA_CRT_FILE_NAME).toString().replace('\\', '/')
 
 private fun isPluginSSLDirExist() = File(getPathToPluginSSLDir()).exists()
 
