@@ -82,7 +82,7 @@ Also, you can find this example in [projector-docker](https://github.com/JetBrai
 ### Modifying your application code
 Using this way, you can add a custom condition to start the server.
 
-Add a dependency to the `projector-server` project to your app. In the **beginning** of your `main`, decide if you want to run the app headlessly. If yes, invoke `System.setProperty("org.jetbrains.projector.server.enable", "true")` and call the `startServer` method of the `HeadlessServer`.
+Add a dependency to the `projector-server` project to your app. In the **beginning** of your `main`, decide if you want to run the app headlessly. If yes, invoke `System.setProperty("org.jetbrains.projector.server.enable", "true")` and call the `runProjectorServer` method of the `ProjectorLauncher`.
 
 When you go this way, ensure that no AWT nor Swing operations are performed before the initialization of the server. Such operations can cause some lazy operations of AWT happen and our server doesn't support that.
 
