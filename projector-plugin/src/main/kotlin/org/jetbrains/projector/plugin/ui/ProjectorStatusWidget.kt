@@ -83,7 +83,9 @@ class ProjectorStatusWidget(private val project: Project, private val myStatusBa
 
   override fun dispose() {
     ProjectorService.unsubscribe(this)
-    ProjectorService.removeObserver(this)
+
+    if (isProjectorRunning())
+      ProjectorService.removeObserver(this)
   }
 
   fun update() {
