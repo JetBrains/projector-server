@@ -56,7 +56,7 @@ fun ipString2Bytes(src: String): ByteArray {
   }
 }
 
-private fun isIp4String(address: String): Boolean {
+fun isIp4String(address: String): Boolean {
   val parts = address.split('.').filter { it.isNotEmpty() }
   return parts.size == 4 && address.all { it.isDigit() || it == '.' }
 }
@@ -66,7 +66,7 @@ private fun Char.isHexDigit(): Boolean {
   return c.isDigit() || c in 'A'..'Z'
 }
 
-private fun isIp6String(address: String): Boolean {
+fun isIp6String(address: String): Boolean {
   val parts = address.split(':').filter { it.isNotEmpty() }
   return parts.size == 8 && address.all { it.isHexDigit() || it == ':' }
 }
