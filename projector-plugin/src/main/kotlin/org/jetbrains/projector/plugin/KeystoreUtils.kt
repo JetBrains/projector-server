@@ -59,7 +59,7 @@ fun storageTypeToExtension(storageType: SupportedStorageTypes) = when (storageTy
 
 private const val SSL_PROPERTIES_FILE = "ssl.properties"
 private val PROJECTOR_KEYSTORE_FILE_NAME = "projector.${storageTypeToExtension(KEYSTORE_TYPE)}"
-private val USER_KEYSTORE_FILE_NAME = "user_imported.${storageTypeToExtension(KEYSTORE_TYPE)}"
+private val USER_KEYSTORE_FILE_NAME = "user-imported.${storageTypeToExtension(KEYSTORE_TYPE)}"
 
 private const val CERTIFICATE_ALIAS = "PROJECTOR-PLUGIN"
 private const val KEY_ALGORITHM_NAME = "RSA"
@@ -88,7 +88,11 @@ fun getPathToPluginSSLDir() = Paths.get(PathManager.getOptionsPath(), "ssl").toS
 
 fun getPathToSSLPropertiesFile() = Paths.get(getPathToPluginSSLDir(), SSL_PROPERTIES_FILE).toString().replace('\\', '/')
 
+fun isUserKeystoreFileExist() = File(getPathToUserKeystoreFile()).exists()
+
 private fun getPathToCACertificateFile() = Paths.get(getPathToPluginSSLDir(), CA_CRT_FILE_NAME).toString().replace('\\', '/')
+
+private fun getPathToUserKeystoreFile() = Paths.get(getPathToPluginSSLDir(), USER_KEYSTORE_FILE_NAME).toString().replace('\\', '/')
 
 private fun isPluginSSLDirExist() = File(getPathToPluginSSLDir()).exists()
 
@@ -96,7 +100,7 @@ private fun isSSLPropertiesFileExist() = File(getPathToSSLPropertiesFile()).exis
 
 private fun isKeystoreFileExist() = File(getPathToKeystoreFile()).exists()
 
-private fun getPathToKeystoreFile() = if (isSSLPropertiesFileExist()) loadSSLProperties(getPathToSSLPropertiesFile()).filePath else ""
+private fun getPathToKeystoreFile() = Paths.get(getPathToPluginSSLDir(), PROJECTOR_KEYSTORE_FILE_NAME).toString().replace('\\', '/')
 
 private fun createKeystoreFiles() {
   File(getPathToPluginSSLDir()).mkdirs()
@@ -258,4 +262,14 @@ private fun removeFileIfExist(path: String) {
     if (exists())
       delete()
   }
+}
+
+fun importUserCertificate(certificatePath: String, keyPath: String ) {
+  File(getPathToUserKeystoreFile()).printWriter().use { out ->
+    out.println("Test")
+  }
+}
+
+fun setCertificateSource(certificateSource: CertificateSource) {
+  ProjectorService.certificateSource = certificateSource
 }

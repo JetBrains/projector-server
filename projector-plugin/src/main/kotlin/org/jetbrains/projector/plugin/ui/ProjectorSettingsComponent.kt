@@ -24,22 +24,23 @@
 package org.jetbrains.projector.plugin.ui
 
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
-import org.jetbrains.projector.plugin.ProjectorService
-import org.jetbrains.projector.plugin.getPathToPluginSSLDir
-import org.jetbrains.projector.plugin.productName
+import org.jetbrains.projector.plugin.*
 import java.awt.Desktop.getDesktop
 import java.io.File
 import javax.swing.*
 
 class ProjectorSettingsComponent {
-  var autostart by ProjectorService.Companion::autostart
-  var confirmConnection by ProjectorService.Companion::confirmConnection
-  var host: String by ProjectorService.Companion::host
-  var port: String by ProjectorService.Companion::port
-  var rwToken: String by ProjectorService.Companion::rwToken
-  var roToken: String by ProjectorService.Companion::roToken
-  var secureConnection by ProjectorService.Companion::secureConnection
+  private var autostart by ProjectorService.Companion::autostart
+  private var confirmConnection by ProjectorService.Companion::confirmConnection
+  private var host: String by ProjectorService.Companion::host
+  private var port: String by ProjectorService.Companion::port
+  private var rwToken: String by ProjectorService.Companion::rwToken
+  private var roToken: String by ProjectorService.Companion::roToken
+  private var secureConnection by ProjectorService.Companion::secureConnection
+
+  var certificateSource = ProjectorService.instance.config.certificateSource
 
   private val autostartCheckbox = JBCheckBox("Start Projector automatically when ${productName()} starts", autostart).apply {
     addActionListener {
@@ -74,6 +75,7 @@ class ProjectorSettingsComponent {
     }
   }
 
+  private var userBtn: CellBuilder<JBRadioButton>? = null
 
   private val mainPanel = panel {
     row { autostartCheckbox() }
@@ -103,10 +105,39 @@ class ProjectorSettingsComponent {
 
     titledRow("SSL") {}
 
-    row { link("Show Certificate File in Files") { getDesktop().open(File(getPathToPluginSSLDir())) } }
+    row { link("Show Projector CA File in Files") { getDesktop().open(File(getPathToPluginSSLDir())) } }
+
+    row { button("Import certificate") { importCertificate() } }
+
+    titledRow("Certificate") {
+
+      buttonGroup(this@ProjectorSettingsComponent::certificateSource) {
+        row {
+          radioButton("Projector CA", CertificateSource.PROJECTOR_CA).apply {
+            this.component.addActionListener {
+              certificateSource = CertificateSource.PROJECTOR_CA
+            }
+          }
+        }
+        row {
+          radioButton("User imported", CertificateSource.USER_IMPORTED).apply {
+            userBtn = this
+            component.addActionListener {
+              certificateSource = CertificateSource.USER_IMPORTED
+            }
+          }.enabled(isUserKeystoreFileExist())
+        }
+      }
+    }
   }
+
 
   fun getPanel(): JPanel {
     return mainPanel
+  }
+
+  private fun importCertificate() {
+    importUserCertificate("", "")
+    userBtn?.enabled(isUserKeystoreFileExist())
   }
 }
