@@ -35,29 +35,13 @@ class ProjectorSettingsConfigurable : Configurable {
   override fun createComponent(): JComponent = component.getPanel()
 
   override fun isModified(): Boolean {
-    var ret = false
-    with(ProjectorService.instance.config) {
-      ret = ret || secureConnection != component.secureConnection
-      ret = ret || host != component.host
-      ret = ret || port != component.port
-      ret = ret || confirmConnection != component.confirmConnection
-      ret = ret || autostart != component.autostart
-      ret = ret || rwToken != component.rwToken
-      ret = ret || roToken != component.roToken
-    }
-
-    return ret
+    return  component.certificateSource != ProjectorService.instance.config.certificateSource
   }
 
   override fun apply() {
     with(ProjectorService.instance.config) {
-      secureConnection = component.secureConnection
-      host = component.host
-      port = component.port
-      confirmConnection = component.confirmConnection
-      autostart = component.autostart
-      rwToken = component.rwToken
-      roToken = component.roToken
+      setCertificateSource(component.certificateSource)
+      certificateSource = component.certificateSource
     }
   }
 }

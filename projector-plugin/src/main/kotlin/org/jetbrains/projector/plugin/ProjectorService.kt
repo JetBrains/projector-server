@@ -43,12 +43,18 @@ enum class EnabledState {
   STOPPED,
 }
 
+enum class CertificateSource {
+  PROJECTOR_CA,
+  USER_IMPORTED
+}
+
 class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
   var secureConnection: Boolean = false
   var host: String = ""
   var port: String = ""
   var confirmConnection: Boolean = true
   var autostart: Boolean = false
+  var certificateSource = CertificateSource.PROJECTOR_CA
 
   var rwToken: String = ""
   var roToken: String = ""
@@ -266,6 +272,12 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       set(value) {
         setSystemProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION, if (value) "true" else "false")
         instance.config.confirmConnection = value
+      }
+
+    var certificateSource: CertificateSource
+      get() = instance.config.certificateSource
+      set(value) {
+        instance.config.certificateSource = value
       }
 
     val isSessionRunning: Boolean get() = instance.currentSession != null
