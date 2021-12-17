@@ -48,8 +48,7 @@ class EnableAction : DumbAwareAction() {
                                       sessionDialog.listenPort,
                                       sessionDialog.rwToken,
                                       sessionDialog.roToken,
-                                      sessionDialog.confirmConnection,
-                                      sessionDialog.autostart))
+                                      sessionDialog.confirmConnection))
     }
 
     sessionDialog.cancelResolverRequests()

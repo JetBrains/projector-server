@@ -50,7 +50,6 @@ class SessionAction : DumbAwareAction() {
         rwToken = sessionDialog.rwToken
         roToken = sessionDialog.roToken
         confirmConnection = sessionDialog.confirmConnection
-        autostart = sessionDialog.autostart
       }
     }
   }
