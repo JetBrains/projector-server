@@ -28,6 +28,7 @@ import com.intellij.ui.layout.*
 import org.jetbrains.projector.plugin.ProjectorService
 import org.jetbrains.projector.plugin.getPathToPluginDir
 import org.jetbrains.projector.plugin.getPathToPluginSSLDir
+import org.jetbrains.projector.plugin.productName
 import java.awt.Desktop.getDesktop
 import java.io.File
 import javax.swing.*
@@ -68,7 +69,7 @@ class ProjectorSettingsComponent {
     }
   }
 
-  private val autostartCheckbox = JBCheckBox("Autostart projector", autostart).apply {
+  private val autostartCheckbox = JBCheckBox("Start Projector automatically when ${productName()} starts", autostart).apply {
     addActionListener {
       autostart = isSelected
     }

@@ -33,7 +33,6 @@ import com.intellij.ui.components.Link
 import org.jetbrains.projector.plugin.ProjectorService
 import org.jetbrains.projector.plugin.ProjectorSettingsConfigurable
 import org.jetbrains.projector.plugin.isProjectorStopped
-import org.jetbrains.projector.plugin.productName
 import org.jetbrains.projector.server.util.*
 import org.jetbrains.projector.server.util.getHostsList
 import java.awt.Toolkit
@@ -53,8 +52,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       updateInvitationLinks()
     }
   }
-  private val autostartProjector: JCheckBox = JCheckBox("Start Projector automatically when ${productName()} starts",
-                                                        ProjectorService.autostart)
+
   private val rwInvitationLink = InvitationLink("Read/Write Link:")
   private val roInvitationLink = InvitationLink("Read Only  Link:")
 
@@ -63,7 +61,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   val listenAddress: String get() = myHostsList.selected?.address ?: ""
   val listenPort: String get() = portEditor.value
   val confirmConnection: Boolean get() = requireConnectConfirmation.isSelected
-  val autostart: Boolean get() = autostartProjector.isSelected
   private val urlAddress: String get() = urlHostsList.selected?.address ?: ""
   val useSecureConnection: Boolean get() = secureConnection.isSelected
 
@@ -117,9 +114,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
       .startNextLine().addNextComponent(requireConnectConfirmation, topGap = 5, bottomGap = 5)
       .startNextLine().addNextComponent(secureConnection, topGap = 5, bottomGap = 5)
-
-      .startNextLine()
-      .addNextComponent(autostartProjector, topGap = 5, bottomGap = 5)
 
       .startNextLine().addNextComponent(JLabel("Invitation Links:"), topGap = 5, bottomGap = 5)
 

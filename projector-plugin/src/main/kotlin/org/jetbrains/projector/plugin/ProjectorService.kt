@@ -119,7 +119,6 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       config.confirmConnection = value?.confirmConnection
       config.storeRWToken(value?.rwToken ?: "")
       config.storeROToken(value?.roToken ?: "")
-      config.autostart = value?.autostart
     }
 
   private var enabled: EnabledState = when (areRequiredVmOptionsPresented()) {
@@ -204,7 +203,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       if (!isHeadlessProjectorDetected() && !isProjectorRunning()) {
         if (host.isNotBlank() and port.isNotBlank()) {
           if (autostart) {
-            val session = Session(secureConnection, host, port, rwToken, roToken, confirmConnection, autostart)
+            val session = Session(secureConnection, host, port, rwToken, roToken, confirmConnection)
             enable(session)
           }
         }

@@ -31,7 +31,6 @@ class Session(
   rwToken: String,
   roToken: String,
   confirmConnection: Boolean,
-  autostart: Boolean,
 ) {
   var secureConnection by ProjectorService.Companion::secureConnection
   var host by ProjectorService.Companion::host
@@ -39,7 +38,6 @@ class Session(
   var rwToken by ProjectorService.Companion::rwToken
   var roToken by ProjectorService.Companion::roToken
   var confirmConnection by ProjectorService.Companion::confirmConnection
-  var autostart by ProjectorService.Companion::autostart
 
   init {
     ProjectorService.secureConnection = secureConnection
@@ -48,6 +46,5 @@ class Session(
     ProjectorService.rwToken = rwToken
     ProjectorService.roToken = roToken
     ProjectorService.confirmConnection = confirmConnection
-    ProjectorService.autostart = autostart
   }
 }
