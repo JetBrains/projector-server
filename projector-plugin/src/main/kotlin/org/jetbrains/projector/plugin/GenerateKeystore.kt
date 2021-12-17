@@ -36,10 +36,8 @@ import sun.security.tools.keytool.CertAndKeyGen
 import sun.security.util.SignatureUtil
 import sun.security.x509.*
 import java.io.File
-import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.net.UnknownHostException
-import java.nio.file.Path
 import java.nio.file.Paths
 import java.security.*
 import java.security.cert.Certificate
@@ -59,7 +57,7 @@ private const val DN = "CN=idea-projector-plugin, OU=Development, O=Idea, L=SPB,
 private const val DAYS_VALID = 10000
 private const val SECONDS_VALID = DAYS_VALID * 24L * 60L * 60L
 
-private const val CA_CRT_FILE_NAME = "ca.crt"
+private const val CA_CRT_FILE_NAME = "projector-ca.crt"
 private const val CA_ALIAS = "projector-ca"
 private const val CA_DN = "CN=PROJECTOR-CA, OU=Development, O=Projector, L=SPB, S=SPB, C=RU"
 
@@ -86,7 +84,7 @@ private fun isSSLPropertiesFileExist() = File(getPathToSSLPropertiesFile()).exis
 
 private fun isKeystoreFileExist() = File(getPathToKeystoreFile()).exists()
 
-private fun getPathToKeystoreFile() = if (isSSLPropertiesFileExist()) loadSSLProperties().file_path else ""
+private fun getPathToKeystoreFile() = if (isSSLPropertiesFileExist()) loadSSLProperties(getPathToSSLPropertiesFile()).filePath else ""
 
 private fun createKeystoreFiles() {
   File(getPathToPluginSSLDir()).mkdirs()
@@ -94,22 +92,15 @@ private fun createKeystoreFiles() {
   createSSLPropertiesFile(props)
 }
 
-private data class SSLProperties(
-  val store_type: String,
-  val file_path: String,
-  val store_password: String,
-  val key_password: String,
-)
-
 private fun CertificateExtensions.add(ext: Extension) = set(ext.id, ext)
 
 private fun createKeystore(): SSLProperties {
   val password = generatePassword()
   val sslProps = SSLProperties(
-    store_type = KEYSTORE_TYPE,
-    file_path = "${getPathToPluginSSLDir()}/${KEYSTORE_FILE_NAME}",
-    store_password = password,
-    key_password = password
+    storeType = KEYSTORE_TYPE,
+    filePath = "${getPathToPluginSSLDir()}/${KEYSTORE_FILE_NAME}",
+    storePassword = password,
+    keyPassword = password
   )
 
   val keyStore = KeyStore.getInstance(KEYSTORE_TYPE).apply {
@@ -126,7 +117,7 @@ private fun createKeystore(): SSLProperties {
 
   keyStore.setKeyEntry(CERTIFICATE_ALIAS, keyPair.private, password.toCharArray(), arrayOf(signedCert))
 
-  FileOutputStream(sslProps.file_path).use { fos -> keyStore.store(fos, password.toCharArray()) }
+  FileOutputStream(sslProps.filePath).use { fos -> keyStore.store(fos, password.toCharArray()) }
 
   return sslProps
 }
@@ -236,10 +227,10 @@ private fun generateKeypair(): KeyPair {
 
 private fun createSSLPropertiesFile(sslProperties: SSLProperties) {
   File(getPathToSSLPropertiesFile()).printWriter().use { out ->
-    out.println("${SSL_STORE_TYPE}=${sslProperties.store_type}")
-    out.println("${SSL_FILE_PATH}=${sslProperties.file_path}")
-    out.println("${SSL_STORE_PASSWORD}=${sslProperties.store_password}")
-    out.println("${SSL_KEY_PASSWORD}=${sslProperties.key_password}")
+    out.println("${SSL_STORE_TYPE}=${sslProperties.storeType}")
+    out.println("${SSL_FILE_PATH}=${sslProperties.filePath}")
+    out.println("${SSL_STORE_PASSWORD}=${sslProperties.storePassword}")
+    out.println("${SSL_KEY_PASSWORD}=${sslProperties.keyPassword}")
   }
 }
 
@@ -255,17 +246,4 @@ private fun removeFileIfExist(path: String) {
     if (exists())
       delete()
   }
-}
-
-private fun loadSSLProperties(): SSLProperties {
-  val props = Properties().apply {
-    load(FileInputStream(getPathToSSLPropertiesFile()))
-  }
-
-  return SSLProperties(
-    store_type = props.getOrThrow(SSL_STORE_TYPE),
-    file_path = props.getOrThrow(SSL_FILE_PATH),
-    store_password = props.getOrThrow(SSL_STORE_PASSWORD),
-    key_password = props.getOrThrow(SSL_KEY_PASSWORD)
-  )
 }
