@@ -45,10 +45,22 @@ import java.security.cert.X509Certificate
 import java.util.*
 
 
-private const val SSL_PROPERTIES_FILE = "ssl.properties"
-private const val KEYSTORE_FILE_NAME = "projector.jks"
+enum class SupportedStorageTypes {
+  JKS,
+  PKCS12
+}
 
-private const val KEYSTORE_TYPE = "jks"
+private val KEYSTORE_TYPE = SupportedStorageTypes.JKS
+
+fun storageTypeToExtension(storageType: SupportedStorageTypes) = when (storageType) {
+  SupportedStorageTypes.JKS -> "jks"
+  SupportedStorageTypes.PKCS12 -> "p12"
+}
+
+private const val SSL_PROPERTIES_FILE = "ssl.properties"
+private val PROJECTOR_KEYSTORE_FILE_NAME = "projector.${storageTypeToExtension(KEYSTORE_TYPE)}"
+private val USER_KEYSTORE_FILE_NAME = "user_imported.${storageTypeToExtension(KEYSTORE_TYPE)}"
+
 private const val CERTIFICATE_ALIAS = "PROJECTOR-PLUGIN"
 private const val KEY_ALGORITHM_NAME = "RSA"
 private const val SIGNING_ALGORITHM_NAME = "SHA256withRSA"
@@ -88,22 +100,22 @@ private fun getPathToKeystoreFile() = if (isSSLPropertiesFileExist()) loadSSLPro
 
 private fun createKeystoreFiles() {
   File(getPathToPluginSSLDir()).mkdirs()
-  val props = createKeystore()
+  val props = createProjectorKeystore()
   createSSLPropertiesFile(props)
 }
 
 private fun CertificateExtensions.add(ext: Extension) = set(ext.id, ext)
 
-private fun createKeystore(): SSLProperties {
+private fun createProjectorKeystore(): SSLProperties {
   val password = generatePassword()
   val sslProps = SSLProperties(
-    storeType = KEYSTORE_TYPE,
-    filePath = "${getPathToPluginSSLDir()}/${KEYSTORE_FILE_NAME}",
+    storeType = KEYSTORE_TYPE.toString(),
+    filePath = "${getPathToPluginSSLDir()}/${PROJECTOR_KEYSTORE_FILE_NAME}",
     storePassword = password,
     keyPassword = password
   )
 
-  val keyStore = KeyStore.getInstance(KEYSTORE_TYPE).apply {
+  val keyStore = KeyStore.getInstance(KEYSTORE_TYPE.toString()).apply {
     load(null, password.toCharArray())
   }
 
@@ -168,7 +180,7 @@ private fun getGeneralNames(): GeneralNames {
 
   for (ip in ips) {
     try {
-      if ( isIp4String(ip) || isIp6String(ip)) {
+      if (isIp4String(ip) || isIp6String(ip)) {
         val gn = GeneralName(IPAddressName(ip))
         result.add(gn)
       }
