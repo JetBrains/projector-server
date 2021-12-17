@@ -26,7 +26,6 @@ package org.jetbrains.projector.plugin.ui
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 import org.jetbrains.projector.plugin.ProjectorService
-import org.jetbrains.projector.plugin.getPathToPluginDir
 import org.jetbrains.projector.plugin.getPathToPluginSSLDir
 import org.jetbrains.projector.plugin.productName
 import java.awt.Desktop.getDesktop
@@ -35,12 +34,24 @@ import javax.swing.*
 
 class ProjectorSettingsComponent {
   var autostart by ProjectorService.Companion::autostart
+  var confirmConnection by ProjectorService.Companion::confirmConnection
   var host: String by ProjectorService.Companion::host
   var port: String by ProjectorService.Companion::port
   var rwToken: String by ProjectorService.Companion::rwToken
   var roToken: String by ProjectorService.Companion::roToken
-  var confirmConnection by ProjectorService.Companion::confirmConnection
   var secureConnection by ProjectorService.Companion::secureConnection
+
+  private val autostartCheckbox = JBCheckBox("Start Projector automatically when ${productName()} starts", autostart).apply {
+    addActionListener {
+      autostart = isSelected
+    }
+  }
+
+  private val confirmConnectionCheckbox = JBCheckBox("Require connection confirmation", confirmConnection).apply {
+    addActionListener {
+      confirmConnection = isSelected
+    }
+  }
 
   private val hosts = HostsList("Host:", ProjectorService.host).apply {
     onChange = { selected?.let { host = it.address } }
@@ -57,27 +68,17 @@ class ProjectorSettingsComponent {
     onChange = { roToken = tokenTextField.text }
   }
 
-  private val confirmConnectionCheckbox = JBCheckBox("Require connection confirmation", confirmConnection).apply {
-    addActionListener {
-      confirmConnection = isSelected
-    }
-  }
-
   private val secureConnectionCheckbox: JCheckBox = JCheckBox("Use HTTPS", ProjectorService.secureConnection).apply {
     addActionListener {
       secureConnection = isSelected
     }
   }
 
-  private val autostartCheckbox = JBCheckBox("Start Projector automatically when ${productName()} starts", autostart).apply {
-    addActionListener {
-      autostart = isSelected
-    }
-  }
-
 
   private val mainPanel = panel {
     row { autostartCheckbox() }
+
+    row { confirmConnectionCheckbox() }
 
     titledRow("Connection") {}
 
@@ -97,8 +98,6 @@ class ProjectorSettingsComponent {
       roTokenEditor.tokenTextField()
       roTokenEditor.refreshButton()
     }
-
-    row { confirmConnectionCheckbox() }
 
     row { secureConnectionCheckbox() }
 

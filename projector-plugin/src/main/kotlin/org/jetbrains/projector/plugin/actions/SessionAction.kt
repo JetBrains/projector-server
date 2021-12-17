@@ -30,7 +30,6 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogWrapper
 import org.jetbrains.projector.plugin.ProjectorService
 import org.jetbrains.projector.plugin.isProjectorRunning
-import org.jetbrains.projector.plugin.isProjectorStopped
 import org.jetbrains.projector.plugin.ui.SessionDialog
 
 class SessionAction : DumbAwareAction() {
@@ -49,7 +48,6 @@ class SessionAction : DumbAwareAction() {
       ProjectorService.currentSession.apply {
         rwToken = sessionDialog.rwToken
         roToken = sessionDialog.roToken
-        confirmConnection = sessionDialog.confirmConnection
       }
     }
   }

@@ -47,8 +47,8 @@ class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
   var secureConnection: Boolean = false
   var host: String = ""
   var port: String = ""
-  var confirmConnection: Boolean? = null
-  var autostart: Boolean? = null
+  var confirmConnection: Boolean = true
+  var autostart: Boolean = false
 
   var rwToken: String = ""
   var roToken: String = ""
@@ -116,7 +116,6 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       config.secureConnection = value?.secureConnection ?: false
       config.host = value?.host ?: ""
       config.port = value?.port ?: ""
-      config.confirmConnection = value?.confirmConnection
       config.storeRWToken(value?.rwToken ?: "")
       config.storeROToken(value?.roToken ?: "")
     }
@@ -203,7 +202,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       if (!isHeadlessProjectorDetected() && !isProjectorRunning()) {
         if (host.isNotBlank() and port.isNotBlank()) {
           if (autostart) {
-            val session = Session(secureConnection, host, port, rwToken, roToken, confirmConnection)
+            val session = Session(secureConnection, host, port, rwToken, roToken)
             enable(session)
           }
         }
@@ -242,13 +241,6 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
         instance.config.port = value
       }
 
-    var confirmConnection: Boolean
-      get() = instance.config.confirmConnection ?: true
-      set(value) {
-        setSystemProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION, if (value) "true" else "false")
-        instance.config.confirmConnection = value
-      }
-
     var rwToken: String
       get() = instance.config.obtainRWToken()
       set(value) {
@@ -264,9 +256,16 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       }
 
     var autostart: Boolean
-      get() = instance.config.autostart ?: false
+      get() = instance.config.autostart
       set(value) {
         instance.config.autostart = value
+      }
+
+    var confirmConnection: Boolean
+      get() = instance.config.confirmConnection
+      set(value) {
+        setSystemProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION, if (value) "true" else "false")
+        instance.config.confirmConnection = value
       }
 
     val isSessionRunning: Boolean get() = instance.currentSession != null
@@ -287,5 +286,6 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
 
   override fun loadState(state: ProjectorConfig) {
     config = state
+    setSystemProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION, if (config.confirmConnection) "true" else "false")
   }
 }

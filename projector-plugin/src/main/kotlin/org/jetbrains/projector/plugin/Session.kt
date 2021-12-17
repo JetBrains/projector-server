@@ -30,14 +30,12 @@ class Session(
   port: String,
   rwToken: String,
   roToken: String,
-  confirmConnection: Boolean,
 ) {
   var secureConnection by ProjectorService.Companion::secureConnection
   var host by ProjectorService.Companion::host
   var port by ProjectorService.Companion::port
   var rwToken by ProjectorService.Companion::rwToken
   var roToken by ProjectorService.Companion::roToken
-  var confirmConnection by ProjectorService.Companion::confirmConnection
 
   init {
     ProjectorService.secureConnection = secureConnection
@@ -45,6 +43,5 @@ class Session(
     ProjectorService.port = port
     ProjectorService.rwToken = rwToken
     ProjectorService.roToken = roToken
-    ProjectorService.confirmConnection = confirmConnection
   }
 }
