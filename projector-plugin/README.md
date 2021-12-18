@@ -9,7 +9,9 @@ Projector doesn't support that.
 
 The plugin is published here:
 
-* **[Get from Marketplace](https://plugins.jetbrains.com/plugin/16015-projector)!**
+<a href="https://plugins.jetbrains.com/plugin/16015-projector">
+  <img src="images/button.png" alt="get from marketplace" width="300">
+</a>
 
 You can also find it in your IDE (the plugin is named as "Projector") and install it.
 
@@ -21,7 +23,7 @@ New widget `Projector` will appear in the toolbar.
 To attract user's attention to something, the plugin can display a notification. A notification can be easily closed by pressing the "Got It" button.
 Message example:
 
-![](hello.png)
+![](images/hello.png)
 
 The following notifications are used (please note that we do our best to avoid showing any of them often):
   - **Greeting message** - displayed for each new plugin installation (but no more than once a day) 
