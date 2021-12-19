@@ -31,20 +31,7 @@ import org.jetbrains.projector.awt.image.PGraphicsEnvironment
 import org.jetbrains.projector.server.ProjectorServer.Companion.ENABLE_PROPERTY_NAME
 import org.jetbrains.projector.util.loading.unprotect
 import sun.font.FontManagerFactory
-import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
-
-internal fun setupGraphicsEnvironment() {
-  val classes = GraphicsEnvironment::class.java.declaredClasses
-  val localGE = classes.single()
-  check(localGE.name == "java.awt.GraphicsEnvironment\$LocalGE")
-
-  localGE.getDeclaredField("INSTANCE").apply {
-    unprotect()
-
-    set(null, PGraphicsEnvironment())
-  }
-}
 
 internal fun setupToolkit() {
   Toolkit::class.java.getDeclaredField("toolkit").apply {
@@ -76,7 +63,6 @@ internal fun setupRepaintManager() {
 internal fun setupSystemProperties() {
   // Setting these properties as run arguments isn't enough because they can be overwritten by JVM
   System.setProperty(ENABLE_PROPERTY_NAME, true.toString())
-  System.setProperty("java.awt.graphicsenv", PGraphicsEnvironment::class.java.canonicalName)
   System.setProperty("awt.toolkit", PToolkit::class.java.canonicalName)
   System.setProperty("sun.font.fontmanager", PFontManager::class.java.canonicalName)
   System.setProperty("java.awt.headless", false.toString())
