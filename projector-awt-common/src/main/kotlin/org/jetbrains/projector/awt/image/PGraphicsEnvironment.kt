@@ -34,14 +34,11 @@ import java.awt.*
 import java.awt.image.BufferedImage
 import java.util.*
 
-class PGraphicsEnvironment : SunGraphicsEnvironment() {
+class PGraphicsEnvironment private constructor(): SunGraphicsEnvironment() {
 
   companion object {
     var clientDoesWindowManagement: Boolean = false
     val devices = ArrayList<PGraphicsDevice>().apply { add(PGraphicsDevice("Screen0")) }
-
-    // this is questionable from garbage collection point of view, but given that normally at most two instances of PGE should be created, it's not that bad
-    private val instances = ArrayList<PGraphicsEnvironment>()
 
     val defaultDevice: PGraphicsDevice
       get() = devices[0]
@@ -58,13 +55,13 @@ class PGraphicsEnvironment : SunGraphicsEnvironment() {
     }
 
     private fun fireDisplaysChanged() {
-      instances.forEach { it.displayChanged() }
+      instance.displayChanged()
       PWindow.windows.forEach { it.updateGraphics() }
     }
-  }
 
-  init {
-    instances.add(this)
+    @Suppress("RedundantVisibilityModifier") // used in IjAwtTransformer
+    @JvmStatic
+    public val instance = PGraphicsEnvironment()
   }
 
   val xResolution: Double = 96.0

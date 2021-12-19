@@ -897,16 +897,16 @@ class ProjectorServer private constructor(
     fun startServer(isAgent: Boolean, logFactory: (tag: String) -> Logger, initializer: Runnable): ProjectorServer {
       loggerFactory = logFactory
 
-      ProjectorAwtInitializer.initProjectorAwt()
-
-      initializer.run()
-
       if (IdeState.isIdeAttached) {
         IjInjectorAgentInitializer.init(isAgent)
       }
       else {
         logger.info { "Skipping IDE injections" }
       }
+
+      ProjectorAwtInitializer.initProjectorAwt()
+
+      initializer.run()
 
       ProjectorAwtInitializer.initDefaults()  // this should be done after setting classes because some headless operations can happen here
 
