@@ -25,6 +25,7 @@
 
 package org.jetbrains.projector.server
 
+import com.intellij.notification.*
 import org.jetbrains.projector.awt.PClipboard
 import org.jetbrains.projector.awt.PToolkit
 import org.jetbrains.projector.awt.PWindow
@@ -498,6 +499,16 @@ class ProjectorServer private constructor(
 
       is ClientWindowsDeactivationEvent -> {
         updateWindowsState(message.windowIds, WindowEvent.WINDOW_DEACTIVATED)
+      }
+      is ClientNotificationEvent -> {
+        val intellijNotificationType = when (message.notificationType) {
+          ClientNotificationType.INFORMATION -> NotificationType.INFORMATION
+          ClientNotificationType.WARNING -> NotificationType.WARNING
+          ClientNotificationType.ERROR -> NotificationType.ERROR
+        }
+
+        val notification = Notification("ProjectorClient", message.title, message.message, intellijNotificationType)
+        Notifications.Bus.notify(notification)
       }
     }
   }
