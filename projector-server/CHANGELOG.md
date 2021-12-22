@@ -3,6 +3,7 @@
 ## Added
 
 - PRJ-20 Synchronization between drawing to different surfaces
+- PRJ-796 Support for displaying markdown preview with plugin version 213
 
 ## Fixed
 
