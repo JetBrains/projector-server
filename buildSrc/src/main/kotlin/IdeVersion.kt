@@ -1,5 +1,11 @@
+import com.intellij.openapi.util.BuildNumber
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import java.io.File
+
 /*
- * Copyright (c) 2019-2022, JetBrains s.r.o. and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,28 +27,13 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-plugins {
-  `kotlin-dsl`
+
+public fun isIdeVersionAtLeast(idePath: String, minVersion: String): Boolean {
+  val productInfo = File("$idePath/product-info.json")
+  if (!productInfo.exists()) return false
+  val jsonRoot = Json.parseToJsonElement(productInfo.readText()) as JsonObject
+  val versionString = jsonRoot["buildNumber"] as JsonPrimitive
+  val ideBuildNumber = BuildNumber.fromString(versionString.content)!!
+  val requiredBuildNumber = BuildNumber.fromString(minVersion)!!
+  return ideBuildNumber >= requiredBuildNumber
 }
-
-repositories {
-  mavenCentral()
-  maven("https://www.jetbrains.com/intellij-repository/releases")
-  maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
-}
-
-val intellijPlatformVersion: String by project
-val serializationVersion: String by project
-
-dependencies {
-  implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:$serializationVersion")
-  implementation("com.jetbrains.intellij.platform:core:$intellijPlatformVersion") {
-    exclude(group = "org.jetbrains.kotlin") // cannot find these dependencies
-  }
-}
-
-kotlin {
-  explicitApi()
-}
-
-sourceSets.main.get().java.srcDir("src/main/kotlin")

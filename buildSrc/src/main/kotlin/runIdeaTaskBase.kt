@@ -69,6 +69,10 @@ public fun Project.createRunIdeaTask(
       "--add-opens=java.base/java.lang.reflect=ALL-UNNAMED",
     )
 
+    if (isIdeVersionAtLeast(ideaPath, "212")) { // appeared in 211, became default in 212, mandatory in 221
+      jvmArgs("-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
+    }
+
     if (prefix != null) {
       jvmArgs("-Didea.platform.prefix=$prefix") // This is required for IDE to determine proper file locations
     }
