@@ -3,6 +3,7 @@ name: Update copyright year in license files
 on:
   schedule:
     - cron: "0 3 1 1 *"
+  workflow_dispatch:
 
 jobs:
   update-license-year:
@@ -18,3 +19,7 @@ jobs:
             ./**/*.kt
             ./**/*.kts
             ./*.kts
+            ./**/*.properties
+            ./*.properties
+            ./projector-plugin/src/main/resources/META-INF/plugin.xml
+            ./**/*.html
