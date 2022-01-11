@@ -143,6 +143,10 @@ fun isProjectorDisabled(): Boolean {
 
 fun isProjectorStopped() = ProjectorService.enabled == EnabledState.STOPPED
 
+fun isConnectionSettingsEditable() : Boolean {
+  return !ProjectorService.isSessionRunning || isProjectorStopped()
+}
+
 fun confirmRestart(messageString: String): Boolean {
   val title = "Restart Is Needed..."
   val message = Function<String, String> { messageString }

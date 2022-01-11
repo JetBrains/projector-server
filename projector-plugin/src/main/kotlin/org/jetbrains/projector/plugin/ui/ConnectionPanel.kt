@@ -28,6 +28,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.projector.plugin.ProjectorService
+import org.jetbrains.projector.plugin.isConnectionSettingsEditable
 import org.jetbrains.projector.plugin.isProjectorStopped
 import org.jetbrains.projector.server.util.AsyncHostResolver
 import org.jetbrains.projector.server.util.Host
@@ -107,7 +108,7 @@ class ConnectionPanel : JPanel(),
   }
 
   init {
-    isVisible = ProjectorService.isSessionRunning && !isProjectorStopped()
+    isVisible = !isConnectionSettingsEditable()
 
     if (isVisible) {
       val buttonPanel = JPanel()

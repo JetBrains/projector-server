@@ -32,7 +32,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.components.Link
 import org.jetbrains.projector.plugin.ProjectorService
 import org.jetbrains.projector.plugin.ProjectorSettingsConfigurable
-import org.jetbrains.projector.plugin.isProjectorStopped
+import org.jetbrains.projector.plugin.isConnectionSettingsEditable
 import org.jetbrains.projector.server.util.*
 import org.jetbrains.projector.server.util.getHostsList
 import java.awt.Toolkit
@@ -64,7 +64,12 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
   init {
 
-    if (ProjectorService.isSessionRunning && !isProjectorStopped()) {
+    if (isConnectionSettingsEditable()) {
+      title = "Start Remote Access to IDE"
+      description.text = "<html>Config remote access to IDE.<br>Listen on:"
+      myOKAction.putValue(Action.NAME, "Start")
+    }
+    else {
       title = "Current Session"
       description.text = "<html>The current session has already started.<br>Do you want to change settings?"
       myOKAction.putValue(Action.NAME, "Save")
@@ -72,11 +77,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       portEditor.isEnabled = false
       myHostsList.isEnabled = false
       secureConnection.isEnabled = false
-    }
-    else {
-      title = "Start Remote Access to IDE"
-      description.text = "<html>Config remote access to IDE.<br>Listen on:"
-      myOKAction.putValue(Action.NAME, "Start")
     }
 
     myHostsList.onChange = ::updateURLList
@@ -125,13 +125,26 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .startNextLine().addNextComponent(ConnectionPanel(), gridWidth = 8)
       .startNextLine().addNextComponent(Link("Settings") { openSettings() })
 
-
     return panel
   }
 
   private fun openSettings() {
     val project = ProjectManager.getInstance().defaultProject
     ShowSettingsUtil.getInstance().editConfigurable(project, ProjectorSettingsConfigurable())
+
+    if (listenAddress != ProjectorService.host) {
+      myHostsList.selectByAddress(ProjectorService.host)
+      updateURLList()
+    }
+
+    portEditor.value = ProjectorService.port
+    secureConnection.isSelected = ProjectorService.secureConnection
+
+
+    rwTokenEditor.token = ProjectorService.rwToken
+    roTokenEditor.token = ProjectorService.roToken
+
+    updateInvitationLinks()
   }
 
   private fun updateInvitationLinks() {

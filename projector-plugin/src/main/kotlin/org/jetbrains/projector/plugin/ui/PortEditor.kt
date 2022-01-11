@@ -49,7 +49,11 @@ internal class PortEditor(portValue: String) : JPanel() {
   }
 
   var onChange: (() -> Unit)? = null
-  val value get() = port.text ?: ""
+  var value
+    get() = port.text ?: ""
+    set(value) {
+      port.text = value
+    }
 
   override fun setEnabled(enabled: Boolean) {
     super.setEnabled(enabled)
