@@ -23,18 +23,21 @@
  */
 package org.jetbrains.projector.plugin.ui
 
+import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
+import com.intellij.util.ui.SwingHelper
 import org.jetbrains.projector.plugin.*
 import java.awt.Desktop.getDesktop
 import java.io.File
 import javax.swing.*
 
-class ProjectorSettingsComponent {
-  init {
-    ProjectorService.instance
-  }
 
+class ProjectorSettingsComponent {
   private var autostart by ProjectorService.Companion::autostart
   private var confirmConnection by ProjectorService.Companion::confirmConnection
   private var host: String by ProjectorService.Companion::host
@@ -145,7 +148,76 @@ class ProjectorSettingsComponent {
   }
 
   private fun importCertificate() {
-    importUserCertificate("", "")
-    userBtn?.enabled(isUserKeystoreFileExist())
+    val (certFile, keyFile) = twoFileChooser()
+
+    fun isValidPath(path: String? ) : Boolean {
+      return path != null &&  File(path).exists()
+    }
+
+    if (isValidPath(certFile) && isValidPath(keyFile)) {
+      importUserCertificate(certFile!!, keyFile!!)
+      userBtn?.enabled(isUserKeystoreFileExist())
+    }
+    else {
+      SwingUtilities.invokeLater {
+        JOptionPane.showMessageDialog(
+          null,
+          "You should specify valid path to certificate chain and to key file",
+          "Can't import user certificate...",
+          JOptionPane.ERROR_MESSAGE,
+        )
+      }
+    }
   }
+}
+
+private class CertificateChooserDialog(project: Project) : DialogWrapper(project) {
+  val certFieldWithBrowseButton = TextFieldWithBrowseButton()
+  val keyFieldWithBrowseButton = TextFieldWithBrowseButton()
+
+  private val descriptor = FileChooserDescriptor(true, false, false, false, false, false)
+
+  init {
+    init()
+  }
+
+  override fun createCenterPanel(): JComponent {
+    val panel = panel {
+      row {
+        label("Certificate file")
+        SwingHelper.installFileCompletionAndBrowseDialog(ProjectManager.getInstance().defaultProject,
+                                                         certFieldWithBrowseButton,
+                                                         "Select Certificate Chain File",
+                                                         descriptor)
+
+        certFieldWithBrowseButton()
+      }
+
+      row {
+        label("Key file")
+        SwingHelper.installFileCompletionAndBrowseDialog(ProjectManager.getInstance().defaultProject,
+                                                         keyFieldWithBrowseButton,
+                                                         "Select Key File",
+                                                         descriptor)
+
+        keyFieldWithBrowseButton()
+      }
+    }
+
+    return panel
+  }
+
+}
+
+private fun twoFileChooser(): Pair<String?, String?> {
+  val chooser = CertificateChooserDialog(ProjectManager.getInstance().defaultProject)
+  chooser.pack()
+  chooser.show()
+
+  if (chooser.exitCode == DialogWrapper.OK_EXIT_CODE) {
+    return Pair(chooser.certFieldWithBrowseButton.text,
+                chooser.keyFieldWithBrowseButton.text)
+  }
+
+  return Pair(null, null)
 }
