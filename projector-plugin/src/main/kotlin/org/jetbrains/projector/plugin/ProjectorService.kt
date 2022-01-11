@@ -50,8 +50,8 @@ enum class CertificateSource {
 
 class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
   var secureConnection: Boolean = false
-  var host: String = ""
-  var port: String = ""
+  var host: String = "127.0.0.1"
+  var port: String = ProjectorServer.getEnvPort().toString()
   var confirmConnection: Boolean = true
   var autostart: Boolean = false
   var certificateSource = CertificateSource.PROJECTOR_CA
