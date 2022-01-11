@@ -23,7 +23,6 @@
  */
 package org.jetbrains.projector.plugin.ui
 
-import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import org.jetbrains.projector.plugin.*
@@ -32,6 +31,10 @@ import java.io.File
 import javax.swing.*
 
 class ProjectorSettingsComponent {
+  init {
+    ProjectorService.instance
+  }
+
   private var autostart by ProjectorService.Companion::autostart
   private var confirmConnection by ProjectorService.Companion::confirmConnection
   private var host: String by ProjectorService.Companion::host
@@ -39,54 +42,45 @@ class ProjectorSettingsComponent {
   private var rwToken: String by ProjectorService.Companion::rwToken
   private var roToken: String by ProjectorService.Companion::roToken
   private var secureConnection by ProjectorService.Companion::secureConnection
-
-  var certificateSource = ProjectorService.instance.config.certificateSource
-
-  private val autostartCheckbox = JBCheckBox("Start Projector automatically when ${productName()} starts", autostart).apply {
-    addActionListener {
-      autostart = isSelected
-    }
-  }
-
-  private val confirmConnectionCheckbox = JBCheckBox("Require connection confirmation", confirmConnection).apply {
-    addActionListener {
-      confirmConnection = isSelected
-    }
-  }
-
-  private val hosts = HostsList("Host:", ProjectorService.host).apply {
-    onChange = { selected?.let { host = it.address } }
-  }
-
-  private val portEdit = PortEditor(ProjectorService.port).apply {
-    onChange = { port = this.value }
-  }
+  var certificateSource = ProjectorService.certificateSource
 
   private val rwTokenEditor = TokenEditor("Password for read-write access:", ProjectorService.rwToken).apply {
     onChange = { rwToken = tokenTextField.text }
   }
+
   private val roTokenEditor = TokenEditor("Password for read-only  access:", ProjectorService.roToken).apply {
     onChange = { roToken = tokenTextField.text }
-  }
-
-  private val secureConnectionCheckbox: JCheckBox = JCheckBox("Use HTTPS", ProjectorService.secureConnection).apply {
-    addActionListener {
-      secureConnection = isSelected
-    }
   }
 
   private var userBtn: CellBuilder<JBRadioButton>? = null
 
   private val mainPanel = panel {
-    row { autostartCheckbox() }
+    row {
+      checkBox("Start Projector automatically when ${productName()} starts", autostart).apply {
+        component.addActionListener {
+          autostart = component.isSelected
+        }
+      }
+    }
 
-    row { confirmConnectionCheckbox() }
+    row {
+      checkBox("Require connection confirmation", confirmConnection).apply {
+        component.addActionListener {
+          confirmConnection = component.isSelected
+        }
+      }
+    }
 
     titledRow("Connection") {}
 
     row {
-      hosts()
-      portEdit()
+      HostsList("Host:", ProjectorService.host).apply {
+        onChange = { selected?.let { host = it.address } }
+      }()
+
+      PortEditor(ProjectorService.port).apply {
+        onChange = { port = value }
+      }()
     }
 
     row {
@@ -101,20 +95,29 @@ class ProjectorSettingsComponent {
       roTokenEditor.refreshButton()
     }
 
-    row { secureConnectionCheckbox() }
+    row {
+      checkBox("Use HTTPS", ProjectorService.secureConnection).apply {
+        component.addActionListener {
+          secureConnection = component.isSelected
+        }
+      }
+    }
 
     titledRow("SSL") {}
 
+    row { button("Regenerate Projector certificate") { recreateKeystoreFiles() } }
+
+    row { button("Import user certificate") { importCertificate() } }
+
     row { link("Show Projector CA File in Files") { getDesktop().open(File(getPathToPluginSSLDir())) } }
 
-    row { button("Import certificate") { importCertificate() } }
 
     titledRow("Certificate") {
 
       buttonGroup(this@ProjectorSettingsComponent::certificateSource) {
         row {
           radioButton("Projector CA", CertificateSource.PROJECTOR_CA).apply {
-            this.component.addActionListener {
+            component.addActionListener {
               certificateSource = CertificateSource.PROJECTOR_CA
             }
           }
