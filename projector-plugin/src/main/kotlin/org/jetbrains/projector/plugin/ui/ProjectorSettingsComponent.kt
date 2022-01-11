@@ -76,10 +76,12 @@ class ProjectorSettingsComponent {
     row {
       HostsList("Host:", ProjectorService.host).apply {
         onChange = { selected?.let { host = it.address } }
+        isEnabled = isConnectionSettingsEditable()
       }()
 
       PortEditor(ProjectorService.port).apply {
         onChange = { port = value }
+        isEnabled = isConnectionSettingsEditable()
       }()
     }
 
@@ -100,16 +102,19 @@ class ProjectorSettingsComponent {
         component.addActionListener {
           secureConnection = component.isSelected
         }
+
+        enabled(isConnectionSettingsEditable())
       }
     }
 
-    titledRow("SSL") {}
+    titledRow("SSL") {
 
-    row { button("Regenerate Projector certificate") { recreateKeystoreFiles() } }
+      row { button("Regenerate Projector certificate") { recreateKeystoreFiles() } }
 
-    row { button("Import user certificate") { importCertificate() } }
+      row { button("Import user certificate") { importCertificate() } }
 
-    row { link("Show Projector CA File in Files") { getDesktop().open(File(getPathToPluginSSLDir())) } }
+      row { link("Show Projector CA File in Files") { getDesktop().open(File(getPathToPluginSSLDir())) } }
+    }
 
 
     titledRow("Certificate") {

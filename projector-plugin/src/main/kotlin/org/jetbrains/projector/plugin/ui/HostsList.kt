@@ -42,6 +42,16 @@ class HostsList(label: String, selectedHost: String) : JPanel(), ResolvedHostSub
 
   fun clear() = hosts.removeAllItems()
 
+  fun selectByAddress(address: String) {
+    for (i in 0 until hosts.itemCount) {
+      val item = hosts.getItemAt(i)
+      if (item.address == address) {
+        hosts.selectedIndex = i
+        break
+      }
+    }
+  }
+
   private fun addItems(values: List<Host>) = values.forEach { hosts.addItem(it) }
 
   fun setItems(values: List<Host>) {
