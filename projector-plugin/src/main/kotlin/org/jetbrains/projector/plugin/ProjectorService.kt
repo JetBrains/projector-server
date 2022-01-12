@@ -218,10 +218,11 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
 
     var secureConnection: Boolean
       get() = instance.config.secureConnection
-      set(value)  {
+      set(value) {
         if (value) {
           setSystemProperty(SSL_ENV_NAME, getPathToSSLPropertiesFile(instance.config.certificateSource))
-        } else {
+        }
+        else {
           setSystemProperty(SSL_ENV_NAME, null)
         }
 
