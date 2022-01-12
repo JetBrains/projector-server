@@ -39,9 +39,6 @@ class ProjectorSettingsConfigurable : Configurable {
   }
 
   override fun apply() {
-    with(ProjectorService.instance.config) {
-      setCertificateSource(component.certificateSource)
-      certificateSource = component.certificateSource
-    }
+    ProjectorService.instance.config.certificateSource = component.certificateSource
   }
 }

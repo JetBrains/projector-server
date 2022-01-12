@@ -43,11 +43,6 @@ enum class EnabledState {
   STOPPED,
 }
 
-enum class CertificateSource {
-  PROJECTOR_CA,
-  USER_IMPORTED
-}
-
 class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
   var secureConnection: Boolean = false
   var host: String = "127.0.0.1"
@@ -113,7 +108,7 @@ interface ProjectorStateListener {
 
 @State(name = "Projector", storages = [Storage(ProjectorConfig.STORAGE_NAME)])
 class ProjectorService : PersistentStateComponent<ProjectorConfig> {
-  private var config: ProjectorConfig = ProjectorConfig()
+  var config: ProjectorConfig = ProjectorConfig()
   private val listeners = arrayListOf<ProjectorStateListener>()
 
   private var currentSession: Session? = null
@@ -225,7 +220,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       get() = instance.config.secureConnection
       set(value)  {
         if (value) {
-          setSystemProperty(SSL_ENV_NAME, getPathToSSLPropertiesFile())
+          setSystemProperty(SSL_ENV_NAME, getPathToSSLPropertiesFile(instance.config.certificateSource))
         } else {
           setSystemProperty(SSL_ENV_NAME, null)
         }
