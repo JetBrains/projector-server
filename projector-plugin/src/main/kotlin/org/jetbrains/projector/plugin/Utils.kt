@@ -97,7 +97,7 @@ fun areRequiredVmOptionsPresented(): Boolean {
 }
 
 fun addRequiredOptions() {
-  try { // // for 2021.3 and later
+  try { // for 2021.3 and later
     VMOptions.setProperty(BUFFER_PER_WINDOW_OPTION, "false")
     VMOptions.setProperty(ALLOW_ATTACH_SELF_OPTION, "true")
   }
