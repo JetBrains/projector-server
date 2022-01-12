@@ -26,6 +26,7 @@
 package org.jetbrains.projector.plugin
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.diagnostic.Logger
 import org.jetbrains.projector.server.core.util.*
 import org.jetbrains.projector.server.util.Host
 import org.jetbrains.projector.server.util.getHostsList
@@ -35,6 +36,7 @@ import sun.security.pkcs10.PKCS10
 import sun.security.tools.keytool.CertAndKeyGen
 import sun.security.util.SignatureUtil
 import sun.security.x509.*
+import sun.security.x509.Extension
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
@@ -43,10 +45,8 @@ import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Paths
 import java.security.*
+import java.security.cert.*
 import java.security.cert.Certificate
-import java.security.cert.CertificateException
-import java.security.cert.CertificateFactory
-import java.security.cert.X509Certificate
 import java.security.interfaces.RSAPrivateKey
 import java.security.spec.InvalidKeySpecException
 import java.security.spec.PKCS8EncodedKeySpec
@@ -77,7 +77,6 @@ private val PROJECTOR_KEYSTORE_FILE_NAME = "projector.${storageTypeToExtension(K
 private val USER_KEYSTORE_FILE_NAME = "user-imported.${storageTypeToExtension(KEYSTORE_TYPE)}"
 
 private const val CERTIFICATE_ALIAS = "PROJECTOR-PLUGIN"
-private const val USER_CERTIFICATE_ALIAS = "USERS-CERTIFICATE"
 private const val KEY_ALGORITHM_NAME = "RSA"
 private const val SIGNING_ALGORITHM_NAME = "SHA256withRSA"
 private const val KEY_SIZE = 2048
@@ -102,7 +101,7 @@ fun recreateKeystoreFiles() {
 
 fun getPathToPluginSSLDir() = Paths.get(PathManager.getOptionsPath(), "ssl").toString().replace('\\', '/')
 
-fun getPathToSSLPropertiesFile(source: CertificateSource ) : String {
+fun getPathToSSLPropertiesFile(source: CertificateSource): String {
   val name = when (source) {
     CertificateSource.PROJECTOR_CA -> SSL_PROPERTIES_FILE
     CertificateSource.USER_IMPORTED -> USER_SSL_PROPERTIES_FILE
@@ -153,7 +152,6 @@ private fun createProjectorKeystore(): SSLProperties {
   val keyPair = generateKeypair()
   val csr = generateCSR(keyPair)
   val signedCert = signCertificate(csr, caPrivateKey, caCertificate)
-
   keyStore.setKeyEntry(CERTIFICATE_ALIAS, keyPair.private, password.toCharArray(), arrayOf(signedCert))
 
   FileOutputStream(sslProps.filePath).use { fos -> keyStore.store(fos, password.toCharArray()) }
@@ -303,7 +301,7 @@ fun createUserKeystore(certificatePath: String, keyPath: String): SSLProperties 
   val certs = loadCertificateChain(certificatePath)
   val key = loadPrivateKey(keyPath)
 
-  keyStore.setKeyEntry(USER_CERTIFICATE_ALIAS, key, password.toCharArray(), certs)
+  keyStore.setKeyEntry(CERTIFICATE_ALIAS, key, password.toCharArray(), certs)
 
   FileOutputStream(sslProps.filePath).use { fos -> keyStore.store(fos, password.toCharArray()) }
 
@@ -330,7 +328,7 @@ fun loadPrivateKey(keyPath: String): Key {
   return keyFactory.generatePrivate(keySpec) as RSAPrivateKey
 }
 
-fun importUserCertificate(certificatePath: String, keyPath: String) : Boolean {
+fun importUserCertificate(certificatePath: String, keyPath: String): Boolean {
   try {
     File(getPathToPluginSSLDir()).mkdirs()
     val props = createUserKeystore(certificatePath, keyPath)
@@ -345,4 +343,32 @@ fun importUserCertificate(certificatePath: String, keyPath: String) : Boolean {
   }
 
   return false
+}
+
+fun getSubjectAlternativeNames(certificate: X509Certificate): Array<String> {
+  val names: MutableList<String> = ArrayList()
+
+  try {
+    val altNames = certificate.subjectAlternativeNames ?: return emptyArray()
+
+    for (item in altNames) {
+      val type = item[0] as Int
+
+      if (type != 2 && type != 7)
+        continue
+
+      when (val data = item.toTypedArray()[1] ) {
+        is String -> names.add(data)
+      }
+    }
+  }
+  catch (e: CertificateParsingException) {
+    Logger.getInstance("Projector parse.certificate")
+      .error("""
+           Error parsing SubjectAltName in certificate: $certificate
+           error: ${e.message}
+           """.trimIndent())
+  }
+
+  return names.toTypedArray()
 }
