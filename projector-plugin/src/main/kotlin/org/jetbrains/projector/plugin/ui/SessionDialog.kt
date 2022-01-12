@@ -52,6 +52,12 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     }
   }
 
+  private val useNamesInURLs: JCheckBox = JCheckBox("Use names in URLs", secureConnection.isSelected).apply {
+    addActionListener {
+      updateInvitationLinks()
+    }
+  }
+
   private val rwInvitationLink = InvitationLink("Read/Write Link:")
   private val roInvitationLink = InvitationLink("Read Only  Link:")
 
@@ -59,7 +65,15 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   val roToken: String get() = roTokenEditor.token
   val listenAddress: String get() = myHostsList.selected?.address ?: ""
   val listenPort: String get() = portEditor.value
-  private val urlAddress: String get() = urlHostsList.selected?.address ?: ""
+  private val urlAddress: String
+    get() {
+      if (useNamesInURLs.isSelected) {
+        return urlHostsList.selected?.name ?: ""
+      }
+
+      return urlHostsList.selected?.address ?: ""
+    }
+
   val useSecureConnection: Boolean get() = secureConnection.isSelected
 
   init {
@@ -111,6 +125,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .addNextComponent(roTokenEditor.refreshButton, gridWidth = 1)
 
       .startNextLine().addNextComponent(secureConnection, topGap = 5, bottomGap = 5)
+      .startNextLine().addNextComponent(useNamesInURLs, topGap = 5, bottomGap = 5)
 
       .startNextLine().addNextComponent(JLabel("Invitation Links:"), topGap = 5, bottomGap = 5)
 
