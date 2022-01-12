@@ -36,18 +36,32 @@ import sun.security.tools.keytool.CertAndKeyGen
 import sun.security.util.SignatureUtil
 import sun.security.x509.*
 import java.io.File
+import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.net.UnknownHostException
+import java.nio.charset.Charset
+import java.nio.file.Files
 import java.nio.file.Paths
 import java.security.*
 import java.security.cert.Certificate
+import java.security.cert.CertificateException
+import java.security.cert.CertificateFactory
 import java.security.cert.X509Certificate
+import java.security.interfaces.RSAPrivateKey
+import java.security.spec.InvalidKeySpecException
+import java.security.spec.PKCS8EncodedKeySpec
 import java.util.*
 
 
 enum class SupportedStorageTypes {
   JKS,
   PKCS12
+}
+
+
+enum class CertificateSource {
+  PROJECTOR_CA,
+  USER_IMPORTED
 }
 
 private val KEYSTORE_TYPE = SupportedStorageTypes.JKS
@@ -58,10 +72,12 @@ fun storageTypeToExtension(storageType: SupportedStorageTypes) = when (storageTy
 }
 
 private const val SSL_PROPERTIES_FILE = "ssl.properties"
+private const val USER_SSL_PROPERTIES_FILE = "user.ssl.properties"
 private val PROJECTOR_KEYSTORE_FILE_NAME = "projector.${storageTypeToExtension(KEYSTORE_TYPE)}"
 private val USER_KEYSTORE_FILE_NAME = "user-imported.${storageTypeToExtension(KEYSTORE_TYPE)}"
 
 private const val CERTIFICATE_ALIAS = "PROJECTOR-PLUGIN"
+private const val USER_CERTIFICATE_ALIAS = "USERS-CERTIFICATE"
 private const val KEY_ALGORITHM_NAME = "RSA"
 private const val SIGNING_ALGORITHM_NAME = "SHA256withRSA"
 private const val KEY_SIZE = 2048
@@ -75,7 +91,7 @@ private const val CA_DN = "CN=PROJECTOR-CA, OU=Development, O=Projector, L=SPB, 
 
 fun isKeystoreExist() = isPluginSSLDirExist()
                         &&
-                        isSSLPropertiesFileExist()
+                        isSSLPropertiesFileExist(CertificateSource.PROJECTOR_CA)
                         &&
                         isKeystoreFileExist()
 
@@ -86,7 +102,14 @@ fun recreateKeystoreFiles() {
 
 fun getPathToPluginSSLDir() = Paths.get(PathManager.getOptionsPath(), "ssl").toString().replace('\\', '/')
 
-fun getPathToSSLPropertiesFile() = Paths.get(getPathToPluginSSLDir(), SSL_PROPERTIES_FILE).toString().replace('\\', '/')
+fun getPathToSSLPropertiesFile(source: CertificateSource ) : String {
+  val name = when (source) {
+    CertificateSource.PROJECTOR_CA -> SSL_PROPERTIES_FILE
+    CertificateSource.USER_IMPORTED -> USER_SSL_PROPERTIES_FILE
+  }
+
+  return Paths.get(getPathToPluginSSLDir(), name).toString().replace('\\', '/')
+}
 
 fun isUserKeystoreFileExist() = File(getPathToUserKeystoreFile()).exists()
 
@@ -96,7 +119,7 @@ private fun getPathToUserKeystoreFile() = Paths.get(getPathToPluginSSLDir(), USE
 
 private fun isPluginSSLDirExist() = File(getPathToPluginSSLDir()).exists()
 
-private fun isSSLPropertiesFileExist() = File(getPathToSSLPropertiesFile()).exists()
+private fun isSSLPropertiesFileExist(source: CertificateSource) = File(getPathToSSLPropertiesFile(source)).exists()
 
 private fun isKeystoreFileExist() = File(getPathToKeystoreFile()).exists()
 
@@ -105,7 +128,7 @@ private fun getPathToKeystoreFile() = Paths.get(getPathToPluginSSLDir(), PROJECT
 private fun createKeystoreFiles() {
   File(getPathToPluginSSLDir()).mkdirs()
   val props = createProjectorKeystore()
-  createSSLPropertiesFile(props)
+  createSSLPropertiesFile(getPathToSSLPropertiesFile(CertificateSource.PROJECTOR_CA), props)
 }
 
 private fun CertificateExtensions.add(ext: Extension) = set(ext.id, ext)
@@ -241,8 +264,8 @@ private fun generateKeypair(): KeyPair {
   return kpg.generateKeyPair()
 }
 
-private fun createSSLPropertiesFile(sslProperties: SSLProperties) {
-  File(getPathToSSLPropertiesFile()).printWriter().use { out ->
+private fun createSSLPropertiesFile(path: String, sslProperties: SSLProperties) {
+  File(path).printWriter().use { out ->
     out.println("${SSL_STORE_TYPE}=${sslProperties.storeType}")
     out.println("${SSL_FILE_PATH}=${sslProperties.filePath}")
     out.println("${SSL_STORE_PASSWORD}=${sslProperties.storePassword}")
@@ -253,7 +276,7 @@ private fun createSSLPropertiesFile(sslProperties: SSLProperties) {
 private fun removeKeystoreFiles() {
   removeFileIfExist(getPathToCACertificateFile())
   removeFileIfExist(getPathToKeystoreFile())
-  removeFileIfExist(getPathToSSLPropertiesFile())
+  removeFileIfExist(getPathToSSLPropertiesFile(CertificateSource.PROJECTOR_CA))
   removeFileIfExist(getPathToPluginSSLDir())
 }
 
@@ -264,12 +287,62 @@ private fun removeFileIfExist(path: String) {
   }
 }
 
-fun importUserCertificate(certificatePath: String, keyPath: String ) {
-  File(getPathToUserKeystoreFile()).printWriter().use { out ->
-    out.println("Test")
+fun createUserKeystore(certificatePath: String, keyPath: String): SSLProperties {
+  val password = generatePassword()
+  val sslProps = SSLProperties(
+    storeType = KEYSTORE_TYPE.toString(),
+    filePath = "${getPathToPluginSSLDir()}/${USER_KEYSTORE_FILE_NAME}",
+    storePassword = password,
+    keyPassword = password
+  )
+
+  val keyStore = KeyStore.getInstance(KEYSTORE_TYPE.toString()).apply {
+    load(null, password.toCharArray())
+  }
+
+  val certs = loadCertificateChain(certificatePath)
+  val key = loadPrivateKey(keyPath)
+
+  keyStore.setKeyEntry(USER_CERTIFICATE_ALIAS, key, password.toCharArray(), certs)
+
+  FileOutputStream(sslProps.filePath).use { fos -> keyStore.store(fos, password.toCharArray()) }
+
+  return sslProps
+}
+
+fun loadCertificateChain(certificatePath: String): Array<Certificate> {
+  return FileInputStream(certificatePath).use {
+    CertificateFactory.getInstance("X.509").generateCertificates(it).toTypedArray()
   }
 }
 
-fun setCertificateSource(certificateSource: CertificateSource) {
-  ProjectorService.certificateSource = certificateSource
+fun loadPrivateKey(keyPath: String): Key {
+  val key = String(Files.readAllBytes(Paths.get(keyPath)), Charset.defaultCharset())
+
+  val privateKeyPEM = key
+    .replace("-----BEGIN PRIVATE KEY-----", "")
+    .replace(System.lineSeparator().toRegex(), "")
+    .replace("-----END PRIVATE KEY-----", "")
+
+  val encoded: ByteArray = Base64.getDecoder().decode(privateKeyPEM)
+  val keyFactory = KeyFactory.getInstance(KEY_ALGORITHM_NAME)
+  val keySpec = PKCS8EncodedKeySpec(encoded)
+  return keyFactory.generatePrivate(keySpec) as RSAPrivateKey
+}
+
+fun importUserCertificate(certificatePath: String, keyPath: String) : Boolean {
+  try {
+    File(getPathToPluginSSLDir()).mkdirs()
+    val props = createUserKeystore(certificatePath, keyPath)
+    createSSLPropertiesFile(getPathToSSLPropertiesFile(CertificateSource.USER_IMPORTED), props)
+    return true
+  }
+  catch (_: CertificateException) {
+
+  }
+  catch (_: InvalidKeySpecException) {
+
+  }
+
+  return false
 }
