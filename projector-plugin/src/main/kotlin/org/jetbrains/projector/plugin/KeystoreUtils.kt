@@ -21,8 +21,6 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
-
 package org.jetbrains.projector.plugin
 
 
@@ -46,14 +44,12 @@ import org.bouncycastle.operator.bc.BcDigestCalculatorProvider
 import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
 import org.bouncycastle.pkcs.PKCS10CertificationRequest
+import org.bouncycastle.pkcs.jcajce.JcaPKCS10CertificationRequestBuilder
 import org.jetbrains.projector.server.core.util.*
 import org.jetbrains.projector.server.util.Host
 import org.jetbrains.projector.server.util.getHostsList
 import org.jetbrains.projector.server.util.isIp4String
 import org.jetbrains.projector.server.util.isIp6String
-import sun.security.pkcs10.PKCS10
-import sun.security.tools.KeyStoreUtil.isSelfSigned
-import sun.security.tools.KeyStoreUtil.signedBy
 import java.io.*
 import java.math.BigInteger
 import java.net.UnknownHostException
@@ -67,6 +63,10 @@ import java.security.interfaces.RSAPrivateKey
 import java.security.spec.InvalidKeySpecException
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.*
+import javax.security.auth.x500.X500Principal
+
+
+
 
 enum class SupportedStorageTypes {
   JKS,
@@ -234,16 +234,12 @@ private fun getAltNames(): Array<GeneralName> {
   return result.toTypedArray()
 }
 
-
 private fun generateCSR(keyPair: KeyPair): ByteArray {
-  val signature = Signature.getInstance(SIGNING_ALGORITHM_NAME).apply {
-    initSign(keyPair.private)
-  }
+  val p10Builder = JcaPKCS10CertificationRequestBuilder( X500Principal(DN), keyPair.public)
+  val csBuilder = JcaContentSignerBuilder(SIGNING_ALGORITHM_NAME)
+  val signer = csBuilder.build(keyPair.private)
 
-  with(PKCS10(keyPair.public)) {
-    encodeAndSign(sun.security.x509.X500Name(DN), signature)
-    return encoded
-  }
+  return p10Builder.build(signer).encoded
 }
 
 
@@ -407,11 +403,11 @@ private fun isFullChain(chain: Array<Certificate>): Boolean {
   for (cert in chain) {
     val certX509 = cert as X509Certificate
 
-    if (isSelfSigned(certX509)) {
+    if (certX509.issuerX500Principal == certX509.subjectX500Principal) { // self-signed
       return true
     }
 
-    if (prevCert != null && !signedBy(prevCert, certX509)) {
+    if (prevCert != null && prevCert.subjectX500Principal != certX509.issuerX500Principal) {  // bad chain
       return false
     }
 
