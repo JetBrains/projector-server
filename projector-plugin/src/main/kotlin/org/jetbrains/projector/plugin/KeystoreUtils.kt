@@ -31,11 +31,21 @@ import com.intellij.openapi.diagnostic.Logger
 import org.apache.http.client.methods.HttpGet
 import org.apache.http.impl.client.HttpClientBuilder
 import org.apache.http.util.EntityUtils
-import org.bouncycastle.asn1.ASN1InputStream
-import org.bouncycastle.asn1.DERIA5String
-import org.bouncycastle.asn1.DEROctetString
-import org.bouncycastle.asn1.x509.AuthorityInformationAccess
-import org.bouncycastle.asn1.x509.X509ObjectIdentifiers
+import org.bouncycastle.asn1.*
+import org.bouncycastle.asn1.x509.*
+import org.bouncycastle.asn1.x509.Extension
+import org.bouncycastle.cert.X509ExtensionUtils
+import org.bouncycastle.cert.X509v3CertificateBuilder
+import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter
+import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder
+import org.bouncycastle.crypto.util.PrivateKeyFactory
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.bouncycastle.operator.DefaultDigestAlgorithmIdentifierFinder
+import org.bouncycastle.operator.DefaultSignatureAlgorithmIdentifierFinder
+import org.bouncycastle.operator.bc.BcDigestCalculatorProvider
+import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder
+import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder
+import org.bouncycastle.pkcs.PKCS10CertificationRequest
 import org.jetbrains.projector.server.core.util.*
 import org.jetbrains.projector.server.util.Host
 import org.jetbrains.projector.server.util.getHostsList
@@ -44,10 +54,8 @@ import org.jetbrains.projector.server.util.isIp6String
 import sun.security.pkcs10.PKCS10
 import sun.security.tools.KeyStoreUtil.isSelfSigned
 import sun.security.tools.KeyStoreUtil.signedBy
-import sun.security.tools.keytool.CertAndKeyGen
-import sun.security.util.SignatureUtil
-import sun.security.x509.*
 import java.io.*
+import java.math.BigInteger
 import java.net.UnknownHostException
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -59,9 +67,6 @@ import java.security.interfaces.RSAPrivateKey
 import java.security.spec.InvalidKeySpecException
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.*
-import org.bouncycastle.asn1.x509.Extension as BCExtension
-import org.bouncycastle.asn1.x509.GeneralName as BCGeneralName
-
 
 enum class SupportedStorageTypes {
   JKS,
@@ -90,13 +95,14 @@ private const val CERTIFICATE_ALIAS = "PROJECTOR-PLUGIN"
 private const val KEY_ALGORITHM_NAME = "RSA"
 private const val SIGNING_ALGORITHM_NAME = "SHA256withRSA"
 private const val KEY_SIZE = 2048
-private const val DN = "CN=idea-projector-plugin, OU=Development, O=Idea, L=SPB, S=SPB, C=RU"
-private const val DAYS_VALID = 10000
+private const val DN = "CN=idea-projector-plugin, OU=Development, O=Idea, L=SPB, C=RU"
+private const val YEARS_VALID = 2
+private const val DAYS_VALID = YEARS_VALID * 365
 private const val SECONDS_VALID = DAYS_VALID * 24L * 60L * 60L
 
 private const val CA_CRT_FILE_NAME = "projector-ca.crt"
 private const val CA_ALIAS = "projector-ca"
-private const val CA_DN = "CN=PROJECTOR-CA, OU=Development, O=Projector, L=SPB, S=SPB, C=RU"
+private const val CA_DN = "CN=PROJECTOR-CA, OU=Development, O=Projector, L= SPB, C=RU"
 
 fun isKeystoreExist() = isPluginSSLDirExist()
                         &&
@@ -140,8 +146,6 @@ private fun createKeystoreFiles() {
   createSSLPropertiesFile(getPathToSSLPropertiesFile(CertificateSource.PROJECTOR_CA), props)
 }
 
-private fun CertificateExtensions.add(ext: sun.security.x509.Extension) = set(ext.id, ext)
-
 private fun createProjectorKeystore(): SSLProperties {
   val password = generatePassword()
   val sslProps = SSLProperties(
@@ -169,54 +173,56 @@ private fun createProjectorKeystore(): SSLProperties {
   return sslProps
 }
 
-// black magic from keytool utility
-
-private const val KEY_USAGE_BITMASK_SIZE = 9
-private const val KEY_CERT_SIGN_EXT_INDEX = 5
-private val KEY_CERT_SIGN_BITMASK = BooleanArray(KEY_USAGE_BITMASK_SIZE).apply { set(KEY_CERT_SIGN_EXT_INDEX, true) }
-private val KEY_CERT_SIGN_EXTENSION = KeyUsageExtension(KEY_CERT_SIGN_BITMASK)
-
 private fun signCertificate(csr: ByteArray, caPrivateKey: PrivateKey, signerCert: Certificate): X509Certificate {
-  val signerCertInfo = X509CertImpl(signerCert.encoded)["${X509CertImpl.NAME}.${X509CertImpl.INFO}"] as X509CertInfo
-  val params = AlgorithmId.getDefaultAlgorithmParameterSpec(SIGNING_ALGORITHM_NAME, caPrivateKey)
-  SignatureUtil.initSignWithParam(Signature.getInstance(SIGNING_ALGORITHM_NAME), caPrivateKey, params, null)
+  val pk10Holder = PKCS10CertificationRequest(csr)
+  val sigAlgId = DefaultSignatureAlgorithmIdentifierFinder().find(SIGNING_ALGORITHM_NAME)
+  val digAlgId = DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId)
+  val key = PrivateKeyFactory.createKey(caPrivateKey.encoded)
+  val keyInfo = SubjectPublicKeyInfo.getInstance(pk10Holder.subjectPublicKeyInfo.encoded)
 
-  val info = X509CertInfo().apply {
-    this[X509CertInfo.VALIDITY] = CertificateValidity(Date(), Date().apply {
-      time += SECONDS_VALID * 1000L
-    })
-    this[X509CertInfo.SERIAL_NUMBER] = CertificateSerialNumber(Random().nextInt() and 0x7fffffff)
-    this[X509CertInfo.VERSION] = CertificateVersion(CertificateVersion.V3)
+  val now = System.currentTimeMillis()
 
-    val algID = AlgorithmId.getWithParameterSpec(SIGNING_ALGORITHM_NAME, params)
-    this[X509CertInfo.ALGORITHM_ID] = CertificateAlgorithmId(algID)
-    this[X509CertInfo.ISSUER] = signerCertInfo["${X509CertInfo.SUBJECT}.${X509CertInfo.DN_NAME}"] as X500Name
+  val certBuilder = X509v3CertificateBuilder(
+    org.bouncycastle.asn1.x500.X500Name(CA_DN),
+    BigInteger(now.toString()),
+    Date(now),
+    Date(now + SECONDS_VALID * 1000),
+    pk10Holder.subject,
+    keyInfo)
 
-    val req = PKCS10(csr)
-    this[X509CertInfo.KEY] = CertificateX509Key(req.subjectPublicKeyInfo)
-    this[X509CertInfo.SUBJECT] = req.subjectName
+  val digCalc = BcDigestCalculatorProvider().get(digAlgId)
+  val x509ExtensionUtils = X509ExtensionUtils(digCalc)
+  certBuilder.addExtension(Extension.subjectKeyIdentifier,
+                           false,
+                           x509ExtensionUtils.createSubjectKeyIdentifier(keyInfo))
 
-    val ext = CertificateExtensions().apply {
-      add(SubjectKeyIdentifierExtension(KeyIdentifier(req.subjectPublicKeyInfo).identifier))
-      add(AuthorityKeyIdentifierExtension(KeyIdentifier(signerCert.publicKey), null, null))
-      add(SubjectAlternativeNameExtension(false, getGeneralNames()))
-    }
-    this[X509CertInfo.EXTENSIONS] = ext
-  }
+  certBuilder.addExtension(Extension.authorityKeyIdentifier, false, AuthorityKeyIdentifier(signerCert.encoded))
 
-  return X509CertImpl(info).apply {
-    sign(caPrivateKey, params, SIGNING_ALGORITHM_NAME, null)
-  }
+
+  val altNames = getAltNames()
+  val subjectAltNames = GeneralNames.getInstance(DERSequence(altNames))
+  certBuilder.addExtension(Extension.subjectAlternativeName, false, subjectAltNames)
+
+
+  val sigGen = BcRSAContentSignerBuilder(sigAlgId, digAlgId).build(key)
+  val holder = certBuilder.build(sigGen)
+  val eeX509CertificateStructure = holder.toASN1Structure()
+  val cf = CertificateFactory.getInstance("X.509", "BC")
+
+  val stream = ByteArrayInputStream(eeX509CertificateStructure.encoded)
+  val signed = cf.generateCertificate(stream) as X509Certificate
+  stream.close()
+  return signed
 }
 
-private fun getGeneralNames(): GeneralNames {
-  val result = GeneralNames()
+private fun getAltNames(): Array<GeneralName> {
+  val result = arrayListOf<GeneralName>()
   val ips = getHostsList { Host(it, "") }.map { it.address }
 
   for (ip in ips) {
     try {
       if (isIp4String(ip) || isIp6String(ip)) {
-        val gn = GeneralName(IPAddressName(ip))
+        val gn = GeneralName(GeneralName.iPAddress, ip)
         result.add(gn)
       }
     }
@@ -225,8 +231,9 @@ private fun getGeneralNames(): GeneralNames {
     }
   }
 
-  return result
+  return result.toTypedArray()
 }
+
 
 private fun generateCSR(keyPair: KeyPair): ByteArray {
   val signature = Signature.getInstance(SIGNING_ALGORITHM_NAME).apply {
@@ -234,25 +241,38 @@ private fun generateCSR(keyPair: KeyPair): ByteArray {
   }
 
   with(PKCS10(keyPair.public)) {
-    encodeAndSign(X500Name(DN), signature)
+    encodeAndSign(sun.security.x509.X500Name(DN), signature)
     return encoded
   }
 }
 
 
 private fun createCA(): Pair<X509Certificate, PrivateKey> {
-  val keyPair = CertAndKeyGen(KEY_ALGORITHM_NAME, SIGNING_ALGORITHM_NAME, CA_ALIAS).apply {
-    generate(KEY_SIZE)
-  }
+  val keyPair = generateKeypair()
+  val bcProvider = BouncyCastleProvider()
+  Security.addProvider(bcProvider)
+  val now = System.currentTimeMillis()
+  val startDate = Date(now)
+  val dnName = org.bouncycastle.asn1.x500.X500Name(CA_DN)
+  val calendar = Calendar.getInstance()
+  calendar.time = startDate
+  calendar.add(Calendar.YEAR, 1)
+  val endDate = calendar.time
 
-  val extensions = CertificateExtensions().apply {
-    add(BasicConstraintsExtension(true, true, -1))
-    add(sun.security.x509.Extension.newExtension(KEY_CERT_SIGN_EXTENSION.extensionId, true, KEY_CERT_SIGN_EXTENSION.extensionValue))
-  }
+  val contentSigner = JcaContentSignerBuilder(SIGNING_ALGORITHM_NAME).build(keyPair.private)
 
-  val cert = keyPair.getSelfCertificate(X500Name(CA_DN), Date(), SECONDS_VALID, extensions)
+  val certBuilder = JcaX509v3CertificateBuilder(dnName,
+                                                BigInteger(now.toString()),
+                                                startDate,
+                                                endDate,
+                                                dnName,
+                                                keyPair.public)
 
-  return Pair(cert, keyPair.privateKey)
+
+  val basicConstraints = BasicConstraints(true)
+  certBuilder.addExtension(ASN1ObjectIdentifier("2.5.29.19"), true, basicConstraints)
+
+  return Pair(JcaX509CertificateConverter().setProvider(bcProvider).getCertificate(certBuilder.build(contentSigner)), keyPair.private)
 }
 
 private fun createCACrtFile(cert: X509Certificate) {
@@ -331,19 +351,18 @@ private fun loadCertificateChain(certificatePath: String): Array<Certificate> {
 }
 
 private fun getAccessLocation(certificate: X509Certificate): String {
-  val authInfoAccessExtensionValue = certificate.getExtensionValue(BCExtension.authorityInfoAccess.id) ?: return ""
-  val oct = ASN1InputStream(ByteArrayInputStream(authInfoAccessExtensionValue)).readObject() as DEROctetString
+  val aiaExtensionValue = certificate.getExtensionValue(Extension.authorityInfoAccess.id) ?: return ""
+  val oct = ASN1InputStream(ByteArrayInputStream(aiaExtensionValue)).readObject() as DEROctetString
   val authorityInformationAccess = AuthorityInformationAccess.getInstance(ASN1InputStream(oct.octets).readObject())
-  val accessDescriptions = authorityInformationAccess.accessDescriptions
 
-  for (accessDescription in accessDescriptions) {
+  for (ad in authorityInformationAccess.accessDescriptions) {
 
-    if (accessDescription.accessMethod != X509ObjectIdentifiers.id_ad_caIssuers)
+    if (ad.accessMethod != X509ObjectIdentifiers.id_ad_caIssuers)
       continue
 
-    val gn = accessDescription.accessLocation
+    val gn = ad.accessLocation
 
-    if (gn.tagNo != BCGeneralName.uniformResourceIdentifier)
+    if (gn.tagNo != GeneralName.uniformResourceIdentifier)
       continue
 
     return DERIA5String.getInstance(gn.name).string
