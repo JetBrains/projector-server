@@ -25,21 +25,29 @@
 
 package org.jetbrains.projector.plugin
 
+
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
+import org.apache.http.client.methods.HttpGet
+import org.apache.http.impl.client.HttpClientBuilder
+import org.apache.http.util.EntityUtils
+import org.bouncycastle.asn1.ASN1InputStream
+import org.bouncycastle.asn1.DERIA5String
+import org.bouncycastle.asn1.DEROctetString
+import org.bouncycastle.asn1.x509.AuthorityInformationAccess
+import org.bouncycastle.asn1.x509.X509ObjectIdentifiers
 import org.jetbrains.projector.server.core.util.*
 import org.jetbrains.projector.server.util.Host
 import org.jetbrains.projector.server.util.getHostsList
 import org.jetbrains.projector.server.util.isIp4String
 import org.jetbrains.projector.server.util.isIp6String
 import sun.security.pkcs10.PKCS10
+import sun.security.tools.KeyStoreUtil.isSelfSigned
+import sun.security.tools.KeyStoreUtil.signedBy
 import sun.security.tools.keytool.CertAndKeyGen
 import sun.security.util.SignatureUtil
 import sun.security.x509.*
-import sun.security.x509.Extension
-import java.io.File
-import java.io.FileInputStream
-import java.io.FileOutputStream
+import java.io.*
 import java.net.UnknownHostException
 import java.nio.charset.Charset
 import java.nio.file.Files
@@ -51,6 +59,8 @@ import java.security.interfaces.RSAPrivateKey
 import java.security.spec.InvalidKeySpecException
 import java.security.spec.PKCS8EncodedKeySpec
 import java.util.*
+import org.bouncycastle.asn1.x509.Extension as BCExtension
+import org.bouncycastle.asn1.x509.GeneralName as BCGeneralName
 
 
 enum class SupportedStorageTypes {
@@ -130,7 +140,7 @@ private fun createKeystoreFiles() {
   createSSLPropertiesFile(getPathToSSLPropertiesFile(CertificateSource.PROJECTOR_CA), props)
 }
 
-private fun CertificateExtensions.add(ext: Extension) = set(ext.id, ext)
+private fun CertificateExtensions.add(ext: sun.security.x509.Extension) = set(ext.id, ext)
 
 private fun createProjectorKeystore(): SSLProperties {
   val password = generatePassword()
@@ -237,7 +247,7 @@ private fun createCA(): Pair<X509Certificate, PrivateKey> {
 
   val extensions = CertificateExtensions().apply {
     add(BasicConstraintsExtension(true, true, -1))
-    add(Extension.newExtension(KEY_CERT_SIGN_EXTENSION.extensionId, true, KEY_CERT_SIGN_EXTENSION.extensionValue))
+    add(sun.security.x509.Extension.newExtension(KEY_CERT_SIGN_EXTENSION.extensionId, true, KEY_CERT_SIGN_EXTENSION.extensionValue))
   }
 
   val cert = keyPair.getSelfCertificate(X500Name(CA_DN), Date(), SECONDS_VALID, extensions)
@@ -285,7 +295,7 @@ private fun removeFileIfExist(path: String) {
   }
 }
 
-fun createUserKeystore(certificatePath: String, keyPath: String): SSLProperties {
+private fun createUserKeystore(certificatePath: String, keyPath: String): SSLProperties {
   val password = generatePassword()
   val sslProps = SSLProperties(
     storeType = KEYSTORE_TYPE.toString(),
@@ -308,13 +318,91 @@ fun createUserKeystore(certificatePath: String, keyPath: String): SSLProperties 
   return sslProps
 }
 
-fun loadCertificateChain(certificatePath: String): Array<Certificate> {
-  return FileInputStream(certificatePath).use {
+private fun loadCertificateChain(certificatePath: String): Array<Certificate> {
+  val res = FileInputStream(certificatePath).use {
     CertificateFactory.getInstance("X.509").generateCertificates(it).toTypedArray()
   }
+
+  if (res.isNotEmpty() && !isFullChain(res) || res.size == 1) {
+    return loadFullChainFor(res[0] as X509Certificate)
+  }
+
+  return res
 }
 
-fun loadPrivateKey(keyPath: String): Key {
+private fun getAccessLocation(certificate: X509Certificate): String {
+  val authInfoAccessExtensionValue = certificate.getExtensionValue(BCExtension.authorityInfoAccess.id) ?: return ""
+  val oct = ASN1InputStream(ByteArrayInputStream(authInfoAccessExtensionValue)).readObject() as DEROctetString
+  val authorityInformationAccess = AuthorityInformationAccess.getInstance(ASN1InputStream(oct.octets).readObject())
+  val accessDescriptions = authorityInformationAccess.accessDescriptions
+
+  for (accessDescription in accessDescriptions) {
+
+    if (accessDescription.accessMethod != X509ObjectIdentifiers.id_ad_caIssuers)
+      continue
+
+    val gn = accessDescription.accessLocation
+
+    if (gn.tagNo != BCGeneralName.uniformResourceIdentifier)
+      continue
+
+    return DERIA5String.getInstance(gn.name).string
+  }
+
+  return ""
+}
+
+private fun loadFullChainFor(certificate: X509Certificate): Array<Certificate> {
+  var lastCert = certificate
+  val res = arrayListOf<Certificate>(lastCert)
+
+  while (lastCert.issuerX500Principal != lastCert.subjectX500Principal) {
+    val url = getAccessLocation(lastCert)
+
+    if (url.isBlank()) {
+      throw CertificateException("Can't get AccessLocation for certificate")
+    }
+
+    lastCert = getCertificateByUrl(url)
+    res.add(lastCert)
+  }
+
+  return res.toTypedArray()
+}
+
+fun getCertificateByUrl(url: String): X509Certificate {
+  val client = HttpClientBuilder.create().build()
+  val get = HttpGet(url)
+  val response = client.execute(get)
+  val content = EntityUtils.toByteArray(response.entity)
+  val certFactory = CertificateFactory.getInstance("X.509")
+  val cert = certFactory.generateCertificate(ByteArrayInputStream(content)) as X509Certificate
+  client.close()
+
+  return cert
+}
+
+private fun isFullChain(chain: Array<Certificate>): Boolean {
+  var prevCert: X509Certificate? = null
+
+  for (cert in chain) {
+    val certX509 = cert as X509Certificate
+
+    if (isSelfSigned(certX509)) {
+      return true
+    }
+
+    if (prevCert != null && !signedBy(prevCert, certX509)) {
+      return false
+    }
+
+    prevCert = certX509
+  }
+
+  return true
+}
+
+private fun loadPrivateKey(keyPath: String): Key {
   val key = String(Files.readAllBytes(Paths.get(keyPath)), Charset.defaultCharset())
 
   val privateKeyPEM = key
@@ -335,18 +423,24 @@ fun importUserCertificate(certificatePath: String, keyPath: String): Boolean {
     createSSLPropertiesFile(getPathToSSLPropertiesFile(CertificateSource.USER_IMPORTED), props)
     return true
   }
-  catch (_: CertificateException) {
-
+  catch (e: CertificateException) {
+    Logger.getInstance("Projector import.certificate")
+      .error("Error parsing importing certificate from file: $certificatePath error: ${e.message}")
   }
-  catch (_: InvalidKeySpecException) {
-
+  catch (e: InvalidKeySpecException) {
+    Logger.getInstance("Projector import.certificate")
+      .error("Error parsing importing certificate from file: $certificatePath error: ${e.message}")
+  }
+  catch (e: IOError) {
+    Logger.getInstance("Projector import.certificate")
+      .error("Error parsing importing certificate from file: $certificatePath error: ${e.message}")
   }
 
   return false
 }
 
 fun getSubjectAlternativeNames(certificate: X509Certificate): Array<String> {
-  val names: MutableList<String> = ArrayList()
+  val names = ArrayList<String>()
 
   try {
     val altNames = certificate.subjectAlternativeNames ?: return emptyArray()
@@ -357,7 +451,7 @@ fun getSubjectAlternativeNames(certificate: X509Certificate): Array<String> {
       if (type != 2 && type != 7)
         continue
 
-      when (val data = item.toTypedArray()[1] ) {
+      when (val data = item.toTypedArray()[1]) {
         is String -> names.add(data)
       }
     }
