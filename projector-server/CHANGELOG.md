@@ -1,5 +1,7 @@
 # Unreleased
 
+# 1.6.0
+
 ## Added
 
 - PRJ-20 Synchronization between drawing to different surfaces
