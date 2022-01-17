@@ -2,10 +2,11 @@
 
 Notable changes to this project are documented in this file.
 
-# Unreleased
+# 1.9.0
 
 ## Updated
 - PRJ-717 Support for platform 193 dropped
+- Projector Server v1.6.0
 
 ## Fixed
 - PRJ-770 Update GotIt message position if widget is moved
