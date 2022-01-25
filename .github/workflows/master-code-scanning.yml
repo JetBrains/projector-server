@@ -1,0 +1,19 @@
+name: Qodana code scanning
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master, 'releases/*']
+
+jobs:
+  qodana-master:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: 'Qodana Scan'
+        uses: JetBrains/qodana-action@v4.2.2
+        with:
+          linter: jetbrains/qodana-jvm
+          use-annotations: false
+      - uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json

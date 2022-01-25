@@ -1,0 +1,35 @@
+version: "1.0"
+linter: jetbrains/qodana-jvm:2021.3-eap
+profile:
+  name: qodana.recommended
+include:
+  - name: Annotator
+  - name: BooleanMethodNameMustStartWithQuestion
+  - name: DefaultFileTemplate
+  - name: Deprecation
+  - name: DuplicatedCode
+  - name: InconsistentLineSeparators
+  - name: JavaLangImport
+  - name: LongLine
+  - name: OnDemandImport
+  - name: ProblematicWhitespace
+  - name: QodanaServiceMessage
+  - name: RedundantSuppression
+  - name: Reformat
+  - name: SamePackageImport
+  - name: SingleClassImport
+  - name: StaticImport
+  - name: SyntaxError
+  - name: UNUSED_IMPORT
+exclude:
+  - name: LongLine
+    paths:
+      - README.md
+      - GPLv2+CPE.txt
+      - projector-plugin/src/main/resources/META-INF
+      - projector-plugin/README.md
+      - projector-agent/README.md
+      - docs/
+      - .github/
+      - gradlew
+      - gradlew.bat
