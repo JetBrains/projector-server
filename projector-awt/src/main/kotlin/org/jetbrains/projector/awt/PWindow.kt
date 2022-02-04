@@ -35,6 +35,7 @@ import org.jetbrains.projector.util.logging.Logger
 import sun.awt.AWTAccessor
 import java.awt.*
 import java.awt.event.ComponentEvent
+import java.awt.event.WindowEvent
 import java.awt.peer.ComponentPeer
 import java.lang.ref.WeakReference
 import java.util.*
@@ -131,7 +132,13 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     if (!hasMoved && !hasResized) return
 
     toFront()
-    target.requestFocusInWindow()
+    // focus is handled in if(isAgent) branches in `move` and `resize`
+    if (!isAgent) {
+      if (target is Window)
+        Toolkit.getDefaultToolkit().systemEventQueue.postEvent(WindowEvent(target, WindowEvent.WINDOW_GAINED_FOCUS))
+      else // TODO: double-check this focus request is necessary for non-Window heavyweight components
+        target.requestFocusInWindow()
+    }
 
     if (PGraphicsEnvironment.clientDoesWindowManagement) {
       AWTAccessor.getComponentAccessor().setLocation(target, x, y)
