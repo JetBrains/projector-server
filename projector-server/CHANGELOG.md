@@ -1,5 +1,9 @@
 # Unreleased
 
+## Changed
+
+- Switch to JS IR compilation for projector-client-web
+
 # 1.6.0
 
 ## Added
