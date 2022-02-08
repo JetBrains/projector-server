@@ -1,5 +1,8 @@
 # Unreleased
 
+## Fixed
+- PRJ-691 PRJ-750 PRJ-779 Fix JetBrains account login
+
 ## Changed
 - Switch to JS IR compilation for projector-client-web
 
