@@ -25,19 +25,11 @@
 
 package org.jetbrains.projector.server.platform
 
-import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.openapi.util.BuildNumber
+import org.jetbrains.projector.common.intellij.buildAtLeast
 import org.jetbrains.projector.util.loading.UseProjectorLoader
-
-fun buildAtLeast(version: String): Boolean {
-  val versionToCheck = BuildNumber.fromString(version) ?: throw IllegalArgumentException("Invalid version string $version")
-  val currentVersion = ApplicationInfo.getInstance().build
-
-  return currentVersion >= versionToCheck
-}
 
 private val isColorSchemeRequired: Boolean by lazy { buildAtLeast("202.6397.94") }
 
