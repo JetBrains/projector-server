@@ -1,8 +1,11 @@
 # Unreleased
 
 ## Changed
-
 - Switch to JS IR compilation for projector-client-web
+
+## Fixed
+- Infinite transport initialization on relay failure
+
 
 # 1.6.0
 
