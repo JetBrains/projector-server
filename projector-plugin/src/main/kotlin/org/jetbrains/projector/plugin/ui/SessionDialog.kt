@@ -124,13 +124,12 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .addNextComponent(roTokenEditor.tokenTextField, gridWidth = 2)
       .addNextComponent(roTokenEditor.refreshButton, gridWidth = 1)
 
-      .startNextLine().addNextComponent(secureConnection, topGap = 5, bottomGap = 5)
-      .startNextLine().addNextComponent(useNamesInURLs, topGap = 5, bottomGap = 5)
-
       .startNextLine().addNextComponent(JLabel("Invitation Links:"), topGap = 5, bottomGap = 5)
 
       .startNextLine().addNextComponent(urlHostsList, gridWidth = 7)
-
+      .startNextLine().addNextComponent(secureConnection, topGap = 5, bottomGap = 5)
+      //.startNextLine()
+      .addNextComponent(useNamesInURLs, topGap = 5, bottomGap = 5)
       .startNextLine().addNextComponent(rwInvitationLink, gridWidth = 7)
       .addNextComponent(rwInvitationLink.copyButton, gridWidth = 1)
 
