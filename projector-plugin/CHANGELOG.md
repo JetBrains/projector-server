@@ -2,10 +2,12 @@
 
 Notable changes to this project are documented in this file.
 
-# 1.9.0
+# Unreleased
 
 ## Added
 - HTTPs support
+
+# 1.9.0
 
 ## Updated
 - PRJ-717 Support for platform 193 dropped
