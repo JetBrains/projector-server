@@ -28,20 +28,14 @@ class Session(
   secureConnection: Boolean,
   host: String,
   port: String,
-  rwToken: String,
-  roToken: String,
 ) {
   var secureConnection by ProjectorService.Companion::secureConnection
   var host by ProjectorService.Companion::host
   var port by ProjectorService.Companion::port
-  var rwToken by ProjectorService.Companion::rwToken
-  var roToken by ProjectorService.Companion::roToken
 
   init {
     ProjectorService.secureConnection = secureConnection
     ProjectorService.host = host
     ProjectorService.port = port
-    ProjectorService.rwToken = rwToken
-    ProjectorService.roToken = roToken
   }
 }

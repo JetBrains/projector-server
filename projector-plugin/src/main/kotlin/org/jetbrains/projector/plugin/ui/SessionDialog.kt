@@ -44,8 +44,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val myHostsList: HostsList = HostsList("Host:", ProjectorService.host)
   private val urlHostsList = HostsList("URL: ", "")
   private val portEditor = PortEditor(ProjectorService.port)
-  private val rwTokenEditor = TokenEditor("Password for read-write access:", ProjectorService.rwToken)
-  private val roTokenEditor = TokenEditor("Password for read-only  access:", ProjectorService.roToken)
   private val secureConnection: JCheckBox = JCheckBox("Use HTTPS", ProjectorService.secureConnection).apply {
     addActionListener {
       updateInvitationLinks()
@@ -61,8 +59,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   private val rwInvitationLink = InvitationLink("Read/Write Link:")
   private val roInvitationLink = InvitationLink("Read Only  Link:")
 
-  val rwToken: String get() = rwTokenEditor.token
-  val roToken: String get() = roTokenEditor.token
   val listenAddress: String get() = myHostsList.selected?.address.orEmpty()
   val listenPort: String get() = portEditor.value
   private val urlAddress: String
@@ -96,8 +92,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     myHostsList.onChange = ::updateURLList
     urlHostsList.onChange = ::updateInvitationLinks
     portEditor.onChange = ::updateInvitationLinks
-    rwTokenEditor.onChange = ::updateInvitationLinks
-    roTokenEditor.onChange = ::updateInvitationLinks
 
     updateURLList()
     updateInvitationLinks()
@@ -112,24 +106,11 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .addNextComponent(myHostsList, gridWidth = 7)
       .addNextComponent(portEditor)
 
-      .startNextLine()
-      .addNextComponent(rwTokenEditor.label, gridWidth = 4)
-      .addNextComponent(JLabel(), gridWidth = 1)
-      .addNextComponent(rwTokenEditor.tokenTextField, gridWidth = 2)
-      .addNextComponent(rwTokenEditor.refreshButton, gridWidth = 1)
-
-      .startNextLine()
-      .addNextComponent(roTokenEditor.label, gridWidth = 4)
-      .addNextComponent(JLabel(), gridWidth = 1)
-      .addNextComponent(roTokenEditor.tokenTextField, gridWidth = 2)
-      .addNextComponent(roTokenEditor.refreshButton, gridWidth = 1)
-
       .startNextLine().addNextComponent(JLabel("Invitation Links:"), topGap = 5, bottomGap = 5)
 
       .startNextLine().addNextComponent(urlHostsList, gridWidth = 7)
       .startNextLine().addNextComponent(secureConnection, topGap = 5, bottomGap = 5)
-      //.startNextLine()
-      .addNextComponent(useNamesInURLs, topGap = 5, bottomGap = 5)
+      .startNextLine().addNextComponent(useNamesInURLs, topGap = 5, bottomGap = 5)
       .startNextLine().addNextComponent(rwInvitationLink, gridWidth = 7)
       .addNextComponent(rwInvitationLink.copyButton, gridWidth = 1)
 
@@ -154,17 +135,13 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
     portEditor.value = ProjectorService.port
     secureConnection.isSelected = ProjectorService.secureConnection
 
-
-    rwTokenEditor.token = ProjectorService.rwToken
-    roTokenEditor.token = ProjectorService.roToken
-
     updateInvitationLinks()
   }
 
   private fun updateInvitationLinks() {
     val scheme = if (useSecureConnection) "https" else "http"
-    rwInvitationLink.update(scheme, urlAddress, listenPort, rwTokenEditor.token)
-    roInvitationLink.update(scheme, urlAddress, listenPort, roTokenEditor.token)
+    rwInvitationLink.update(scheme, urlAddress, listenPort, ProjectorService.rwToken)
+    roInvitationLink.update(scheme, urlAddress, listenPort, ProjectorService.roToken)
   }
 
   fun cancelResolverRequests() {

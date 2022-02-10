@@ -45,9 +45,7 @@ class EnableAction : DumbAwareAction() {
     if (sessionDialog.exitCode == DialogWrapper.OK_EXIT_CODE) {
       ProjectorService.enable(Session(sessionDialog.useSecureConnection,
                                       sessionDialog.listenAddress,
-                                      sessionDialog.listenPort,
-                                      sessionDialog.rwToken,
-                                      sessionDialog.roToken))
+                                      sessionDialog.listenPort))
     }
 
     sessionDialog.cancelResolverRequests()
