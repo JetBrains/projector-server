@@ -63,15 +63,15 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
   val rwToken: String get() = rwTokenEditor.token
   val roToken: String get() = roTokenEditor.token
-  val listenAddress: String get() = myHostsList.selected?.address ?: ""
+  val listenAddress: String get() = myHostsList.selected?.address.orEmpty()
   val listenPort: String get() = portEditor.value
   private val urlAddress: String
     get() {
       if (useNamesInURLs.isSelected) {
-        return urlHostsList.selected?.name ?: ""
+        return urlHostsList.selected?.name.orEmpty()
       }
 
-      return urlHostsList.selected?.address ?: ""
+      return urlHostsList.selected?.address.orEmpty()
     }
 
   val useSecureConnection: Boolean get() = secureConnection.isSelected
@@ -137,7 +137,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       .addNextComponent(roInvitationLink.copyButton, gridWidth = 1)
 
       .startNextLine().addNextComponent(ConnectionPanel(), gridWidth = 8)
-      .startNextLine().addNextComponent(Link("Settings") { openSettings() })
+      .startNextLine().addNextComponent(Link("More settings") { openSettings() })
 
     return panel
   }
