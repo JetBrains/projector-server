@@ -91,6 +91,8 @@ class ProjectorServer private constructor(
 ) {
   private val transports: MutableSet<ServerTransport> = ConcurrentHashMap<ServerTransport, Unit>().keySet(Unit)
 
+  // Reading the wasStarted property will block execution of the thread until
+  // all transports have been initialized (successfully or not)
   val wasStarted: Boolean
     get() {
       return transports.all { it.wasStarted }
