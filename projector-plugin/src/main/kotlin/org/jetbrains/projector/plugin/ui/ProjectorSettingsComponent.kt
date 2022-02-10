@@ -23,6 +23,7 @@
  */
 package org.jetbrains.projector.plugin.ui
 
+import com.intellij.ide.actions.RevealFileAction
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -51,63 +52,61 @@ class ProjectorSettingsComponent {
     onChange = { rwToken = token }
   }
 
-  private val roTokenEditor = TokenEditor("Password for read-only  access:", ProjectorService.roToken).apply {
+  private val roTokenEditor = TokenEditor("Password for read-only access:", ProjectorService.roToken).apply {
     onChange = { roToken = token }
   }
 
   private var userBtn: CellBuilder<JBRadioButton>? = null
 
   private val mainPanel = panel {
-    row {
-      checkBox("Start Projector automatically when ${productName()} starts", autostart).apply {
-        component.addActionListener {
-          autostart = component.isSelected
+    titledRow("Listen on") {
+
+      row {
+        cell {
+          HostsList("Host:", ProjectorService.host).apply {
+            onChange = { selected?.let { host = it.address } }
+            isEnabled = isConnectionSettingsEditable()
+          }()
+
+          PortEditor(ProjectorService.port).apply {
+            onChange = { port = value }
+            isEnabled = isConnectionSettingsEditable()
+          }()
+        }
+      }
+
+      row {
+        checkBox("Use HTTPS", ProjectorService.secureConnection).apply {
+          component.addActionListener {
+            secureConnection = component.isSelected
+          }
+
+          enabled(isConnectionSettingsEditable())
         }
       }
     }
 
-    row {
-      checkBox("Require connection confirmation", confirmConnection).apply {
-        component.addActionListener {
-          confirmConnection = component.isSelected
+    titledRow("Passwords") {
+
+      row {
+        cell {
+          rwTokenEditor.label()
+          rwTokenEditor.tokenTextField()
+          rwTokenEditor.refreshButton()
         }
       }
-    }
 
-    titledRow("Connection") {}
-
-    row {
-      HostsList("Host:", ProjectorService.host).apply {
-        onChange = { selected?.let { host = it.address } }
-        isEnabled = isConnectionSettingsEditable()
-      }()
-
-      PortEditor(ProjectorService.port).apply {
-        onChange = { port = value }
-        isEnabled = isConnectionSettingsEditable()
-      }()
-    }
-
-    row {
-      rwTokenEditor.label()
-      rwTokenEditor.tokenTextField()
-      rwTokenEditor.refreshButton()
-    }
-
-    row {
-      roTokenEditor.label()
-      roTokenEditor.tokenTextField()
-      roTokenEditor.refreshButton()
-    }
-
-    row {
-      checkBox("Use HTTPS", ProjectorService.secureConnection).apply {
-        component.addActionListener {
-          secureConnection = component.isSelected
+      row {
+        cell {
+          roTokenEditor.label().apply {
+            component.preferredSize = rwTokenEditor.label.preferredSize
+          }
+          roTokenEditor.tokenTextField()
+          roTokenEditor.refreshButton()
         }
-
-        enabled(isConnectionSettingsEditable())
       }
+
+
     }
 
     titledRow("SSL") {
@@ -116,9 +115,12 @@ class ProjectorSettingsComponent {
 
       row { button("Import user certificate") { importCertificate() } }
 
-      row { link("Show Projector CA File in Files") { getDesktop().open(File(getPathToPluginSSLDir())) } }
+      row {
+        link("Show Projector CA File in ${RevealFileAction.getFileManagerName()}") {
+          getDesktop().open(File(getPathToPluginSSLDir()))
+        }
+      }
     }
-
 
     titledRow("Certificate") {
 
@@ -140,6 +142,24 @@ class ProjectorSettingsComponent {
         }
       }
     }
+
+    titledRow("Misc") {
+      row {
+        checkBox("Start Projector automatically when ${productName()} starts", autostart).apply {
+          component.addActionListener {
+            autostart = component.isSelected
+          }
+        }
+      }
+
+      row {
+        checkBox("Require connection confirmation", confirmConnection).apply {
+          component.addActionListener {
+            confirmConnection = component.isSelected
+          }
+        }
+      }
+    }
   }
 
 
@@ -150,8 +170,8 @@ class ProjectorSettingsComponent {
   private fun importCertificate() {
     val (certFile, keyFile) = twoFileChooser()
 
-    fun isValidPath(path: String? ) : Boolean {
-      return path != null &&  File(path).exists()
+    fun isValidPath(path: String?): Boolean {
+      return path != null && File(path).exists()
     }
 
     if (isValidPath(certFile) && isValidPath(keyFile)) {

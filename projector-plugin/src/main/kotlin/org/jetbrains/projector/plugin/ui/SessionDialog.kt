@@ -29,7 +29,7 @@ import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.ui.components.Link
+import com.intellij.ui.layout.*
 import org.jetbrains.projector.plugin.ProjectorService
 import org.jetbrains.projector.plugin.ProjectorSettingsConfigurable
 import org.jetbrains.projector.plugin.isConnectionSettingsEditable
@@ -57,7 +57,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   }
 
   private val rwInvitationLink = InvitationLink("Read/Write Link:")
-  private val roInvitationLink = InvitationLink("Read Only  Link:")
+  private val roInvitationLink = InvitationLink("Read Only Link:")
 
   val listenAddress: String get() = myHostsList.selected?.address.orEmpty()
   val listenPort: String get() = portEditor.value
@@ -76,12 +76,12 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
 
     if (isConnectionSettingsEditable()) {
       title = "Start Remote Access to IDE"
-      description.text = "<html>Config remote access to IDE.<br>Listen on:"
+      description.text = "Configure remote access to IDE"
       myOKAction.putValue(Action.NAME, "Start")
     }
     else {
       title = "Current Session"
-      description.text = "<html>The current session has already started.<br>Do you want to change settings?"
+      description.text = "The current session has already started"
       myOKAction.putValue(Action.NAME, "Save")
 
       portEditor.isEnabled = false
@@ -100,25 +100,49 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
   }
 
   override fun createCenterPanel(): JComponent {
-    val panel = JPanel()
-    LinearPanelBuilder(panel).addNextComponent(description, bottomGap = 5)
-      .startNextLine()
-      .addNextComponent(myHostsList, gridWidth = 7)
-      .addNextComponent(portEditor)
+    val panel = panel {
+      row { description() }
+      titledRow("Listen on") {
+        row {
+          cell {
+            myHostsList()
+            portEditor()
+          }
+        }
+        row { secureConnection() }
+      }
 
-      .startNextLine().addNextComponent(JLabel("Invitation Links:"), topGap = 5, bottomGap = 5)
+      titledRow("Invitation Links:") {
+        row { urlHostsList() }
+        row { useNamesInURLs() }
+        row {
+          cell {
+            rwInvitationLink.label()
+            rwInvitationLink.link()
+            rwInvitationLink.copyButton()
+          }
+        }
 
-      .startNextLine().addNextComponent(urlHostsList, gridWidth = 7)
-      .startNextLine().addNextComponent(secureConnection, topGap = 5, bottomGap = 5)
-      .startNextLine().addNextComponent(useNamesInURLs, topGap = 5, bottomGap = 5)
-      .startNextLine().addNextComponent(rwInvitationLink, gridWidth = 7)
-      .addNextComponent(rwInvitationLink.copyButton, gridWidth = 1)
+        row {
+          cell {
+            roInvitationLink.label().apply {
+              component.preferredSize = rwInvitationLink.label.preferredSize
+            }
+            roInvitationLink.link()
+            roInvitationLink.copyButton()
+          }
+        }
+      }
 
-      .startNextLine().addNextComponent(roInvitationLink, gridWidth = 7)
-      .addNextComponent(roInvitationLink.copyButton, gridWidth = 1)
+      row {
+        val cpn = ConnectionPanel()
+        cpn()
+      }
 
-      .startNextLine().addNextComponent(ConnectionPanel(), gridWidth = 8)
-      .startNextLine().addNextComponent(Link("More settings") { openSettings() })
+      row {
+        link("More settings") { openSettings() }
+      }
+    }
 
     return panel
   }
@@ -186,7 +210,7 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
       background = null
       border = null
       horizontalAlignment = SwingConstants.LEFT
-      columns = 35
+      columns = 30
     }
 
 
@@ -198,12 +222,6 @@ class SessionDialog(project: Project?) : DialogWrapper(project) {
           .systemClipboard
           .setContents(StringSelection(link.text), null)
       }
-    }
-
-    init {
-      LinearPanelBuilder(this)
-        .addNextComponent(label)
-        .addNextComponent(link)
     }
 
     fun update(scheme: String, host: String, port: String, token: String?) {
