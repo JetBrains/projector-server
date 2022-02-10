@@ -73,8 +73,10 @@ class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
   fun obtainROToken() = roToken
 
   init {
-    roToken = safeLoad(PROJECTOR_RO_TOKEN_KEY) ?: ""
-    rwToken = safeLoad(PROJECTOR_RW_TOKEN_KEY) ?: ""
+    roToken = safeLoad(PROJECTOR_RO_TOKEN_KEY) ?: generatePassword()
+    rwToken = safeLoad(PROJECTOR_RW_TOKEN_KEY) ?: generatePassword()
+    setSystemProperty(ProjectorServer.TOKEN_ENV_NAME, rwToken)
+    setSystemProperty(ProjectorServer.RO_TOKEN_ENV_NAME, roToken)
   }
 
   override fun getState(): ProjectorConfig {
@@ -115,10 +117,8 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     set(value) {
       field = value
       config.secureConnection = value?.secureConnection ?: false
-      config.host = value?.host ?: ""
-      config.port = value?.port ?: ""
-      config.storeRWToken(value?.rwToken ?: "")
-      config.storeROToken(value?.roToken ?: "")
+      config.host = value?.host.orEmpty()
+      config.port = value?.port.orEmpty()
     }
 
   private var enabled: EnabledState = when (areRequiredVmOptionsPresented()) {
@@ -203,7 +203,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
       if (!isHeadlessProjectorDetected() && !isProjectorRunning()) {
         if (host.isNotBlank() and port.isNotBlank()) {
           if (autostart) {
-            val session = Session(secureConnection, host, port, rwToken, roToken)
+            val session = Session(secureConnection, host, port)
             enable(session)
           }
         }

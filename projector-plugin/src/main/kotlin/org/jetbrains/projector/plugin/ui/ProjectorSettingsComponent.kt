@@ -48,11 +48,11 @@ class ProjectorSettingsComponent {
   var certificateSource = ProjectorService.certificateSource
 
   private val rwTokenEditor = TokenEditor("Password for read-write access:", ProjectorService.rwToken).apply {
-    onChange = { rwToken = tokenTextField.text }
+    onChange = { rwToken = token }
   }
 
   private val roTokenEditor = TokenEditor("Password for read-only  access:", ProjectorService.roToken).apply {
-    onChange = { roToken = tokenTextField.text }
+    onChange = { roToken = token }
   }
 
   private var userBtn: CellBuilder<JBRadioButton>? = null
