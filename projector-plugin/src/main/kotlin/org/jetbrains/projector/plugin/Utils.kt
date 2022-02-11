@@ -143,7 +143,7 @@ fun isProjectorDisabled(): Boolean {
 
 fun isProjectorStopped() = ProjectorService.enabled == EnabledState.STOPPED
 
-fun isConnectionSettingsEditable() : Boolean {
+fun isConnectionSettingsEditable(): Boolean {
   return !ProjectorService.isSessionRunning || isProjectorStopped()
 }
 

@@ -88,7 +88,7 @@ class ProjectorStatusWidget(private val project: Project, private val myStatusBa
       ProjectorService.removeObserver(this)
   }
 
-  fun update() {
+  private fun update() {
     myComponent.text = updateText()
     myComponent.icon = updateIcon()
     myComponent.toolTipText = updateTooltip()

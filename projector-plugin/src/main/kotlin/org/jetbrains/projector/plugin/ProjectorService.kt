@@ -51,8 +51,8 @@ class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
   var autostart: Boolean = false
   var certificateSource = CertificateSource.PROJECTOR_CA
 
-  var rwToken: String = ""
-  var roToken: String = ""
+  private var rwToken: String = ""
+  private var roToken: String = ""
 
   fun storeRWToken(token: String) {
     if (token != rwToken) {
