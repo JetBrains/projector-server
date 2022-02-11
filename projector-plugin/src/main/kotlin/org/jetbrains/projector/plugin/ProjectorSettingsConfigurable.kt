@@ -35,7 +35,7 @@ class ProjectorSettingsConfigurable : Configurable {
   override fun createComponent(): JComponent = component.getPanel()
 
   override fun isModified(): Boolean {
-    return  component.certificateSource != ProjectorService.instance.config.certificateSource
+    return component.certificateSource != ProjectorService.instance.config.certificateSource
   }
 
   override fun apply() {
