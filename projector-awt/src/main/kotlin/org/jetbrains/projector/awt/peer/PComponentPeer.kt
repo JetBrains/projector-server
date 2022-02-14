@@ -28,6 +28,7 @@ package org.jetbrains.projector.awt.peer
 import org.jetbrains.projector.awt.PToolkit
 import org.jetbrains.projector.awt.PWindow
 import org.jetbrains.projector.awt.image.PVolatileImage
+import sun.awt.PaintEventDispatcher
 import sun.awt.image.ToolkitImage
 import sun.java2d.pipe.Region
 import java.awt.*
@@ -71,7 +72,12 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
 
   override fun setVisible(v: Boolean) {
     if (v) {
-      pWindow.target.repaint()  // todo: why XToolkit doesn't use this?  // maybe should do smth like dispatchEvent(ComponentEvent.COMPONENT_SHOWN)
+      // like XWindow.postPaintEvent does: without it, popups will be initially transparent when shown (PRJ-552)
+      val paintEvent = PaintEventDispatcher
+        .getPaintEventDispatcher()
+        .createPaintEvent(pWindow.target, 0, 0, pWindow.target.width, pWindow.target.height)
+
+      paintEvent?.let { PToolkit.systemEventQueueImplPP.postEvent(it) }
     }
 
     pWindow.target.isVisible = v
