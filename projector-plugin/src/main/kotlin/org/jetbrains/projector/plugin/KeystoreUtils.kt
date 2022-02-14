@@ -66,8 +66,6 @@ import java.util.*
 import javax.security.auth.x500.X500Principal
 
 
-
-
 enum class SupportedStorageTypes {
   JKS,
   PKCS12
@@ -235,7 +233,7 @@ private fun getAltNames(): Array<GeneralName> {
 }
 
 private fun generateCSR(keyPair: KeyPair): ByteArray {
-  val p10Builder = JcaPKCS10CertificationRequestBuilder( X500Principal(DN), keyPair.public)
+  val p10Builder = JcaPKCS10CertificationRequestBuilder(X500Principal(DN), keyPair.public)
   val csBuilder = JcaContentSignerBuilder(SIGNING_ALGORITHM_NAME)
   val signer = csBuilder.build(keyPair.private)
 
@@ -452,32 +450,4 @@ fun importUserCertificate(certificatePath: String, keyPath: String): Boolean {
   }
 
   return false
-}
-
-fun getSubjectAlternativeNames(certificate: X509Certificate): Array<String> {
-  val names = ArrayList<String>()
-
-  try {
-    val altNames = certificate.subjectAlternativeNames ?: return emptyArray()
-
-    for (item in altNames) {
-      val type = item[0] as Int
-
-      if (type != 2 && type != 7)
-        continue
-
-      when (val data = item.toTypedArray()[1]) {
-        is String -> names.add(data)
-      }
-    }
-  }
-  catch (e: CertificateParsingException) {
-    Logger.getInstance("Projector parse.certificate")
-      .error("""
-           Error parsing SubjectAltName in certificate: $certificate
-           error: ${e.message}
-           """.trimIndent())
-  }
-
-  return names.toTypedArray()
 }

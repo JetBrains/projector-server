@@ -140,7 +140,8 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
 
   fun activate() {
     if (confirmRestart(
-        "Before enabling Projector for the first time, some run arguments (VM properties) should be set. Can I set them and restart the IDE now?")) {
+        "Before enabling Projector for the first time, some run arguments " +
+        "(VM properties) should be set. Can I set them and restart the IDE now?")) {
 
       try {
         addRequiredOptions()
