@@ -307,6 +307,7 @@ class ProjectorServer private constructor(
           isAutoRequestFocus = window.isAutoRequestFocus,
           isAlwaysOnTop = window.isAlwaysOnTop,
           parentId = window.parentWindow?.id,
+          renderingScale = window.renderingScale
         )
       }
 

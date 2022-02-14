@@ -179,6 +179,12 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     }
   }
 
+  val renderingScale: Float
+    get() {
+      // Assuming uniform x/y scale as is the case for most HiDPI setups
+      return graphics.transform.scaleX.toFloat()
+    }
+
   fun move(deltaX: Int, deltaY: Int) {
     if (isAgent) {
       toFront()
