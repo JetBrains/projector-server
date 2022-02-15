@@ -35,7 +35,7 @@ import org.jetbrains.projector.server.service.ProjectorImageCacher
 import org.jetbrains.projector.util.logging.Logger
 
 object WebsocketServer {
-  internal fun createTransportBuilders(): List<WsTransportBuilder> {
+  internal fun createTransportBuilders(getLastUserActionTimeStampMs: () -> Long): List<WsTransportBuilder> {
     val builders = arrayListOf<WsTransportBuilder>()
 
     val relayUrl = getOption(RELAY_PROPERTY_NAME)
@@ -68,6 +68,7 @@ object WebsocketServer {
           )
         }
       }
+      serverBuilder.getLastUserActionTimeStampMs = getLastUserActionTimeStampMs
 
       builders.add(serverBuilder)
     }
