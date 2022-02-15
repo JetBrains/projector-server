@@ -22,6 +22,7 @@
  * if you need additional information or have any questions.
  */
 
+import com.intellij.openapi.util.BuildNumber
 import java.net.URL
 import java.util.*
 import java.util.zip.ZipFile
@@ -52,6 +53,9 @@ val kotlinVersion: String by project
 val intellijJcefVersion: String by project
 val intellijPlatformVersion: String by project
 
+val intelliJVersionRemovedSuffix = intellijPlatformVersion.takeWhile { it.isDigit() || it == '.' } // in case of EAP
+val intellijPlatformBuildNumber = BuildNumber.fromString(intelliJVersionRemovedSuffix)!!
+
 dependencies {
   implementation("$projectorClientGroup:projector-common:$projectorClientVersion")
   implementation("$projectorClientGroup:projector-ij-common:$projectorClientVersion")
@@ -60,7 +64,12 @@ dependencies {
   implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
   api(project(":projector-awt"))
 
-  compileOnly("com.jetbrains.intellij.platform:code-style:$intellijPlatformVersion")
+  if (intellijPlatformBuildNumber >= BuildNumber.fromString("203.5981.165")!!) {
+    compileOnly("com.jetbrains.intellij.platform:code-style:$intellijPlatformVersion")
+  } else {
+    compileOnly("com.jetbrains.intellij.platform:lang:$intellijPlatformVersion")
+  }
+
   compileOnly("com.jetbrains.intellij.platform:core-ui:$intellijPlatformVersion")
   compileOnly("com.jetbrains.intellij.platform:ide-impl:$intellijPlatformVersion")
   compileOnly("org.jetbrains.intellij.deps.jcef:jcef:$intellijJcefVersion")

@@ -21,6 +21,9 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+
+import java.util.*
+
 plugins {
   `kotlin-dsl`
 }
@@ -28,10 +31,18 @@ plugins {
 repositories {
   mavenCentral()
   maven("https://www.jetbrains.com/intellij-repository/releases")
+  maven("https://www.jetbrains.com/intellij-repository/snapshots")
   maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
 }
 
-val intellijPlatformVersion: String by project
+val gradleProperties = Properties()
+val gradlePropertiesFile = project.file("../gradle.properties")
+if (gradlePropertiesFile.canRead()) {
+  gradleProperties.load(gradlePropertiesFile.inputStream())
+}
+
+val intellijPlatformVersion: String by gradleProperties
+
 val serializationVersion: String by project
 
 dependencies {
