@@ -180,10 +180,9 @@ fun safeStore(key: String, value: String?) {
 const val RANDOM_PASSWORD_LEN = 11
 
 fun generatePassword(): String {
-  val charPool: List<Char> = ('a'..'z') + ('A'..'Z') + ('0'..'9')
-  return (1..RANDOM_PASSWORD_LEN)
-    .map { Random.nextInt(0, charPool.size) }
-    .map(charPool::get)
+  val charPool = ('a'..'z') + ('A'..'Z') + ('0'..'9')
+  return generateSequence { charPool.random() }
+    .take(RANDOM_PASSWORD_LEN)
     .joinToString("")
 }
 
