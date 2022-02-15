@@ -21,11 +21,21 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package org.jetbrains.projector.server
 
+import org.jetbrains.projector.awt.peer.PComponentPeer
 import org.jetbrains.projector.common.EventSender
+import org.jetbrains.projector.common.event.BrowserShowEventPart
+import org.jetbrains.projector.common.event.ServerEventPart
+import org.jetbrains.projector.common.protocol.toClient.ServerBrowserEvent
 import org.jetbrains.projector.common.protocol.toClient.ServerEvent
 import org.jetbrains.projector.util.loading.UseProjectorLoader
+import sun.awt.AWTAccessor
+import java.awt.Component
+import java.awt.peer.ComponentPeer
+import javax.swing.SwingUtilities
 
 @UseProjectorLoader
 class CommonQueueEventSender : EventSender {
@@ -33,4 +43,19 @@ class CommonQueueEventSender : EventSender {
   override fun sendEvent(event: ServerEvent) {
     ProjectorServer.appendToCommonQueue(event)
   }
+
+  override fun sendEventPart(part: ServerEventPart) {
+    val serverEvent = when (part) {
+      is BrowserShowEventPart -> ServerBrowserEvent.ShowEvent(part.browserId, part.show, part.component?.pWindowId)
+    }
+
+    sendEvent(serverEvent)
+  }
+
+  private val Component.pWindowId: Int?
+    get() = let {
+      val root = SwingUtilities.getRoot(it) ?: return@let null
+      val peer = AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(root) as? PComponentPeer ?: return@let null
+      peer.pWindow.id
+    }
 }
