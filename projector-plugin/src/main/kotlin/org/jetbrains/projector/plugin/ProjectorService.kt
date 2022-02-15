@@ -267,7 +267,7 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     var confirmConnection: Boolean
       get() = instance.config.confirmConnection
       set(value) {
-        setSystemProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION, if (value) "true" else "false")
+        setSystemProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION, value.toString())
         instance.config.confirmConnection = value
       }
 
