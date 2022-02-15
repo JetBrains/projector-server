@@ -295,6 +295,6 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
 
   override fun loadState(state: ProjectorConfig) {
     config = state
-    setSystemProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION, if (config.confirmConnection) "true" else "false")
+    setSystemProperty(ProjectorServer.ENABLE_CONNECTION_CONFIRMATION, config.confirmConnection.toString())
   }
 }
