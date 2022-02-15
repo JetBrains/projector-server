@@ -45,8 +45,8 @@ public fun Project.createRunIdeaTask(
 
   println("JDK home dir: $jdkHome")
 
-  val ideaPathsSelector = "ProjectorIntelliJIdea"
   val prefix = getIdePrefix(ideaPath)
+  val ideaPathsSelector = "Projector${prefix ?: "Idea"}"
 
   val (classToLaunchProperty, launcherClassName) = getLaunchingSetup(isAgent)
 
