@@ -6,6 +6,11 @@ Notable changes to this project are documented in this file.
 
 ## Added
 - HTTPs support
+- Projector plugin settings page
+
+## Changed
+- Parameters from SessionDialog moved to settings page
+
 
 # 1.9.0
 
