@@ -102,7 +102,7 @@ There are two gradle tasks for running server. They are handy when developing. T
 When the server is launched, you can open `localhost:8887` in the browser to access the app.
 
 ## Notes
-Currently, `projector-server` supports only Linux and JetBrains Runtime 11 as JRE.
+Currently, `projector-server` supports only Linux and JetBrains Runtime 11 and 17 as JRE.
 
 To set the port which will be used by Projector Server for WebSocket, use the `-Dorg.jetbrains.projector.server.port=8001` System Property.
 

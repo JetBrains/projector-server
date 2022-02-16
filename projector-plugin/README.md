@@ -31,7 +31,7 @@ The following notifications are used (please note that we do our best to avoid s
 This will give you a zip file with IntelliJ plugin:
 
 ```shell script
-./gradlew :projector-plugin:buildPlugin  # Java 11 is required
+./gradlew :projector-plugin:buildPlugin  # Java 11 or 17 is required
 ```
 
 This command creates a zip file in the `projector-plugin/build/distributions` dir.
