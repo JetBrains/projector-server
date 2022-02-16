@@ -13,10 +13,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
       - uses: gradle/wrapper-validation-action@v1
-      - name: Setup Java 11
+      - name: Setup Java
         uses: actions/setup-java@v1
         with:
-          java-version: '11'
+          java-version: '17'
       - name: Build project
         run: |
           ./gradlew :projector-plugin:buildPlugin
