@@ -211,3 +211,5 @@ val downloadFonts by tasks.creating<Task> {
 tasks.processResources {
   dependsOn(downloadFonts)
 }
+
+setupTesting()
