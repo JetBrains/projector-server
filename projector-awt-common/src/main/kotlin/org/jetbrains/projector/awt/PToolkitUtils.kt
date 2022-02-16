@@ -26,15 +26,20 @@
 package org.jetbrains.projector.awt
 
 import sun.awt.AWTAutoShutdown
+import sun.awt.AppContext
+import java.awt.EventQueue
 
-public object PToolkitUtils {
+object PToolkitUtils {
   private val unregisterPeerMethod = AWTAutoShutdown::class.java.getDeclaredMethod("unregisterPeer", Any::class.java,
                                                                                    Any::class.java).apply {
     isAccessible = true
   }
 
 
-  public fun targetDisposedPeer(target: Any, peer: Any) {
+  fun targetDisposedPeer(target: Any, peer: Any) {
     unregisterPeerMethod.invoke(AWTAutoShutdown.getInstance(), target, peer)
   }
+
+  val systemEventQueueImplPP: EventQueue
+    get() = AppContext.getAppContext().get(AppContext.EVENT_QUEUE_KEY) as EventQueue
 }

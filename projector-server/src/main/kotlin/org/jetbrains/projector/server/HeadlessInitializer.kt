@@ -27,7 +27,6 @@ package org.jetbrains.projector.server
 
 import org.jetbrains.projector.awt.PToolkit
 import org.jetbrains.projector.awt.font.PFontManager
-import org.jetbrains.projector.awt.image.PGraphicsEnvironment
 import org.jetbrains.projector.server.ProjectorServer.Companion.ENABLE_PROPERTY_NAME
 import org.jetbrains.projector.util.loading.unprotect
 import sun.font.FontManagerFactory
