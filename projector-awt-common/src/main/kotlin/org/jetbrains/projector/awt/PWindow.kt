@@ -22,6 +22,7 @@
  * if you need additional information or have any questions.
  */
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package org.jetbrains.projector.awt
 
 import org.jetbrains.annotations.TestOnly
@@ -34,7 +35,6 @@ import sun.awt.AWTAccessor
 import java.awt.*
 import java.awt.event.ComponentEvent
 import java.awt.event.WindowEvent
-import java.awt.peer.ComponentPeer
 import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -106,7 +106,8 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     synchronized(weakWindows) {
       id = windowIdCounter.incrementAndGet()
 
-      // it's very unlikely that this will happen, as this requires creation of about 60 new windows per second, every second, for an entire year
+      // it's very unlikely that this will happen, as this requires creation of about 60 new windows per second,
+      // every second, for an entire year
       if (id == 0) logger.error { "Window IDs wrapped around; issues will follow" }
 
       weakWindows.addLast(self)
@@ -206,17 +207,11 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
       toFront()
       target.requestFocusInWindow()
 
-      if (direction == Direction.E || direction == Direction.S || direction == Direction.SE) {
-        target.setSize(target.size.width + deltaX, target.size.height + deltaY)
-      }
-      else if (direction == Direction.SW) {
-        target.setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
-      }
-      else if (direction == Direction.NE) {
-        target.setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
-      }
-      else {
-        target.setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
+      when (direction) {
+        Direction.E, Direction.S, Direction.SE -> target.setSize(target.size.width + deltaX, target.size.height + deltaY)
+        Direction.SW -> target.setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
+        Direction.NE -> target.setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
+        else -> target.setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
       }
 
       // We need to trigger layout recalculation manually.
@@ -225,17 +220,19 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     }
     else {
       // this doesn't change position of native peer, so doesn't work well for agent
-      if (direction == Direction.E || direction == Direction.S || direction == Direction.SE) {
-        setBounds(target.x, target.y, target.size.width + deltaX, target.size.height + deltaY)
-      }
-      else if (direction == Direction.SW) {
-        setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
-      }
-      else if (direction == Direction.NE) {
-        setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
-      }
-      else {
-        setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
+      when (direction) {
+        Direction.E, Direction.S, Direction.SE -> {
+          setBounds(target.x, target.y, target.size.width + deltaX, target.size.height + deltaY)
+        }
+        Direction.SW -> {
+          setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
+        }
+        Direction.NE -> {
+          setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
+        }
+        else -> {
+          setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
+        }
       }
     }
   }

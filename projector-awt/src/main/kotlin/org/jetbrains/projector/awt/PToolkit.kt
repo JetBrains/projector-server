@@ -264,7 +264,7 @@ class PToolkit : SunToolkit(), KeyboardFocusManagerPeerProvider, ComponentFactor
   }
 
   override fun getSystemEventQueueImpl(): EventQueue {
-    return systemEventQueueImplPP
+    return PToolkitUtils.systemEventQueueImplPP
   }
 
   override fun createDragSourceContextPeer(dge: DragGestureEvent): DragSourceContextPeer {
@@ -394,7 +394,5 @@ class PToolkit : SunToolkit(), KeyboardFocusManagerPeerProvider, ComponentFactor
     @Suppress("DEPRECATION")  // todo
     private val imgCache = SoftCache()
 
-    val systemEventQueueImplPP: EventQueue
-      get() = AppContext.getAppContext().get(AppContext.EVENT_QUEUE_KEY) as EventQueue
   }
 }

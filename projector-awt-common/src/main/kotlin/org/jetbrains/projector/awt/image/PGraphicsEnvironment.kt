@@ -34,7 +34,7 @@ import java.awt.*
 import java.awt.image.BufferedImage
 import java.util.*
 
-class PGraphicsEnvironment private constructor(): SunGraphicsEnvironment() {
+class PGraphicsEnvironment private constructor() : SunGraphicsEnvironment() {
 
   companion object {
     var clientDoesWindowManagement: Boolean = false

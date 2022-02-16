@@ -68,7 +68,8 @@ object PWindowUtils {
     return headerBounds.centerX.roundToInt() in screenBounds.x..(screenBounds.x + screenBounds.width)
   }
 
-  fun createVisibleWindowBounds(headerVisibleHeightPx: Int, targetWindowBounds: Rectangle, screenBounds: Rectangle): Rectangle {
+  @Suppress("SameParameterValue")
+  private fun createVisibleWindowBounds(headerVisibleHeightPx: Int, targetWindowBounds: Rectangle, screenBounds: Rectangle): Rectangle {
     val headerBounds = Rectangle(
       targetWindowBounds.x,
       targetWindowBounds.y - headerVisibleHeightPx,
