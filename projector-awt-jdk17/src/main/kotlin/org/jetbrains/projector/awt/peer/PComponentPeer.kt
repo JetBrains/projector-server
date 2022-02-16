@@ -25,9 +25,6 @@
 
 package org.jetbrains.projector.awt.peer
 
-import sun.awt.image.ToolkitImage
 import java.awt.*
-import java.awt.image.ImageObserver
-import java.awt.image.ImageProducer
 
 abstract class PComponentPeer(target: Component, isFocusable: Boolean = false) : PComponentPeerBase(target, isFocusable)

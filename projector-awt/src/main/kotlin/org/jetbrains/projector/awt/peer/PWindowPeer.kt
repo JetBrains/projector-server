@@ -87,8 +87,8 @@ open class PWindowPeer(target: Window) : PContainerPeer(target), WindowPeer {
   override fun setBounds(x: Int, y: Int, width: Int, height: Int, op: Int) {
     super.setBounds(x, y, width, height, op)
 
-    if (pWindow.undecorated || PWindow.windows.first() == pWindow || PGraphicsEnvironment.clientDoesWindowManagement) {  // don't change undecorated and root windows
-      return
+    if (pWindow.undecorated || PWindow.windows.first() == pWindow || PGraphicsEnvironment.clientDoesWindowManagement) {
+      return // don't change undecorated and root windows
     }
 
     PWindowUtils.getVisibleWindowBoundsIfNeeded(x, y, width, height)?.let { pWindow.target.bounds = it }
