@@ -64,6 +64,7 @@ import org.jetbrains.projector.server.service.ProjectorImageCacher
 import org.jetbrains.projector.server.util.*
 import org.jetbrains.projector.server.websocket.WebsocketServer
 import org.jetbrains.projector.util.loading.UseProjectorLoader
+import org.jetbrains.projector.util.loading.state.IdeState
 import org.jetbrains.projector.util.logging.Logger
 import org.jetbrains.projector.util.logging.loggerFactory
 import sun.awt.AWTAccessor
@@ -501,6 +502,8 @@ class ProjectorServer private constructor(
         updateWindowsState(message.windowIds, WindowEvent.WINDOW_DEACTIVATED)
       }
       is ClientNotificationEvent -> {
+        if (!IdeState.isIdeAttached) return
+
         val intellijNotificationType = when (message.notificationType) {
           ClientNotificationType.INFORMATION -> NotificationType.INFORMATION
           ClientNotificationType.WARNING -> NotificationType.WARNING
