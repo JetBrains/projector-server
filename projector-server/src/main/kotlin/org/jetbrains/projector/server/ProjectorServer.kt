@@ -510,6 +510,7 @@ class ProjectorServer private constructor(
           ClientNotificationType.ERROR -> NotificationType.ERROR
         }
 
+        @Suppress("UnresolvedPluginConfigReference")
         val notification = Notification("ProjectorClient", message.title, message.message, intellijNotificationType)
         Notifications.Bus.notify(notification)
       }
