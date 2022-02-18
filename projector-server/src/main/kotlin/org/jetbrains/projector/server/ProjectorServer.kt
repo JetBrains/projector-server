@@ -92,10 +92,11 @@ class ProjectorServer private constructor(
   private val transports: MutableSet<ServerTransport> = ConcurrentHashMap<ServerTransport, Unit>().keySet(Unit)
 
   // Reading the wasStarted property will block execution of the thread until
-  // all transports have been initialized (successfully or not)
+  // at least transport will be successfully initialized
+  // or all transports will be initialized unsuccessfully
   val wasStarted: Boolean
     get() {
-      return transports.all { it.wasStarted }
+      return transports.any { it.wasStarted }
     }
 
   private lateinit var updateThread: Thread
