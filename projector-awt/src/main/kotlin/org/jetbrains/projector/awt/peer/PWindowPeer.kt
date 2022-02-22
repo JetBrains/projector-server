@@ -53,7 +53,7 @@ open class PWindowPeer(target: Window) : PContainerPeer(target), WindowPeer {
 
     // Fallback: try getting last window that was brought to front
     if (targetOwner == null) {
-      targetOwner = PWindow.windows.lastOrNull { it !== pWindow && it.target is Window && it.target.isFocusableWindow }?.target as Window?
+      targetOwner = PWindow.windows.filter { it !== pWindow }.mapNotNull { it.target as? Window }.lastOrNull(Window::isFocusableWindow)
     }
 
     if (targetOwner != null) {
