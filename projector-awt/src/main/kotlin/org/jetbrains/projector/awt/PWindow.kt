@@ -125,20 +125,24 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     updateGraphics()
   }
 
+  fun transferNativeFocus() {
+    toFront()
+    if (!isAgent) {
+      if (target is Window)
+        Toolkit.getDefaultToolkit().systemEventQueue.postEvent(WindowEvent(target, WindowEvent.WINDOW_GAINED_FOCUS))
+      else // TODO: double-check this focus request is necessary for non-Window heavyweight components
+        target.requestFocusInWindow()
+    } else
+      target.requestFocusInWindow()
+  }
+
   fun setBounds(x: Int, y: Int, width: Int, height: Int) {
     val hasMoved = target.x != x || target.y != y
     val hasResized = target.width != width || target.height != height
 
     if (!hasMoved && !hasResized) return
 
-    toFront()
-    // focus is handled in if(isAgent) branches in `move` and `resize`
-    if (!isAgent) {
-      if (target is Window)
-        Toolkit.getDefaultToolkit().systemEventQueue.postEvent(WindowEvent(target, WindowEvent.WINDOW_GAINED_FOCUS))
-      else // TODO: double-check this focus request is necessary for non-Window heavyweight components
-        target.requestFocusInWindow()
-    }
+    transferNativeFocus()
 
     if (PGraphicsEnvironment.clientDoesWindowManagement) {
       AWTAccessor.getComponentAccessor().setLocation(target, x, y)
@@ -303,6 +307,7 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     }
 
     fun getWindow(windowId: Int): PWindow? = windows.find { it.id == windowId }
+    fun getWindow(window: Window): PWindow? = windows.find { it.target === window }
 
     @TestOnly
     fun createWithGraphicsOverride(target: Component, isAgent: Boolean, graphicsOverride: Graphics2D?): PWindow {
