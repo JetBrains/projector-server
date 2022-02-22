@@ -32,7 +32,6 @@ import java.awt.Dialog
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.Window
-import java.awt.event.WindowEvent
 import java.awt.peer.WindowPeer
 import kotlin.math.roundToInt
 
@@ -52,10 +51,13 @@ open class PWindowPeer(target: Window) : PContainerPeer(target), WindowPeer {
       targetOwner = targetOwner.owner
     }
 
+    // Fallback: try getting last window that was brought to front
+    if (targetOwner == null) {
+      targetOwner = PWindow.windows.lastOrNull { it !== pWindow && it.target is Window && it.target.isFocusableWindow }?.target as Window?
+    }
+
     if (targetOwner != null) {
-      PKeyboardFocusManagerPeer.setCurrentFocusedWindow(targetOwner)
-      val we = WindowEvent(targetOwner, WindowEvent.WINDOW_GAINED_FOCUS)
-      targetOwner.dispatchEvent(we)
+      PWindow.getWindow(targetOwner)?.transferNativeFocus()
     }
   }
 
