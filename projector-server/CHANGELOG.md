@@ -6,6 +6,7 @@
 
 ## Changed
 - Switch to JS IR compilation for projector-client-web
+- Server startup logic - now the server does not require successful initialization of all transports and starts if at least one transport is successfully initialized
 
 # 1.6.0
 
