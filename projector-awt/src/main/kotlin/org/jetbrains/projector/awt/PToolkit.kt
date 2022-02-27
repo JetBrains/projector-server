@@ -334,7 +334,7 @@ class PToolkit : SunToolkit(), KeyboardFocusManagerPeerProvider, ComponentFactor
           img = createImage(FileImageSource(filename))
           imgCache[filename] = img
         }
-        catch (e: Exception) {
+        catch (_: Exception) {
         }
       }
 
@@ -351,7 +351,7 @@ class PToolkit : SunToolkit(), KeyboardFocusManagerPeerProvider, ComponentFactor
           img = createImage(URLImageSource(url))
           imgCache[url] = img
         }
-        catch (e: Exception) {
+        catch (_: Exception) {
         }
       }
 
@@ -370,26 +370,6 @@ class PToolkit : SunToolkit(), KeyboardFocusManagerPeerProvider, ComponentFactor
   companion object {
 
     var macKeyboardModifiersMode = false
-
-    private val registerPeerMethod = AWTAutoShutdown::class.java.getDeclaredMethod("registerPeer", Any::class.java, Any::class.java).apply {
-      isAccessible = true
-    }
-
-    private val unregisterPeerMethod = AWTAutoShutdown::class.java.getDeclaredMethod("unregisterPeer", Any::class.java,
-                                                                                     Any::class.java).apply {
-      isAccessible = true
-    }
-
-    // Target can be MenuComponent or Component
-    // Peer can be MenuComponentPeer or ComponentPeer
-
-    private fun targetCreatedPeer(target: Any, peer: Any) {
-      registerPeerMethod.invoke(AWTAutoShutdown.getInstance(), target, peer)
-    }
-
-    internal fun targetDisposedPeer(target: Any, peer: Any) {
-      unregisterPeerMethod.invoke(AWTAutoShutdown.getInstance(), target, peer)
-    }
 
     @Suppress("DEPRECATION")  // todo
     private val imgCache = SoftCache()

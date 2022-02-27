@@ -21,9 +21,8 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-package org.jetbrains.projector.awt.peer
+package org.jetbrains.projector.awt
 
-import org.jetbrains.projector.awt.PWindowUtils
 import java.awt.Rectangle
 import kotlin.test.Test
 import kotlin.test.assertFalse
