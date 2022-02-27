@@ -1,9 +1,3 @@
-import org.gradle.api.Project
-import org.gradle.api.tasks.testing.Test
-import org.gradle.kotlin.dsl.getting
-import org.gradle.kotlin.dsl.withType
-import org.gradle.testing.jacoco.tasks.JacocoReport
-
 /*
  * Copyright (c) 2019-2022, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -27,6 +21,10 @@ import org.gradle.testing.jacoco.tasks.JacocoReport
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
+
+import org.gradle.api.Project
+import org.gradle.api.tasks.testing.Test
+import org.gradle.kotlin.dsl.withType
 
 public fun Project.setupTesting() {
   tasks.withType<Test> {
