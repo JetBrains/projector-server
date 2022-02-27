@@ -221,18 +221,10 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     else {
       // this doesn't change position of native peer, so doesn't work well for agent
       when (direction) {
-        Direction.E, Direction.S, Direction.SE -> {
-          setBounds(target.x, target.y, target.size.width + deltaX, target.size.height + deltaY)
-        }
-        Direction.SW -> {
-          setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
-        }
-        Direction.NE -> {
-          setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
-        }
-        else -> {
-          setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
-        }
+        Direction.E, Direction.S, Direction.SE -> setBounds(target.x, target.y, target.size.width + deltaX, target.size.height + deltaY)
+        Direction.SW -> setBounds(target.x + deltaX, target.y, target.width - deltaX, target.size.height + deltaY)
+        Direction.NE -> setBounds(target.x, target.y + deltaY, target.width + deltaX, target.height - deltaY)
+        else -> setBounds(target.x + deltaX, target.y + deltaY, target.width - deltaX, target.height - deltaY)
       }
     }
   }
