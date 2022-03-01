@@ -3,6 +3,7 @@
 ## Fixed
 - PRJ-691 PRJ-750 PRJ-779 Fix JetBrains account login
 - Infinite transport initialization on relay failure
+- (partial) PRJ-552 Fix transparent pop-ups in some cases
 
 ## Changed
 - Switch to JS IR compilation for projector-client-web
