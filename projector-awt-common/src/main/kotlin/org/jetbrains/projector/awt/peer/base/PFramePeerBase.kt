@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019-2022, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,19 +21,38 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-plugins {
-  kotlin("jvm")
-  `maven-publish`
-}
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
-publishToSpace()
+package org.jetbrains.projector.awt.peer.base
 
-val kotlinVersion: String by project
-val projectorClientVersion: String by project
-val projectorClientGroup: String by project
-version = project(":projector-server-common").version
+import java.awt.Frame
+import java.awt.MenuBar
+import java.awt.Rectangle
+import java.awt.peer.FramePeer
 
-dependencies {
-  api("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
-  testImplementation(kotlin("test", kotlinVersion))
+abstract class PFramePeerBase(target: Frame) : PWindowPeerBase(target), FramePeer {
+
+  override fun setTitle(title: String?) {
+    pWindow.title = title
+  }
+
+  override fun setMenuBar(mb: MenuBar) {}
+
+  override fun setResizable(resizeable: Boolean) {}
+
+  override fun setState(state: Int) {}
+
+  override fun getState(): Int {
+    return 0
+  }
+
+  override fun setMaximizedBounds(bounds: Rectangle?) {}
+
+  override fun setBoundsPrivate(x: Int, y: Int, width: Int, height: Int) {}
+
+  override fun getBoundsPrivate(): Rectangle? {
+    return null
+  }
+
+  override fun emulateActivation(b: Boolean) {}
 }

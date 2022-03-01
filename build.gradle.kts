@@ -42,8 +42,13 @@ subprojects {
     maven("https://cache-redirector.jetbrains.com/intellij-dependencies")
   }
 
+  val jvmVersion = when {
+    name.endsWith("jdk17") -> "17"
+    else -> targetJvm
+  }
+
   tasks.withType<JavaCompile> {
-    sourceCompatibility = targetJvm
+    sourceCompatibility = jvmVersion
   }
 
   tasks.withType<KotlinCompile<*>> {
@@ -55,7 +60,7 @@ subprojects {
 
   tasks.withType<KotlinJvmCompile> {
     kotlinOptions {
-      jvmTarget = targetJvm
+      jvmTarget = jvmVersion
     }
   }
 }

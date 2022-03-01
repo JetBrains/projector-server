@@ -29,7 +29,7 @@ plugins {
 publishToSpace()
 
 val kotlinVersion: String by project
-version = project(":projector-server").version
+version = project(":projector-server-common").version
 
 kotlin {
   jvmToolchain {

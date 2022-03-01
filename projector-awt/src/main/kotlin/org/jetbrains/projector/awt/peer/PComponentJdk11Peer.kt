@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019-2022, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,19 +21,32 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-plugins {
-  kotlin("jvm")
-  `maven-publish`
-}
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
-publishToSpace()
+package org.jetbrains.projector.awt.peer
 
-val kotlinVersion: String by project
-val projectorClientVersion: String by project
-val projectorClientGroup: String by project
-version = project(":projector-server-common").version
+import sun.awt.image.ToolkitImage
+import java.awt.Image
+import java.awt.Toolkit
+import java.awt.image.ImageObserver
+import java.awt.image.ImageProducer
+import java.awt.peer.ComponentPeer
 
-dependencies {
-  api("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
-  testImplementation(kotlin("test", kotlinVersion))
+interface PComponentJdk11Peer : ComponentPeer {
+
+  private val toolkit: Toolkit
+    get() = Toolkit.getDefaultToolkit()
+
+  override fun createImage(producer: ImageProducer?): Image {
+    return ToolkitImage(producer)
+  }
+
+  override fun prepareImage(img: Image, w: Int, h: Int, o: ImageObserver?): Boolean {
+    return toolkit.prepareImage(img, w, h, o)
+  }
+
+  override fun checkImage(img: Image, w: Int, h: Int, o: ImageObserver?): Int {
+    return toolkit.checkImage(img, w, h, o)
+  }
+
 }
