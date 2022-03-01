@@ -29,12 +29,14 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.projector.awt.data.Direction
 import org.jetbrains.projector.awt.image.PGraphics2D
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
+import org.jetbrains.projector.awt.peer.base.PWindowPeerBase
 import org.jetbrains.projector.awt.service.ImageCacher
 import org.jetbrains.projector.util.logging.Logger
 import sun.awt.AWTAccessor
 import java.awt.*
 import java.awt.event.ComponentEvent
 import java.awt.event.WindowEvent
+import java.awt.peer.ComponentPeer
 import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
@@ -83,6 +85,9 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
       is Window -> target.isAlwaysOnTop
       else -> false
     }
+
+  val parentWindow: PWindow?
+    get() = (target as? Window)?.let { (AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(it) as? PWindowPeerBase)?.pWindow }
 
   /** ImageIds of icons. */
   var icons: List<Any>? = null

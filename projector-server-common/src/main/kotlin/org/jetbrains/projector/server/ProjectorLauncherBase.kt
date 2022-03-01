@@ -21,19 +21,39 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-plugins {
-  kotlin("jvm")
-  `maven-publish`
-}
+package org.jetbrains.projector.server
 
-publishToSpace()
+import org.jetbrains.projector.util.loading.ProjectorClassLoaderSetup
+import org.jetbrains.projector.util.loading.unprotect
+import java.lang.reflect.Method
 
-val kotlinVersion: String by project
-val projectorClientVersion: String by project
-val projectorClientGroup: String by project
-version = project(":projector-server-common").version
+abstract class ProjectorLauncherBase {
 
-dependencies {
-  api(project(":projector-awt-common"))
-  testImplementation(kotlin("test", kotlinVersion))
+  companion object {
+
+    /* Field is public for the case, when someone would like to launch server from their own code. */
+    @Suppress("Could be private")
+    const val MAIN_CLASS_PROPERTY_NAME = "org.jetbrains.projector.server.classToLaunch"
+
+    @JvmStatic
+    protected fun start(args: Array<String>, awtProvider: PAwtProvider) {
+
+      /**
+       * [ProjectorStarter.start]
+       */
+      getStarterClass()
+        .getDeclaredMethod("start", Array<String>::class.java, PAwtProvider::class.java)
+        .apply(Method::unprotect)
+        .invoke(null, args, awtProvider)
+    }
+
+    @JvmStatic
+    private fun getStarterClass(): Class<*> {
+      val thisClass = ProjectorLauncherBase::class.java
+      val prjClassLoader = ProjectorClassLoaderSetup.initClassLoader(thisClass.classLoader)
+
+      return prjClassLoader.loadClass("${thisClass.packageName}.ProjectorStarter")
+    }
+  }
+
 }
