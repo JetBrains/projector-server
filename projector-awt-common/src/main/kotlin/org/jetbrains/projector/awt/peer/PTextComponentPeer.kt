@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019-2021, JetBrains s.r.o. and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019-2022, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,19 +21,41 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-plugins {
-  kotlin("jvm")
-  `maven-publish`
-}
+@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
-publishToSpace()
+package org.jetbrains.projector.awt.peer
 
-val kotlinVersion: String by project
-val projectorClientVersion: String by project
-val projectorClientGroup: String by project
-version = project(":projector-server-common").version
+import org.jetbrains.projector.awt.peer.base.PComponentPeerBase
+import java.awt.TextComponent
+import java.awt.peer.TextComponentPeer
 
-dependencies {
-  api("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
-  testImplementation(kotlin("test", kotlinVersion))
+abstract class PTextComponentPeer(target: TextComponent) : PComponentPeerBase(target, isFocusable = true), TextComponentPeer {
+
+  private var text: String? = null
+
+  override fun setEditable(editable: Boolean) {}
+
+  override fun getText(): String? {
+    return text
+  }
+
+  override fun setText(l: String) {
+    text = l
+  }
+
+  override fun getSelectionStart(): Int {
+    return 0
+  }
+
+  override fun getSelectionEnd(): Int {
+    return 0
+  }
+
+  override fun select(selStart: Int, selEnd: Int) {}
+
+  override fun setCaretPosition(pos: Int) {}
+
+  override fun getCaretPosition(): Int {
+    return 0
+  }
 }

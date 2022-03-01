@@ -24,107 +24,24 @@
 package org.jetbrains.projector.server
 
 import org.jetbrains.projector.server.core.ij.log.DelegatingJvmLogger
-import org.jetbrains.projector.server.service.ProjectorFontProvider
-import org.jetbrains.projector.util.loading.ProjectorClassLoaderSetup
-import org.jetbrains.projector.util.loading.UseProjectorLoader
-import org.jetbrains.projector.util.loading.unprotect
 import org.jetbrains.projector.util.logging.Logger
-import java.lang.reflect.Method
-import kotlin.system.exitProcess
 
-object ProjectorLauncher {
-
-  /* Field is public for the case, when someone would like to launch server from their own code. */
-  @Suppress("Could be private")
-  const val MAIN_CLASS_PROPERTY_NAME = "org.jetbrains.projector.server.classToLaunch"
+object ProjectorLauncher : ProjectorLauncherBase() {
 
   @JvmStatic
   fun main(args: Array<String>) {
-
-    /**
-     * [Starter.start]
-     */
-    getStarterClass()
-      .getDeclaredMethod("start", Array<String>::class.java)
-      .apply(Method::unprotect)
-      .invoke(null, args)
+    start(args, PAwtProviderJdk11)
   }
 
-  @Suppress("unused") // "invoked from CWM code as the generic launcher can't be used there"
-  @JvmStatic
-  fun runProjectorServer(): Boolean {
+  // For compatibility with CWM
+  @Suppress("unused")
+  private object Starter : ProjectorStarter() {
 
-    /**
-     * [Starter.runProjectorServer]
-     */
-    return getStarterClass()
-      .getDeclaredMethod("runProjectorServer")
-      .apply(Method::unprotect)
-      .invoke(null) as Boolean
-  }
-
-  /**
-   * @return [Starter] Class
-   */
-  private fun getStarterClass(): Class<*> {
-    val prjClassLoader = ProjectorClassLoaderSetup.initClassLoader(javaClass.classLoader)
-
-    return prjClassLoader.loadClass("${javaClass.name}\$Starter")
-  }
-
-  @UseProjectorLoader
-  private object Starter {
-
-    @JvmStatic
-    fun start(args: Array<String>) {
-      val canonicalMainClassName = requireNotNull(System.getProperty(MAIN_CLASS_PROPERTY_NAME)) {
-        "System property `$MAIN_CLASS_PROPERTY_NAME` isn't assigned, so can't understand which class to launch"
-      }
-
-      val mainMethod = getMainMethodOf(canonicalMainClassName)
-
-      if (runProjectorServer()) {
-        mainMethod.invoke(null, args)
-      }
-      else {
-        exitProcess(1)
-      }
-    }
-
-    private fun getMainMethodOf(canonicalClassName: String): Method {
-      val mainClass = Class.forName(canonicalClassName)
-      return mainClass.getMethod("main", Array<String>::class.java)
-    }
-
-    private fun setupSingletons() {
-      setupToolkit()
-      setupFontManager()
-      setupRepaintManager()
-    }
-
-    private fun initializeHeadless() {
-      setupSystemProperties()
-      setupSingletons()
-      ProjectorFontProvider.isAgent = false
-    }
-
+    // "invoked from CWM code as the generic launcher can't be used there"
     @JvmStatic
     @JvmOverloads
-    fun runProjectorServer(loggerFactory: (tag: String) -> Logger = ::DelegatingJvmLogger): Boolean {
-      System.setProperty(ProjectorServer.ENABLE_PROPERTY_NAME, true.toString())
+    fun runProjectorServer(loggerFactory: (tag: String) -> Logger = ::DelegatingJvmLogger) = runProjectorServer(PAwtProviderJdk11, loggerFactory)
 
-      assert(ProjectorServer.isEnabled) { "Can't start the ${ProjectorServer::class.simpleName} because it's disabled..." }
-
-      val server = ProjectorServer.startServer(isAgent = false, loggerFactory) { initializeHeadless() }
-
-      Runtime.getRuntime().addShutdownHook(object : Thread() {
-
-        override fun run() {
-          server.stop()
-        }
-      })
-
-      return server.wasStarted
-    }
   }
+
 }
