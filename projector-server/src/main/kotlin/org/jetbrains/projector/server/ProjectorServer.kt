@@ -43,10 +43,7 @@ import org.jetbrains.projector.common.protocol.data.UserKeymap
 import org.jetbrains.projector.common.protocol.handshake.*
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.common.protocol.toServer.*
-import org.jetbrains.projector.ij.jcef.ProjectorCefBrowser
-import org.jetbrains.projector.ij.jcef.getHandlers
-import org.jetbrains.projector.ij.jcef.getMessageRouters
-import org.jetbrains.projector.ij.jcef.onProjectorQuery
+import org.jetbrains.projector.ij.jcef.*
 import org.jetbrains.projector.server.core.*
 import org.jetbrains.projector.server.core.convert.toAwt.*
 import org.jetbrains.projector.server.core.convert.toClient.*
@@ -197,7 +194,7 @@ class ProjectorServer private constructor(
           previousWindowEvents = emptySet()
           caretInfoUpdater.createCaretInfoEvent()
           PanelUpdater.updateAll()
-          ProjectorCefBrowser.updateAll()
+          updateCefBrowsersSafely()
         }
 
         is ReadyClientSettings -> {
