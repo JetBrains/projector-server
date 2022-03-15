@@ -1,5 +1,8 @@
 # Unreleased
 
+## Added
+- PRJ-127 To-client clipboard synchronization without asynchronous clipboard API for Web client
+
 ## Fixed
 - PRJ-691 PRJ-750 PRJ-779 Fix JetBrains account login
 - Infinite transport initialization on relay failure
