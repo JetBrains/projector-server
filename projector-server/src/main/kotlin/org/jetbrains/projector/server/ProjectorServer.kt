@@ -25,7 +25,9 @@
 
 package org.jetbrains.projector.server
 
-import com.intellij.notification.*
+import com.intellij.notification.Notification
+import com.intellij.notification.NotificationType
+import com.intellij.notification.Notifications
 import org.jetbrains.projector.awt.PClipboard
 import org.jetbrains.projector.awt.PToolkit
 import org.jetbrains.projector.awt.PWindow
@@ -186,9 +188,6 @@ class ProjectorServer private constructor(
           )
 
           PVolatileImage.images.forEach(PVolatileImage::invalidate)
-          PWindow.windows.forEach {
-            SwingUtilities.invokeAndWait { it.target.revalidate() }  // this solves PRJ-69
-          }
           PWindow.windows.forEach(PWindow::repaint)
           previousWindowEvents = emptySet()
           caretInfoUpdater.createCaretInfoEvent()
