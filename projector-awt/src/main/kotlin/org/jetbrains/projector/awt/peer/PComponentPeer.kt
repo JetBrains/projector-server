@@ -35,6 +35,7 @@ import java.awt.*
 import java.awt.BufferCapabilities.FlipContents
 import java.awt.dnd.DropTarget
 import java.awt.dnd.peer.DropTargetPeer
+import java.awt.event.ComponentEvent
 import java.awt.event.FocusEvent
 import java.awt.event.PaintEvent
 import java.awt.image.ColorModel
@@ -103,7 +104,20 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
     pWindow.target.print(g)
   }
 
-  override fun setBounds(x: Int, y: Int, width: Int, height: Int, op: Int) {}
+  override fun setBounds(x: Int, y: Int, width: Int, height: Int, op: Int) {
+    fun dispatchIfNeeded(eventId: Int) {
+      (pWindow.target as? Window)?.dispatchEvent(ComponentEvent(pWindow.target, eventId))
+    }
+
+    when (op) {
+      ComponentPeer.SET_BOUNDS -> {
+        dispatchIfNeeded(ComponentEvent.COMPONENT_MOVED)
+        dispatchIfNeeded(ComponentEvent.COMPONENT_RESIZED)
+      }
+      ComponentPeer.SET_LOCATION -> dispatchIfNeeded(ComponentEvent.COMPONENT_MOVED)
+      ComponentPeer.SET_SIZE, ComponentPeer.SET_CLIENT_SIZE -> dispatchIfNeeded(ComponentEvent.COMPONENT_RESIZED)
+    }
+  }
 
   override fun handleEvent(e: AWTEvent) {}
 
