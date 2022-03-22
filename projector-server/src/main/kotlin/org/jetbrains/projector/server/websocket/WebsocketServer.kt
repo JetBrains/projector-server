@@ -27,11 +27,11 @@ import org.jetbrains.projector.common.protocol.data.ImageData
 import org.jetbrains.projector.common.protocol.data.ImageId
 import org.jetbrains.projector.common.protocol.toClient.MainWindow
 import org.jetbrains.projector.server.ProjectorServer
-import org.jetbrains.projector.server.core.util.getOption
 import org.jetbrains.projector.server.core.websocket.HttpWsClientBuilder
 import org.jetbrains.projector.server.core.websocket.HttpWsServerBuilder
 import org.jetbrains.projector.server.core.websocket.WsTransportBuilder
 import org.jetbrains.projector.server.service.ProjectorImageCacher
+import org.jetbrains.projector.util.loading.getOption
 import org.jetbrains.projector.util.logging.Logger
 
 object WebsocketServer {
