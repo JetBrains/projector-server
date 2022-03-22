@@ -8,6 +8,7 @@
 - Infinite transport initialization on relay failure
 - (partial) PRJ-552 Fix transparent pop-ups in some cases
 - (full) PRJ-62 PRJ-552 Fix incorrect window size in some cases
+- PRJ-565 Fix wrong header position after the window is resized
 
 ## Changed
 - Switch to JS IR compilation for projector-client-web
