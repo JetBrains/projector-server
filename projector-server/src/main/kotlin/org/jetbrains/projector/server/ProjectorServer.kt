@@ -52,7 +52,6 @@ import org.jetbrains.projector.server.core.ij.IdeColors
 import org.jetbrains.projector.server.core.ij.IjInjectorAgentInitializer
 import org.jetbrains.projector.server.core.ij.KeymapSetter
 import org.jetbrains.projector.server.core.ij.SettingsInitializer
-import org.jetbrains.projector.server.core.ij.log.DelegatingJvmLogger
 import org.jetbrains.projector.server.core.ij.md.PanelUpdater
 import org.jetbrains.projector.server.core.protocol.HandshakeTypesSelector
 import org.jetbrains.projector.server.core.protocol.KotlinxJsonToClientHandshakeEncoder
@@ -890,8 +889,8 @@ class ProjectorServer private constructor(
     }
 
     @JvmStatic
-    fun startServer(isAgent: Boolean, initializer: Runnable): ProjectorServer {
-      loggerFactory = { DelegatingJvmLogger(it) }
+    fun startServer(isAgent: Boolean, logFactory: (tag: String) -> Logger, initializer: Runnable): ProjectorServer {
+      loggerFactory = logFactory
 
       ProjectorAwtInitializer.initProjectorAwt()
 

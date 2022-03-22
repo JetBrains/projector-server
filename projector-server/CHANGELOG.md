@@ -1,3 +1,8 @@
+# Unreleased
+
+## Added
+- Allow specifying server logger factory
+
 # 1.7.0
 
 ## Added
