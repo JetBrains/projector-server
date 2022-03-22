@@ -28,11 +28,18 @@ package org.jetbrains.projector.server
 import org.jetbrains.projector.awt.PToolkit
 import org.jetbrains.projector.awt.font.PFontManager
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
+import org.jetbrains.projector.awt.peer.PWindowPeer
+import org.jetbrains.projector.awt.service.WindowSystemHelper
 import org.jetbrains.projector.server.ProjectorServer.Companion.ENABLE_PROPERTY_NAME
 import org.jetbrains.projector.util.loading.unprotect
+import sun.awt.AWTAccessor
 import sun.font.FontManagerFactory
+import java.awt.Component
 import java.awt.GraphicsEnvironment
 import java.awt.Toolkit
+import java.awt.Window
+import java.awt.peer.ComponentPeer
+import javax.swing.SwingUtilities
 
 internal fun setupGraphicsEnvironment() {
   val classes = GraphicsEnvironment::class.java.declaredClasses
@@ -59,6 +66,16 @@ internal fun setupFontManager() {
     unprotect()
 
     set(null, PFontManager)
+  }
+}
+
+internal fun setupWindowHelper() {
+  WindowSystemHelper.instance = object : WindowSystemHelper {
+
+    override fun getParentWindow(component: Component) = when (component) {
+      is Window -> component.owner
+      else -> SwingUtilities.getWindowAncestor(component)
+    }?.let { (AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(it) as? PWindowPeer)?.pWindow }
   }
 }
 

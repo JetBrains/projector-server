@@ -136,12 +136,12 @@ class PGraphics2D private constructor(
 
   constructor(component: Component, target: PWindow.Descriptor) : this(
     drawEventQueue = DrawEventQueue.createOnScreen(target),
-    transform = component.graphicsConfiguration.defaultTransform,  // from Graphics2D "Default Rendering Attributes" java doc
+    transform = component.graphicsConfiguration?.defaultTransform ?: AffineTransform(),  // from Graphics2D "Default Rendering Attributes" java doc
     backgroundColor = component.background,  // from Graphics2D "Default Rendering Attributes" java doc
     paint = component.foreground,  // from Graphics2D "Default Rendering Attributes" java doc
     foregroundColor = component.foreground,  // from Graphics2D "Default Rendering Attributes" java doc
     font = component.font,
-    device = component.graphicsConfiguration.device
+    device = component.graphicsConfiguration?.device ?: GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice
   )
 
   private constructor(

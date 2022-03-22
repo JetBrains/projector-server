@@ -33,14 +33,12 @@ import org.jetbrains.projector.server.ProjectorServer
 import org.jetbrains.projector.server.service.ProjectorDrawEventQueue
 import org.jetbrains.projector.server.service.ProjectorFontProvider
 import org.jetbrains.projector.util.loading.UseProjectorLoader
-import org.jetbrains.projector.util.loading.unprotect
 import org.jetbrains.projector.util.logging.Logger
-import sun.awt.NullComponentPeer
 import sun.java2d.SunGraphics2D
 import java.awt.*
-import java.awt.peer.ComponentPeer
 import java.beans.PropertyChangeListener
 import javax.swing.JComponent
+import javax.swing.SwingUtilities
 
 @UseProjectorLoader
 internal object GraphicsInterceptor {
@@ -65,6 +63,13 @@ internal object GraphicsInterceptor {
     ProjectorFontProvider.isAgent = true
   }
 
+  internal fun getPWindow(component: Component): PWindow? {
+    val parentWindow = getParentWindow(component) ?: return null
+    return pWindows.getOrPut(parentWindow.id()) { PWindow(parentWindow, isAgent = true) }
+  }
+
+  private fun getOrPutWindow(component: Component): PWindow = getPWindow(component)!!
+
   @Suppress("unused", "PLATFORM_CLASS_MAPPED_TO_KOTLIN",
             "UNUSED_PARAMETER")  // Integer is needed because this function is used via reflection
   @JvmStatic
@@ -75,12 +80,11 @@ internal object GraphicsInterceptor {
 
     paintToOffscreenInProgress = true
 
-    val parentWindow = getParentWindow(comp)
-    val pWindow = pWindows.getOrPut(parentWindow.id()) { PWindow(parentWindow, isAgent = true) }
+    val pWindow = getOrPutWindow(comp)
 
     currentQueue = ProjectorDrawEventQueue(ServerDrawCommandsEvent.Target.Onscreen(pWindow.id))
 
-    paintingConstraint = calculateComponentPositionInsideWindow(comp, parentWindow).let {
+    paintingConstraint = calculateComponentPositionInsideWindow(comp, pWindow.target).let {
       Point(
         it.x + x.toInt(),
         it.y + y.toInt()
@@ -220,21 +224,18 @@ internal object GraphicsInterceptor {
       val location = window.locationOnScreen
       val mouseLocation = PMouseInfoPeer.lastMouseCoords
       val targetComp = (window as Container).findComponentAt(mouseLocation - location) ?: return
-      pWindows[window.id()]!!.cursor = targetComp.cursor
+      pWindows[window.id()]!!.apply {
+        cursor = targetComp.cursor
+        fakeChildren.forEach {
+          it.cursor = targetComp.cursor
+        }
+      }
     }
   }
 
-  private fun getParentWindow(comp: Component): Component {
-    var currComp = comp
-    val peerField = Component::class.java.getDeclaredField("peer")
-    peerField.unprotect()
-    var peer = peerField.get(currComp) as ComponentPeer
-    while (peer is NullComponentPeer) {
-      currComp = currComp.parent
-      peer = peerField.get(currComp) as ComponentPeer
-    }
-
-    return currComp
+  private fun getParentWindow(comp: Component) = when (comp) {
+    is Window -> comp
+    else -> SwingUtilities.getWindowAncestor(comp)
   }
 
   private fun copyArgs(args: Array<Any?>): Array<Any?> {
