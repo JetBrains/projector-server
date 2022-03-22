@@ -23,10 +23,12 @@
  */
 package org.jetbrains.projector.server
 
+import org.jetbrains.projector.server.core.ij.log.DelegatingJvmLogger
 import org.jetbrains.projector.server.service.ProjectorFontProvider
 import org.jetbrains.projector.util.loading.ProjectorClassLoaderSetup
 import org.jetbrains.projector.util.loading.UseProjectorLoader
 import org.jetbrains.projector.util.loading.unprotect
+import org.jetbrains.projector.util.logging.Logger
 import java.lang.reflect.Method
 import kotlin.system.exitProcess
 
@@ -108,12 +110,13 @@ object ProjectorLauncher {
     }
 
     @JvmStatic
-    fun runProjectorServer(): Boolean {
+    @JvmOverloads
+    fun runProjectorServer(loggerFactory: (tag: String) -> Logger = ::DelegatingJvmLogger): Boolean {
       System.setProperty(ProjectorServer.ENABLE_PROPERTY_NAME, true.toString())
 
       assert(ProjectorServer.isEnabled) { "Can't start the ${ProjectorServer::class.simpleName} because it's disabled..." }
 
-      val server = ProjectorServer.startServer(isAgent = false) { initializeHeadless() }
+      val server = ProjectorServer.startServer(isAgent = false, loggerFactory) { initializeHeadless() }
 
       Runtime.getRuntime().addShutdownHook(object : Thread() {
 
