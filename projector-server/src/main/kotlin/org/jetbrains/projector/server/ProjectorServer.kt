@@ -363,7 +363,7 @@ class ProjectorServer private constructor(
 
         PMouseInfoPeer.lastMouseCoords.setLocation(shiftedMessage.x, shiftedMessage.y)
 
-        val window = PWindow.getWindow(message.windowId)?.target
+        val window = PWindow.getWindow(message.windowId)?.thisWindow
         PMouseInfoPeer.lastWindowUnderMouse = window
 
         window ?: return@invokeLater

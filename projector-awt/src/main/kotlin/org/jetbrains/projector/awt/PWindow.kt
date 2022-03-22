@@ -102,7 +102,7 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
       else -> null
     }
 
-  private val thisWindow: Component?
+  val thisWindow: Component?
     get() = when (target) {
       is Window -> target
       else -> SwingUtilities.getWindowAncestor(target)
