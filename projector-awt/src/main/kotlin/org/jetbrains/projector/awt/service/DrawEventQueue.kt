@@ -59,6 +59,7 @@ interface DrawEventQueue {
     fun drawLine(x1: Int, y1: Int, x2: Int, y2: Int)
     fun paintRect(paintType: AwtPaintType, x: Double, y: Double, width: Double, height: Double)
     fun paintRoundRect(paintType: AwtPaintType, x: Int, y: Int, width: Int, height: Int, arcWidth: Int, arcHeight: Int)
+    fun clearRect(x: Double, y: Double, width: Double, height: Double)
     fun paintOval(paintType: AwtPaintType, x: Int, y: Int, width: Int, height: Int)
     fun paintArc(paintType: AwtPaintType, x: Int, y: Int, width: Int, height: Int, startAngle: Int, arcAngle: Int)
     fun drawPolyline(points: List<Pair<Int, Int>>)

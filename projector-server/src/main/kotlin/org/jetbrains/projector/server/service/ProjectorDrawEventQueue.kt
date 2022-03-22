@@ -129,6 +129,15 @@ class ProjectorDrawEventQueue(private val target: ServerDrawCommandsEvent.Target
       build()
     }
 
+    override fun clearRect(x: Double, y: Double, width: Double, height: Double) {
+      events.add(
+        ServerClearRectEvent(
+          x = x, y = y, width = width, height = height
+        )
+      )
+      build()
+    }
+
     override fun paintOval(paintType: AwtPaintType, x: Int, y: Int, width: Int, height: Int) {
       events.add(ServerPaintOvalEvent(paintType.toPaintType(), x = x, y = y, width = width, height = height))
       build()

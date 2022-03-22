@@ -539,13 +539,16 @@ class PGraphics2D private constructor(
   }
 
   override fun clearRect(x: Int, y: Int, width: Int, height: Int) {
-    val c = composite
-    val p = getPaint()
-    composite = AlphaComposite.Src
-    color = background
-    fillRect(x, y, width, height)
-    setPaint(p)
-    composite = c
+    if (width <= 0 || height <= 0) return
+
+    paintShape {
+      clearRect(
+        x = x.toDouble(),
+        y = y.toDouble(),
+        width = width.toDouble(),
+        height = height.toDouble(),
+      )
+    }
   }
 
   private fun paintRoundRect(paintType: AwtPaintType, x: Int, y: Int, width: Int, height: Int, arcWidth: Int, arcHeight: Int) {
