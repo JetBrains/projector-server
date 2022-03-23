@@ -118,6 +118,7 @@ public fun Project.applyCommonServerConfiguration(javaApplication: JavaApplicati
   }
 }
 
+// TODO make possible to use kotlin gradle API
 private fun DependencyHandler.api(dependencyNotation: Any): Dependency? =
   add("api", dependencyNotation)
 
