@@ -33,3 +33,9 @@ applyCommonServerConfiguration(application)
 dependencies {
   api(project(":projector-awt"))
 }
+
+kotlin {
+  jvmToolchain {
+    (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(11))
+  }
+}
