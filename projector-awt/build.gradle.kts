@@ -37,3 +37,9 @@ dependencies {
   api(project(":projector-awt-common"))
   testImplementation(kotlin("test", kotlinVersion))
 }
+
+kotlin {
+  jvmToolchain {
+    (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(11))
+  }
+}
