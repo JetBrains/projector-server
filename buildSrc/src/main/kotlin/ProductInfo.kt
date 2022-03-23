@@ -1,3 +1,11 @@
+import com.intellij.openapi.util.BuildNumber
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import org.gradle.internal.os.OperatingSystem
+import java.io.File
+
 /*
  * Copyright (c) 2019-2022, JetBrains s.r.o. and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
@@ -22,11 +30,18 @@
  * if you need additional information or have any questions.
  */
 
-import kotlinx.serialization.json.*
-import java.io.File
+public fun isIdeVersionAtLeast(idePath: String, minVersion: String): Boolean {
+  val productInfo = getProductInfoFile(idePath)
+  if (!productInfo.exists()) return false
+  val jsonRoot = Json.parseToJsonElement(productInfo.readText()) as JsonObject
+  val versionString = jsonRoot["buildNumber"] as JsonPrimitive
+  val ideBuildNumber = BuildNumber.fromString(versionString.content)!!
+  val requiredBuildNumber = BuildNumber.fromString(minVersion)!!
+  return ideBuildNumber >= requiredBuildNumber
+}
 
 public fun getIdePrefix(idePath: String): String? {
-  val productInfo = File("$idePath/product-info.json")
+  val productInfo = getProductInfoFile(idePath)
   if (!productInfo.exists()) return null
   val jsonRoot = Json.parseToJsonElement(productInfo.readText()) as JsonObject
   val launchConfigs = jsonRoot["launch"] as JsonArray
@@ -43,4 +58,9 @@ public fun getIdePrefix(idePath: String): String? {
   }
 
   return null
+}
+
+private fun getProductInfoFile(idePath: String): File = when {
+  OperatingSystem.current().isMacOsX -> File("$idePath/MacOS/product-info.json")
+  else -> File("$idePath/product-info.json")
 }
