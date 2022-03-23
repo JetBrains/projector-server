@@ -155,6 +155,7 @@ abstract class PComponentPeer(target: Component, private val isFocusable: Boolea
     }
 
     pWindow.cursor = cursorUnderMouse
+    pWindow.fakeChildren.forEach { it.cursor = cursorUnderMouse }
   }
 
   override fun requestFocus(

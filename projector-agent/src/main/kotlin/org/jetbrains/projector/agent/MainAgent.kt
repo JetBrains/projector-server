@@ -26,10 +26,12 @@ package org.jetbrains.projector.agent
 
 import javassist.ClassPool
 import javassist.LoaderClassPath
+import org.jetbrains.projector.awt.service.WindowSystemHelper
 import org.jetbrains.projector.util.loading.ProjectorClassLoaderSetup
 import org.jetbrains.projector.util.loading.UseProjectorLoader
 import org.jetbrains.projector.util.loading.unprotect
 import org.jetbrains.projector.util.logging.Logger
+import java.awt.Component
 import java.lang.instrument.Instrumentation
 import java.lang.reflect.Method
 
@@ -85,6 +87,11 @@ public object MainAgent {
       )
 
       logger.info { "agentmain finish" }
+
+      WindowSystemHelper.instance = object : WindowSystemHelper {
+
+        override fun getParentWindow(component: Component) = GraphicsInterceptor.getPWindow(component)
+      }
     }
   }
 }

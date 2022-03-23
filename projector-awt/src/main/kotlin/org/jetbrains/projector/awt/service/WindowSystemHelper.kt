@@ -21,34 +21,17 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-@file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+package org.jetbrains.projector.awt.service
 
-package org.jetbrains.projector.server
-
-import org.jetbrains.projector.awt.service.WindowSystemHelper
-import org.jetbrains.projector.common.EventSender
-import org.jetbrains.projector.common.event.BrowserShowEventPart
-import org.jetbrains.projector.common.event.ServerEventPart
-import org.jetbrains.projector.common.protocol.toClient.ServerBrowserEvent
-import org.jetbrains.projector.common.protocol.toClient.ServerEvent
-import org.jetbrains.projector.util.loading.UseProjectorLoader
+import org.jetbrains.projector.awt.PWindow
 import java.awt.Component
 
-@UseProjectorLoader
-class CommonQueueEventSender : EventSender {
+interface WindowSystemHelper {
 
-  override fun sendEvent(event: ServerEvent) {
-    ProjectorServer.appendToCommonQueue(event)
+  fun getParentWindow(component: Component): PWindow?
+
+  companion object {
+
+    lateinit var instance: WindowSystemHelper
   }
-
-  override fun sendEventPart(part: ServerEventPart) {
-    val serverEvent = when (part) {
-      is BrowserShowEventPart -> ServerBrowserEvent.ShowEvent(part.browserId, part.show, part.component?.pWindowId)
-    }
-
-    sendEvent(serverEvent)
-  }
-
-  private val Component.pWindowId: Int?
-    get() = WindowSystemHelper.instance.getParentWindow(this)?.id
 }

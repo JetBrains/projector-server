@@ -136,12 +136,12 @@ class PGraphics2D private constructor(
 
   constructor(component: Component, target: PWindow.Descriptor) : this(
     drawEventQueue = DrawEventQueue.createOnScreen(target),
-    transform = component.graphicsConfiguration.defaultTransform,  // from Graphics2D "Default Rendering Attributes" java doc
+    transform = component.graphicsConfiguration?.defaultTransform ?: AffineTransform(),  // from Graphics2D "Default Rendering Attributes" java doc
     backgroundColor = component.background,  // from Graphics2D "Default Rendering Attributes" java doc
     paint = component.foreground,  // from Graphics2D "Default Rendering Attributes" java doc
     foregroundColor = component.foreground,  // from Graphics2D "Default Rendering Attributes" java doc
     font = component.font,
-    device = component.graphicsConfiguration.device
+    device = component.graphicsConfiguration?.device ?: GraphicsEnvironment.getLocalGraphicsEnvironment().defaultScreenDevice
   )
 
   private constructor(
@@ -539,13 +539,16 @@ class PGraphics2D private constructor(
   }
 
   override fun clearRect(x: Int, y: Int, width: Int, height: Int) {
-    val c = composite
-    val p = getPaint()
-    composite = AlphaComposite.Src
-    color = background
-    fillRect(x, y, width, height)
-    setPaint(p)
-    composite = c
+    if (width <= 0 || height <= 0) return
+
+    paintShape {
+      clearRect(
+        x = x.toDouble(),
+        y = y.toDouble(),
+        width = width.toDouble(),
+        height = height.toDouble(),
+      )
+    }
   }
 
   private fun paintRoundRect(paintType: AwtPaintType, x: Int, y: Int, width: Int, height: Int, arcWidth: Int, arcHeight: Int) {

@@ -37,6 +37,7 @@ import org.jetbrains.projector.awt.peer.PComponentPeer
 import org.jetbrains.projector.awt.peer.PDesktopPeer
 import org.jetbrains.projector.awt.peer.PMouseInfoPeer
 import org.jetbrains.projector.common.misc.Do
+import org.jetbrains.projector.common.protocol.data.CommonRectangle
 import org.jetbrains.projector.common.protocol.data.ImageData
 import org.jetbrains.projector.common.protocol.data.ImageId
 import org.jetbrains.projector.common.protocol.data.UserKeymap
@@ -301,7 +302,7 @@ class ProjectorServer private constructor(
           icons = window.icons?.map { it as ImageId },
           isShowing = window.target.isShowing,
           zOrder = i,
-          bounds = window.target.shiftBounds(PGraphicsEnvironment.defaultDevice.clientShift),
+          bounds = window.shifted(),
           headerHeight = window.headerHeight,
           cursorType = window.cursor?.type?.toCursorType(),
           resizable = window.resizable,
@@ -362,7 +363,7 @@ class ProjectorServer private constructor(
 
         PMouseInfoPeer.lastMouseCoords.setLocation(shiftedMessage.x, shiftedMessage.y)
 
-        val window = PWindow.getWindow(message.windowId)?.target
+        val window = PWindow.getWindow(message.windowId)?.thisWindow
         PMouseInfoPeer.lastWindowUnderMouse = window
 
         window ?: return@invokeLater
@@ -870,6 +871,15 @@ class ProjectorServer private constructor(
           PGraphicsEnvironment.defaultDevice.clientShift.setLocation(x, y)
         }
       }
+    }
+
+    private fun PWindow.shifted(): CommonRectangle {
+      val shift = when {
+        isFakeWindow -> SwingUtilities.getWindowAncestor(target)?.insets?.let { java.awt.Point(it.left, it.top) } ?: java.awt.Point()
+        else -> PGraphicsEnvironment.defaultDevice.clientShift
+      }
+
+      return bounds.shift(shift)
     }
 
     private fun resize(width: Int, height: Int) {

@@ -28,18 +28,21 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.projector.awt.data.Direction
 import org.jetbrains.projector.awt.image.PGraphics2D
 import org.jetbrains.projector.awt.image.PGraphicsEnvironment
-import org.jetbrains.projector.awt.peer.PWindowPeer
 import org.jetbrains.projector.awt.peer.PWindowPeer.Companion.getVisibleWindowBoundsIfNeeded
 import org.jetbrains.projector.awt.service.ImageCacher
+import org.jetbrains.projector.awt.service.WindowSystemHelper
 import org.jetbrains.projector.util.logging.Logger
 import sun.awt.AWTAccessor
 import java.awt.*
 import java.awt.event.ComponentEvent
 import java.awt.event.WindowEvent
-import java.awt.peer.ComponentPeer
 import java.lang.ref.WeakReference
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import javax.swing.JComponent
+import javax.swing.SwingUtilities
+import javax.swing.event.AncestorEvent
+import javax.swing.event.AncestorListener
 import kotlin.math.abs
 import kotlin.math.min
 
@@ -87,10 +90,7 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     }
 
   val parentWindow: PWindow?
-    get() = when (target) {
-      is Window -> target.owner?.let { (AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(it) as? PWindowPeer)?.pWindow }
-      else -> null
-    }
+    get() = WindowSystemHelper.instance.getParentWindow(target)
 
   /** ImageIds of icons. */
   var icons: List<Any>? = null
@@ -102,13 +102,41 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
       else -> null
     }
 
+  val thisWindow: Component?
+    get() = when (target) {
+      is Window -> target
+      else -> SwingUtilities.getWindowAncestor(target)
+    }
+
+  val bounds: Rectangle
+    get() = when (target) {
+      is Window -> target.bounds
+      else -> {
+        if (target.isShowing) {
+          val locationInWindow = SwingUtilities.convertPoint(target, Point(0, 0), null)
+          Rectangle(locationInWindow.x, locationInWindow.y, target.width, target.height)
+        } else {
+          target.bounds
+        }
+      }
+    }
+
+  val isFakeWindow: Boolean
+    get() = target !is Window
+
+  private val mutableFakeChildren = mutableSetOf<PWindow>()
+
+  val fakeChildren: Set<PWindow>
+    get() = mutableFakeChildren
+
+
   init {
     updateIcons()
   }
 
   private val self by lazy { WeakReference(this) }
 
-  var cursor: Cursor? = target.cursor
+  var cursor: Cursor? = thisWindow?.cursor
 
   init {
     synchronized(weakWindows) {
@@ -123,6 +151,25 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     graphics = graphicsOverride ?: PGraphics2D(target, Descriptor(id))
 
     updateGraphics()
+
+    if (isFakeWindow) {
+      parentWindow?.mutableFakeChildren?.add(this@PWindow)
+      if (target is JComponent) {
+        target.addAncestorListener(object : AncestorListener {
+
+          override fun ancestorAdded(event: AncestorEvent) {
+            parentWindow?.mutableFakeChildren?.add(this@PWindow)
+          }
+
+          override fun ancestorRemoved(event: AncestorEvent) {
+            parentWindow?.mutableFakeChildren?.remove(this@PWindow)
+          }
+
+          override fun ancestorMoved(event: AncestorEvent) {
+          }
+        })
+      }
+    }
   }
 
   fun transferNativeFocus() {
@@ -304,10 +351,26 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
       synchronized(weakWindows) {
         weakWindows.removeIf { it.get() == window }
       }
+      window.fakeChildren.forEach { it.dispose() }
+      window.parentWindow?.mutableFakeChildren?.remove(window)
+    }
+
+    @JvmStatic
+    @Suppress("unused")
+    fun disposeWindow(target: Component) {
+      synchronized(weakWindows) {
+        weakWindows.filter { it.get()?.target == target }.forEach {
+          it.get()?.dispose()
+        }
+      }
     }
 
     fun getWindow(windowId: Int): PWindow? = windows.find { it.id == windowId }
     fun getWindow(window: Window): PWindow? = windows.find { it.target === window }
+
+    @JvmStatic
+    @Suppress("unused")
+    fun getWindow(target: Component): PWindow? = weakWindows.find { it.get()?.target == target }?.get()
 
     @TestOnly
     fun createWithGraphicsOverride(target: Component, isAgent: Boolean, graphicsOverride: Graphics2D?): PWindow {

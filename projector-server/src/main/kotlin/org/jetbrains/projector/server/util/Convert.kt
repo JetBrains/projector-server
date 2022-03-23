@@ -59,6 +59,7 @@ val PWindow.windowType: WindowType
   get() = when {
     "IdeFrameImpl" in target::class.java.simpleName -> WindowType.IDEA_WINDOW
     target.let { it is Window && it.type == Window.Type.POPUP } -> WindowType.POPUP
+    isFakeWindow -> WindowType.FAKE_WINDOW
     else -> WindowType.WINDOW
   }
 

@@ -99,6 +99,7 @@ object ProjectorLauncher {
       setupToolkit()
       setupFontManager()
       setupRepaintManager()
+      setupWindowHelper()
     }
 
     private fun initializeHeadless() {
