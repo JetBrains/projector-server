@@ -49,10 +49,11 @@ val localProperties = Properties().apply {
 if (localProperties["useLocalProjectorClient"] == "true") {
   includeBuild("../projector-client") {
     dependencySubstitution {
-      substitute(module("$projectorClientGroup:projector-common")).with(project(":projector-common"))
-      substitute(module("$projectorClientGroup:projector-server-core")).with(project(":projector-server-core"))
-      substitute(module("$projectorClientGroup:projector-util-loading")).with(project(":projector-util-loading"))
-      substitute(module("$projectorClientGroup:projector-util-logging")).with(project(":projector-util-logging"))
+      substitute(module("$projectorClientGroup:projector-common")).using(project(":projector-common"))
+      substitute(module("$projectorClientGroup:projector-ij-common")).using(project(":projector-ij-common"))
+      substitute(module("$projectorClientGroup:projector-server-core")).using(project(":projector-server-core"))
+      substitute(module("$projectorClientGroup:projector-util-loading")).using(project(":projector-util-loading"))
+      substitute(module("$projectorClientGroup:projector-util-logging")).using(project(":projector-util-logging"))
     }
   }
 }

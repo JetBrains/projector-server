@@ -45,6 +45,7 @@ import org.jetbrains.projector.common.protocol.data.UserKeymap
 import org.jetbrains.projector.common.protocol.handshake.*
 import org.jetbrains.projector.common.protocol.toClient.*
 import org.jetbrains.projector.common.protocol.toServer.*
+import org.jetbrains.projector.ij.jcef.*
 import org.jetbrains.projector.server.core.*
 import org.jetbrains.projector.server.core.convert.toAwt.*
 import org.jetbrains.projector.server.core.convert.toClient.*
@@ -192,6 +193,7 @@ class ProjectorServer private constructor(
           previousWindowEvents = emptySet()
           caretInfoUpdater.createCaretInfoEvent()
           PanelUpdater.updateAll()
+          updateCefBrowsersSafely()
         }
 
         is ReadyClientSettings -> {
@@ -500,6 +502,7 @@ class ProjectorServer private constructor(
       is ClientWindowsDeactivationEvent -> {
         updateWindowsState(message.windowIds, WindowEvent.WINDOW_DEACTIVATED)
       }
+
       is ClientNotificationEvent -> {
         if (!IdeState.isIdeAttached) return
 
@@ -512,6 +515,20 @@ class ProjectorServer private constructor(
         @Suppress("UnresolvedPluginConfigReference")
         val notification = Notification("ProjectorClient", message.title, message.message, intellijNotificationType)
         Notifications.Bus.notify(notification)
+      }
+
+      is ClientJcefEvent -> {
+        val projectorCefBrowser = ProjectorCefBrowser.getInstance(message.browserId) ?: return
+
+        val messageRouters = projectorCefBrowser.client.getMessageRouters()
+        val eventRouter = messageRouters.find {
+          it.messageRouterConfig?.jsQueryFunction == message.functionName
+        } ?: return
+
+        val handlers = eventRouter.getHandlers()
+        handlers.forEach {
+          it.onProjectorQuery(projectorCefBrowser, message.data)
+        }
       }
     }
   }
@@ -915,6 +932,10 @@ class ProjectorServer private constructor(
         lastStartedServer = it
         it.start()
       }
+    }
+
+    fun appendToCommonQueue(event: ServerEvent) {
+      lastStartedServer?.apply { commonQueue += event }
     }
 
     @Suppress("MemberVisibilityCanBePrivate")  // used in CWM
