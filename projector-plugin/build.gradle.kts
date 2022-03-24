@@ -26,15 +26,19 @@ import java.nio.file.Paths
 plugins {
   kotlin("jvm")
   id("org.jetbrains.intellij")
+  jacoco
 }
 
+setupJacoco()
 
+val kotlinVersion: String by project
 val projectorClientVersion: String by project
 val projectorClientGroup: String by project
 
 dependencies {
   implementation("$projectorClientGroup:projector-server-core:$projectorClientVersion")
   implementation(project(":projector-agent"))
+  testImplementation(kotlin("test", kotlinVersion))
 }
 
 intellij {

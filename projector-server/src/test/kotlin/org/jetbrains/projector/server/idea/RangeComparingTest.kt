@@ -24,7 +24,7 @@
 package org.jetbrains.projector.server.idea
 
 import com.intellij.openapi.editor.markup.TextAttributes
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertSame

@@ -30,6 +30,7 @@ plugins {
   kotlin("jvm")
   application
   `maven-publish`
+  jacoco
 }
 
 val launcherClassName = "org.jetbrains.projector.server.ProjectorLauncher"
@@ -39,6 +40,7 @@ application {
 }
 
 publishToSpace()
+setupJacoco()
 
 configurations.all {
   // disable caching of -SNAPSHOT dependencies

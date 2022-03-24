@@ -27,9 +27,11 @@ import java.util.*
 plugins {
   kotlin("jvm")
   `maven-publish`
+  jacoco
 }
 
 publishToSpace()
+setupJacoco()
 
 val agentClassName = "org.jetbrains.projector.agent.MainAgent"
 val launcherClassName = "org.jetbrains.projector.agent.AgentLauncher"
@@ -38,7 +40,7 @@ version = project(":projector-plugin").version
 kotlin {
   explicitApi()
 }
-
+val kotlinVersion: String by project
 val projectorClientGroup: String by project
 val projectorClientVersion: String by project
 val javassistVersion: String by project
@@ -51,6 +53,7 @@ dependencies {
   api(project(":projector-awt"))
   api(project(":projector-server"))
   implementation("org.javassist:javassist:$javassistVersion")
+  testImplementation("org.jetbrains.kotlin:kotlin-test:$kotlinVersion")
 }
 
 // todo: undestand why `tasks.jar` doesn't work when executing runWithAgent and runIdeaWithAgent:

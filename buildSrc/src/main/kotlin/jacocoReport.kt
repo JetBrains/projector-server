@@ -21,21 +21,32 @@
  * Please contact JetBrains, Na Hrebenech II 1718/10, Prague, 14000, Czech Republic
  * if you need additional information or have any questions.
  */
-plugins {
-  kotlin("jvm")
-  `maven-publish`
-  jacoco
-}
 
-publishToSpace()
-setupJacoco()
+import org.gradle.api.Project
+import org.gradle.api.tasks.testing.Test
+import org.gradle.kotlin.dsl.configure
+import org.gradle.kotlin.dsl.named
+import org.gradle.kotlin.dsl.provideDelegate
+import org.gradle.kotlin.dsl.withType
+import org.gradle.testing.jacoco.plugins.JacocoPluginExtension
+import org.gradle.testing.jacoco.tasks.JacocoReport
 
-val kotlinVersion: String by project
-val projectorClientVersion: String by project
-val projectorClientGroup: String by project
-version = project(":projector-server").version
+public fun Project.setupJacoco() {
+  val jacocoVersion: String by this
 
-dependencies {
-  implementation("$projectorClientGroup:projector-util-logging:$projectorClientVersion")
-  testImplementation(kotlin("test", kotlinVersion))
+  configure<JacocoPluginExtension> {
+    toolVersion = jacocoVersion
+  }
+
+  tasks.withType<JacocoReport> {
+    reports {
+      xml.required.set(true)
+      csv.required.set(false)
+    }
+  }
+
+  tasks.named<Test>("test") {
+    useJUnitPlatform()
+    finalizedBy(tasks.named<JacocoReport>("jacocoTestReport"))
+  }
 }

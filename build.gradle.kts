@@ -28,6 +28,7 @@ plugins {
   kotlin("jvm") apply false
   `maven-publish`
   id("org.sonarqube")
+  jacoco
 }
 
 sonarqube {
@@ -48,6 +49,7 @@ subprojects {
     properties {
       property("sonar.sources", "src/main")
       property("sonar.tests", "src/test")
+      property("sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml")
       property("sonar.host.url", "https://sonarcloud.io")
     }
   }
