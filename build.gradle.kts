@@ -27,6 +27,15 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinJvmCompile
 plugins {
   kotlin("jvm") apply false
   `maven-publish`
+  id("org.sonarqube")
+}
+
+sonarqube {
+  properties {
+    property("sonar.projectKey", "Jetbrains_projector-server")
+    property("sonar.organization", "jetbrains")
+    property("sonar.host.url", "https://sonarcloud.io")
+  }
 }
 
 val kotlinVersion: String by project
@@ -34,6 +43,14 @@ val targetJvm: String by project
 
 subprojects {
   group = "org.jetbrains.projector"
+
+  sonarqube {
+    properties {
+      property("sonar.sources", "src/main")
+      property("sonar.tests", "src/test")
+      property("sonar.host.url", "https://sonarcloud.io")
+    }
+  }
 
   repositories {
     mavenCentral()

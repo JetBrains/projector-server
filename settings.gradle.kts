@@ -26,10 +26,12 @@ import java.util.*
 pluginManagement {
   val kotlinVersion: String by settings
   val intellijPluginVersion: String by settings
+  val sonarqubeVersion: String by settings
 
   plugins {
     kotlin("jvm") version kotlinVersion apply false
     id("org.jetbrains.intellij") version intellijPluginVersion apply false
+    id("org.sonarqube") version sonarqubeVersion apply false
   }
 }
 
