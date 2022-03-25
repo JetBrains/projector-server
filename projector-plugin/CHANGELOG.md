@@ -2,7 +2,10 @@
 
 Notable changes to this project are documented in this file.
 
-# Unreleased
+# 1.10.0
+
+## Updated
+- Projector Server v1.7.0
 
 ## Added
 - HTTPs support
