@@ -1,4 +1,4 @@
-# Unreleased
+# 1.7.0
 
 ## Added
 - PRJ-127 To-client clipboard synchronization without asynchronous clipboard API for Web client
