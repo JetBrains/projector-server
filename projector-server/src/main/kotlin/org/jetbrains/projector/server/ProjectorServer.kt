@@ -900,7 +900,12 @@ class ProjectorServer private constructor(
 
       initializer.run()
 
-      IjInjectorAgentInitializer.init(isAgent)
+      if (IdeState.isIdeAttached) {
+        IjInjectorAgentInitializer.init(isAgent)
+      }
+      else {
+        logger.info { "Skipping IDE injections" }
+      }
 
       ProjectorAwtInitializer.initDefaults()  // this should be done after setting classes because some headless operations can happen here
 
