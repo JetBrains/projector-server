@@ -33,6 +33,9 @@ object ProjectorLauncher : ProjectorLauncherBase() {
     start(args, PAwtProviderJdk17)
   }
 
+  @JvmStatic
+  fun runProjectorServer() = runProjectorServer(PAwtProviderJdk17)
+
   // For compatibility with CWM
   @Suppress("unused")
   private object Starter : ProjectorStarter() {
