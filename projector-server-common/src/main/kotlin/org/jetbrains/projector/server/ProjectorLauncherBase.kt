@@ -48,6 +48,18 @@ abstract class ProjectorLauncherBase {
     }
 
     @JvmStatic
+    protected fun runProjectorServer(awtProvider: PAwtProvider): Boolean {
+
+      /**
+       * [ProjectorStarter.runProjectorServer]
+       */
+      return getStarterClass()
+        .getDeclaredMethod("runProjectorServer", PAwtProvider::class.java)
+        .apply(Method::unprotect)
+        .invoke(null, awtProvider) as Boolean
+    }
+
+    @JvmStatic
     private fun getStarterClass(): Class<*> {
       val thisClass = ProjectorLauncherBase::class.java
       val prjClassLoader = ProjectorClassLoaderSetup.initClassLoader(thisClass.classLoader)
