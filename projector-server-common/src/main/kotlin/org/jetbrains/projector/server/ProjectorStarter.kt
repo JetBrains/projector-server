@@ -73,6 +73,7 @@ open class ProjectorStarter {
     }
 
     @JvmStatic
+    @JvmOverloads
     fun runProjectorServer(awtProvider: PAwtProvider, loggerFactory: (tag: String) -> Logger = ::DelegatingJvmLogger): Boolean {
       System.setProperty(ProjectorServer.ENABLE_PROPERTY_NAME, true.toString())
 
