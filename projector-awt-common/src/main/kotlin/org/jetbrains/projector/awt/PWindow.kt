@@ -87,7 +87,7 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     }
 
   val parentWindow: PWindow?
-    get() = (target as? Window)?.let { (AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(it) as? PWindowPeerBase)?.pWindow }
+    get() = (target as? Window)?.owner?.let { (AWTAccessor.getComponentAccessor().getPeer<ComponentPeer>(it) as? PWindowPeerBase)?.pWindow }
 
   /** ImageIds of icons. */
   var icons: List<Any>? = null
