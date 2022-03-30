@@ -893,8 +893,12 @@ class ProjectorServer private constructor(
     }
 
     @JvmStatic
-    fun startServer(isAgent: Boolean, logFactory: (tag: String) -> Logger, initializer: Runnable): ProjectorServer {
+    fun startServer(isAgent: Boolean, logFactory: (tag: String) -> Logger, generalInitializer: Runnable, fullInitializer: Runnable): ProjectorServer {
       loggerFactory = logFactory
+
+      ProjectorAwtInitializer.initProjectorAwt()
+
+      generalInitializer.run()
 
       if (IdeState.isIdeAttached) {
         IjInjectorAgentInitializer.init(isAgent)
@@ -903,9 +907,7 @@ class ProjectorServer private constructor(
         logger.info { "Skipping IDE injections" }
       }
 
-      ProjectorAwtInitializer.initProjectorAwt()
-
-      initializer.run()
+      fullInitializer.run()
 
       ProjectorAwtInitializer.initDefaults()  // this should be done after setting classes because some headless operations can happen here
 
