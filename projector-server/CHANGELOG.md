@@ -2,6 +2,7 @@
 
 ## Added
 - Allow specifying server logger factory
+- PRJ-496 Allow disabling server integrations with IDE
 
 ## Fixed
 - PRJ-58 Fix Markdown client components couldn't be shrunk
@@ -10,7 +11,6 @@
 
 ## Added
 - PRJ-127 To-client clipboard synchronization without asynchronous clipboard API for Web client
-- PRJ-496 Allow disabling server integrations with IDE
 
 ## Fixed
 - PRJ-691 PRJ-750 PRJ-779 Fix JetBrains account login
