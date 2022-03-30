@@ -29,4 +29,6 @@ interface PAwtProvider {
 
   fun createToolkit(): PToolkitBase
 
+  val toolkitClass: Class<out PToolkitBase>
+
 }

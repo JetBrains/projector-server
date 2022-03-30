@@ -59,12 +59,13 @@ internal object GraphicsInterceptor {
   private var currentQueue: DrawEventQueue? = null
 
   @Suppress("unused")
-  private val server = ProjectorServer.startServer(isAgent = true, ::DelegatingJvmLogger) {
+  private val server = ProjectorServer.startServer(
+    isAgent = true, ::DelegatingJvmLogger, {
     // todo: make it work with dynamic agent
     //setupAgentSystemProperties()
     //setupAgentSingletons()
     ProjectorFontProvider.isAgent = true
-  }
+  }, {})
 
   @Suppress("unused", "PLATFORM_CLASS_MAPPED_TO_KOTLIN",
             "UNUSED_PARAMETER")  // Integer is needed because this function is used via reflection

@@ -29,4 +29,6 @@ import org.jetbrains.projector.awt.PToolkitBase
 object PAwtProviderJdk17 : PAwtProvider {
 
   override fun createToolkit(): PToolkitBase = PToolkit()
+
+  override val toolkitClass = PToolkit::class.java
 }
