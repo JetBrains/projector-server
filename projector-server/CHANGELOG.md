@@ -3,6 +3,9 @@
 ## Added
 - Allow specifying server logger factory
 
+## Fixed
+- PRJ-58 Fix Markdown client components couldn't be shrunk
+
 # 1.7.0
 
 ## Added
