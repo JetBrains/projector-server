@@ -63,11 +63,13 @@ open class ProjectorStarter {
       setupRepaintManager()
     }
 
-    private fun initializeHeadless(awtProvider: PAwtProvider) {
-      val toolkit = awtProvider.createToolkit()
-      setupSystemProperties(toolkit::class.java)
-      setupSingletons(toolkit)
+    private fun initializeHeadlessGeneral(toolkitClass: Class<out Toolkit>) {
+      setupSystemProperties(toolkitClass)
       ProjectorFontProvider.isAgent = false
+    }
+
+    private fun initializeHeadlessFull(projectorToolkit: Toolkit) {
+      setupSingletons(projectorToolkit)
     }
 
     @JvmStatic
@@ -76,7 +78,13 @@ open class ProjectorStarter {
 
       assert(ProjectorServer.isEnabled) { "Can't start the ${ProjectorServer::class.simpleName} because it's disabled..." }
 
-      val server = ProjectorServer.startServer(isAgent = false, loggerFactory) { initializeHeadless(awtProvider) }
+      // Initializing toolkit before awt transformer results in caching of headless property (= true)
+      // and call to system graphics environment initialization, so we need firstly to set up java.awt.headless=false,
+      // then set our graphics environment (via transformer), and only then to initialize toolkit
+      val server = ProjectorServer.startServer(
+        isAgent = false, loggerFactory,
+        { initializeHeadlessGeneral(awtProvider.toolkitClass) }, { initializeHeadlessFull(awtProvider.createToolkit()) },
+      )
 
       Runtime.getRuntime().addShutdownHook(object : Thread() {
 
