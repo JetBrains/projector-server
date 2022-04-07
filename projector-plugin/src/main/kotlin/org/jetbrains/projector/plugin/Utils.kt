@@ -180,7 +180,8 @@ const val RANDOM_PASSWORD_LEN = 11
 
 fun generatePassword(): String {
   val charPool = ('a'..'z') + ('A'..'Z') + ('0'..'9')
-  return generateSequence { charPool.random(SecureRNG()) }
+  val random = SecureRandom().asKotlinRandom()
+  return generateSequence { charPool.random(random) }
     .take(RANDOM_PASSWORD_LEN)
     .joinToString("")
 }
