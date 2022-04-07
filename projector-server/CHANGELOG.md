@@ -6,6 +6,8 @@
 
 ## Fixed
 - PRJ-58 Fix Markdown client components couldn't be shrunk
+- PRJ-868 Avoid using HTML plain text injections
+- Support linear gradient paint (Fixes Nyan Progress Bar, for example)
 
 # 1.7.0
 
