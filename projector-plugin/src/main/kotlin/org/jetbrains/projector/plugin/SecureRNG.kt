@@ -34,7 +34,8 @@ class SecureRNG(seed: Int) : Random() {
   private class SecureRandomImpl : SecureRandom {
     constructor(seed: Int) : super(seed.toByteArray())
     constructor() : super()
-    fun nextBits(bitCount: Int) : Int = next(bitCount)
+
+    fun nextBits(bitCount: Int): Int = next(bitCount)
   }
 
   private val impl: SecureRandomImpl = if (seed == 0) SecureRandomImpl() else SecureRandomImpl(seed)
