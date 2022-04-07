@@ -49,10 +49,12 @@ import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Document
 import java.util.function.Function
 import java.io.File
+import java.security.SecureRandom
 import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
+import kotlin.random.asKotlinRandom
 
 fun productName(): String = ApplicationInfo.getInstance().versionName
 
