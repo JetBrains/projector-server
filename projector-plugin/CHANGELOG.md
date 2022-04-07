@@ -2,6 +2,11 @@
 
 Notable changes to this project are documented in this file.
 
+# Unreleased
+
+## Updated
+- PRJ-869: Use secure RNG for random password generation
+
 # 1.10.0
 
 ## Updated

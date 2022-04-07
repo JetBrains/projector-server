@@ -53,7 +53,6 @@ import javax.xml.transform.OutputKeys
 import javax.xml.transform.TransformerFactory
 import javax.xml.transform.dom.DOMSource
 import javax.xml.transform.stream.StreamResult
-import kotlin.random.Random
 
 fun productName(): String = ApplicationInfo.getInstance().versionName
 
@@ -181,7 +180,7 @@ const val RANDOM_PASSWORD_LEN = 11
 
 fun generatePassword(): String {
   val charPool = ('a'..'z') + ('A'..'Z') + ('0'..'9')
-  return generateSequence { charPool.random() }
+  return generateSequence { charPool.random(SecureRNG()) }
     .take(RANDOM_PASSWORD_LEN)
     .joinToString("")
 }
