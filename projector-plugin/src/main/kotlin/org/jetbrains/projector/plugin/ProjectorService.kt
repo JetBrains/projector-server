@@ -75,8 +75,6 @@ class ProjectorConfig : PersistentStateComponent<ProjectorConfig> {
   init {
     roToken = safeLoad(PROJECTOR_RO_TOKEN_KEY) ?: generatePassword()
     rwToken = safeLoad(PROJECTOR_RW_TOKEN_KEY) ?: generatePassword()
-    setSystemProperty(ProjectorServer.TOKEN_ENV_NAME, rwToken)
-    setSystemProperty(ProjectorServer.RO_TOKEN_ENV_NAME, roToken)
   }
 
   override fun getState(): ProjectorConfig {
@@ -189,6 +187,9 @@ class ProjectorService : PersistentStateComponent<ProjectorConfig> {
     fun enable(session: Session?) {
       if (session != null)
         currentSession = session
+
+      setSystemProperty(ProjectorServer.TOKEN_ENV_NAME, rwToken)
+      setSystemProperty(ProjectorServer.RO_TOKEN_ENV_NAME, roToken)
 
       instance.enable()
     }
