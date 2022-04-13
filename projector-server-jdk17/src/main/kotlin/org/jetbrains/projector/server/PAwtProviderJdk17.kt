@@ -30,5 +30,5 @@ object PAwtProviderJdk17 : PAwtProvider {
 
   override fun createToolkit(): PToolkitBase = PToolkit()
 
-  override val toolkitClass = PToolkit::class.java
+  override val toolkitClass get() = PToolkit::class.java
 }

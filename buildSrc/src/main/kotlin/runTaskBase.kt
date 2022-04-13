@@ -47,6 +47,7 @@ public fun Project.createRunProjectorTask(
       "-D$classToLaunchProperty=$classToLaunch",
       "-Djdk.attach.allowAttachSelf=true",
     )
+    jvmArgs(openAndExportJvmArgs)
     configuration()
   }
 }

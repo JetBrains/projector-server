@@ -63,8 +63,8 @@ open class ProjectorStarter {
       setupRepaintManager()
     }
 
-    private fun initializeHeadlessGeneral(toolkitClass: Class<out Toolkit>) {
-      setupSystemProperties(toolkitClass)
+    private fun initializeHeadlessGeneral() {
+      setupSystemProperties()
       ProjectorFontProvider.isAgent = false
     }
 
@@ -84,7 +84,7 @@ open class ProjectorStarter {
       // then set our graphics environment (via transformer), and only then to initialize toolkit
       val server = ProjectorServer.startServer(
         isAgent = false, loggerFactory,
-        { initializeHeadlessGeneral(awtProvider.toolkitClass) }, { initializeHeadlessFull(awtProvider.createToolkit()) },
+        { initializeHeadlessGeneral() }, { initializeHeadlessFull(awtProvider.createToolkit()) },
       )
 
       Runtime.getRuntime().addShutdownHook(object : Thread() {

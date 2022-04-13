@@ -40,7 +40,66 @@ public fun Project.createRunIdeaTask(
   if (ideaPath == null) return
 
   val ideaLib = "$ideaPath/lib"
-  val ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar"
+  var ideaClassPath = "$ideaLib/bootstrap.jar:$ideaLib/extensions.jar:$ideaLib/util.jar:$ideaLib/jdom.jar:$ideaLib/log4j.jar:$ideaLib/trove4j.jar"
+
+  // todo: this is added because of 222 EAP. deal with specific jars with versions!
+  ideaClassPath += """
+    $ideaLib/util.jar
+    $ideaLib/app.jar
+    $ideaLib/3rd-party-rt.jar
+    $ideaLib/jna.jar
+    $ideaLib/platform-statistics-devkit.jar
+    $ideaLib/jps-model.jar
+    $ideaLib/rd-core.jar
+    $ideaLib/rd-framework.jar
+    $ideaLib/stats.jar
+    $ideaLib/protobuf.jar
+    $ideaLib/external-system-rt.jar
+    $ideaLib/jsp-base-openapi.jar
+    $ideaLib/forms_rt.jar
+    $ideaLib/intellij-test-discovery.jar
+    $ideaLib/rd-swing.jar
+    $ideaLib/annotations.jar
+    $ideaLib/groovy.jar
+    $ideaLib/annotations-java5.jar
+    $ideaLib/async-profiler.jar
+    $ideaLib/byte-buddy-agent.jar
+    $ideaLib/error-prone-annotations.jar
+    $ideaLib/externalProcess-rt.jar
+    $ideaLib/grpc-netty-shaded.jar
+    $ideaLib/idea_rt.jar
+    $ideaLib/intellij-coverage-agent-1.0.656.jar
+    $ideaLib/jsch-agent.jar
+    $ideaLib/junit.jar
+    $ideaLib/junit4.jar
+    $ideaLib/junixsocket-core.jar
+    $ideaLib/lz4-java.jar
+    $ideaLib/platform-objectSerializer-annotations.jar
+    $ideaLib/pty4j.jar
+    $ideaLib/rd-text.jar
+    $ideaLib/tests_bootstrap.jar
+    $ideaLib/uast-tests.jar
+    $ideaLib/util_rt.jar
+    $ideaLib/winp.jar
+    $ideaLib/ant/lib/ant.jar
+    $ideaLib/dbus-java-3.2.1.jar
+    $ideaLib/java-utils-1.0.6.jar
+    $ideaLib/jnr-unixsocket-0.23.jar
+    $ideaLib/jnr-ffi-2.1.10.jar
+    $ideaLib/jffi-1.2.19.jar
+    $ideaLib/jffi-1.2.19-native.jar
+    $ideaLib/asm-7.1.jar
+    $ideaLib/asm-commons-7.1.jar
+    $ideaLib/asm-analysis-7.1.jar
+    $ideaLib/asm-tree-7.1.jar
+    $ideaLib/asm-util-7.1.jar
+    $ideaLib/jnr-a64asm-1.0.0.jar
+    $ideaLib/jnr-x86asm-1.0.2.jar
+    $ideaLib/jnr-constants-0.9.12.jar
+    $ideaLib/jnr-enxio-0.21.jar
+    $ideaLib/jnr-posix-3.0.50.jar
+  """.trimIndent().lines().joinToString(":")
+
   val jdkHome = System.getProperty("java.home")
 
   println("JDK home dir: $jdkHome")
@@ -58,8 +117,6 @@ public fun Project.createRunIdeaTask(
       "-Didea.jre.check=true",
       "-Didea.is.internal=true",
     )
-
-    jvmArgs(openAndExportJvmArgs)
 
     if (isIdeVersionAtLeast(ideaPath, "212")) { // appeared in 211, became default in 212, mandatory in 221
       jvmArgs("-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
