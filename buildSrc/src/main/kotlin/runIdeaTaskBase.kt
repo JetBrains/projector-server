@@ -114,6 +114,7 @@ public fun Project.createRunIdeaTask(
 
     jvmArgs(
       "-Didea.paths.selector=$ideaPathsSelector",
+      "-Didea.vendor.name=ProjectorVendor",
       "-Didea.jre.check=true",
       "-Didea.is.internal=true",
     )
