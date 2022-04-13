@@ -37,6 +37,7 @@ internal fun setupToolkit(toolkit: Toolkit) {
 
     set(null, toolkit)
   }
+  System.setProperty("awt.toolkit", toolkit::class.java.canonicalName)
 }
 
 internal fun setupFontManager() {
@@ -45,6 +46,7 @@ internal fun setupFontManager() {
 
     set(null, PFontManager)
   }
+  System.setProperty("sun.font.fontmanager", PFontManager::class.java.canonicalName)
 }
 
 internal fun setupRepaintManager() {
@@ -58,11 +60,9 @@ internal fun setupRepaintManager() {
   //RepaintManager.currentManager(null).isDoubleBufferingEnabled = false
 }
 
-internal fun setupSystemProperties(toolkitClass: Class<out Toolkit>) {
+internal fun setupSystemProperties() {
   // Setting these properties as run arguments isn't enough because they can be overwritten by JVM
   System.setProperty(ENABLE_PROPERTY_NAME, true.toString())
-  System.setProperty("awt.toolkit", toolkitClass.canonicalName)
-  System.setProperty("sun.font.fontmanager", PFontManager::class.java.canonicalName)
   System.setProperty("java.awt.headless", false.toString())
   System.setProperty("swing.bufferPerWindow", false.toString())
   System.setProperty("awt.nativeDoubleBuffering", true.toString())  // enable "native" double buffering to disable db in Swing
