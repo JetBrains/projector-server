@@ -31,13 +31,13 @@ publishToSpace()
 val kotlinVersion: String by project
 version = project(":projector-server-common").version
 
+dependencies {
+  api(project(":projector-awt-common"))
+  testImplementation(kotlin("test", kotlinVersion))
+}
+
 kotlin {
   jvmToolchain {
     (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(17))
   }
-}
-
-dependencies {
-  api(project(":projector-awt-common"))
-  testImplementation(kotlin("test", kotlinVersion))
 }
