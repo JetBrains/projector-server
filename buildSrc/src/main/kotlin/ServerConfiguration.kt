@@ -35,6 +35,7 @@ import org.gradle.kotlin.dsl.*
 import java.util.*
 
 public fun Project.applyCommonServerConfiguration(javaApplication: JavaApplication) {
+  fun isJdk17Project() = name.endsWith("-jdk17")
 
   val launcherClassName = "org.jetbrains.projector.server.ProjectorLauncher"
 
@@ -52,6 +53,13 @@ public fun Project.applyCommonServerConfiguration(javaApplication: JavaApplicati
   dependencies {
     api(project(":projector-server-common"))
     implementation("$projectorClientGroup:projector-server-core:$projectorClientVersion")
+
+    if (isJdk17Project()) {
+      api(project(":projector-awt-jdk17"))
+    }
+    else {
+      api(project(":projector-awt"))
+    }
   }
 
   tasks.named<Jar>("jar") {
