@@ -30,10 +30,6 @@ plugins {
 
 applyCommonServerConfiguration(application)
 
-dependencies {
-  api(project(":projector-awt-jdk17"))
-}
-
 kotlin {
   jvmToolchain {
     (this as JavaToolchainSpec).languageVersion.set(JavaLanguageVersion.of(17))
