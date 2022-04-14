@@ -29,8 +29,6 @@ plugins {
 publishToSpace()
 
 val kotlinVersion: String by project
-val projectorClientVersion: String by project
-val projectorClientGroup: String by project
 version = project(":projector-server-common").version
 
 dependencies {
