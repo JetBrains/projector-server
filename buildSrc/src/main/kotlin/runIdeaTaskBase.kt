@@ -98,7 +98,7 @@ public fun Project.createRunIdeaTask(
     $ideaLib/jnr-constants-0.9.12.jar
     $ideaLib/jnr-enxio-0.21.jar
     $ideaLib/jnr-posix-3.0.50.jar
-  """.trimIndent().lines().joinToString(":")
+  """.trimIndent().lines().joinToString(":", prefix = ":")
 
   val jdkHome = System.getProperty("java.home")
 
