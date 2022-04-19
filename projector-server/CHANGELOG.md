@@ -3,6 +3,7 @@
 ## Added
 - Allow specifying server logger factory
 - PRJ-496 Allow disabling server integrations with IDE
+- PRJ-472 New artifact with JDK 17 support
 
 ## Fixed
 - PRJ-58 Fix Markdown client components couldn't be shrunk
