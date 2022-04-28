@@ -8,6 +8,10 @@ jobs:
   publish:
     name: publish on space
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        modules: [ agent, awt, awt-common, awt-jdk17, server, server-common, server-jdk17 ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -15,9 +19,12 @@ jobs:
         uses: actions/setup-java@v1
         with:
           java-version: '11'
-      - name: Add properties and publish
+      - name: Add properties
         run: |
           echo projectorClientGroup=org.jetbrains.projector >> gradle.properties
           echo version=$(echo ${{ github.sha }} | head -c 8) >> projector-plugin/gradle.properties
           echo version=$(echo ${{ github.sha }} | head -c 8) >> projector-server-common/gradle.properties
-          ./gradlew clean publish -PmavenUsername=${{ secrets.SPACE_NAME }} -PmavenPassword=${{ secrets.SPACE_TOKEN }}
+      - name: Clean
+        run: ./gradlew clean
+      - name: Publish to space
+        run: ./gradlew :projector-${{ matrix.modules }}:publish -PmavenUsername=${{ secrets.SPACE_NAME }} -PmavenPassword=${{ secrets.SPACE_TOKEN }}
