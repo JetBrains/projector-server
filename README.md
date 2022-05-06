@@ -13,13 +13,20 @@ The following command creates a zip file with the whole runtime classpath:
 ./gradlew :projector-server:distZip
 ```
 
-You can find the file here: `projector-server/build/distibution/projector-server-VERSION.zip`.
+You can find the file here: `/<project-root>/projector-server/build/distibution/projector-server-<server-version>.zip`.
 
 By default, a proper revision of `projector-client:projector-common` at GitHub will be used as a dependency. If you want to **use
 local** `projector-client`, please specify a special local property `useLocalProjectorClient=true` as a line in `local.properties` file (
 create this file if you don't have one). You can find an example in [local.properties.example](local.properties.example) file. After
 specifying this property and reloading Gradle build script, local `projector-client` from `../projector-client` will be used as the
 dependency.
+
+to use the local projector-client, the folders must be located as follows:
+```shell
+.
+├── projector-client
+├── projector-server
+```
 
 ## How to run my application using this?
 There are two ways.
@@ -34,10 +41,10 @@ Extract `libs` folder from `projector-server-VERSION.zip` to add it to classpath
 To launch your app, change your run script like this:
 ```Shell Script
 java \
--classpath YOUR_USUAL_CLASSPATH:libs/* \
--Dorg.jetbrains.projector.server.classToLaunch=YOUR_USUAL_MAIN_CLASS \
-org.jetbrains.projector.server.ProjectorLauncher \
-YOUR_USUAL_MAIN_ARGUMENTS
+ -classpath YOUR_USUAL_CLASSPATH:libs/* \
+ -Dorg.jetbrains.projector.server.classToLaunch=YOUR_USUAL_MAIN_CLASS \
+ org.jetbrains.projector.server.ProjectorLauncher \
+ YOUR_USUAL_MAIN_ARGUMENTS
 ```
 
 As you see, you should add the `libs` folder to you classpath. Also, you should change the main class to the `ProjectorLauncher` but pass your original main class as a special System Property.
@@ -46,36 +53,50 @@ We have an example in our demo app called [projector-demo](https://github.com/Je
 
 Also, we've tested this variant with IntelliJ IDEA. Just download it from [the download page](https://www.jetbrains.com/idea/download/index.html) and only change the `idea.sh` script. In the end of default script, the are lines like the following:
 ```shell script
+...
+CLASS_PATH="$CLASS_PATH:$IDE_HOME/lib/jnr-posix-3.0.50.jar"
+
+# ---------------------------------------------------------------------
+# Run the IDE.
+# ---------------------------------------------------------------------
+IFS="$(printf '\n\t')"
+# shellcheck disable=SC2086
 "$JAVA_BIN" \
-  -classpath "$CLASSPATH" \
+  -classpath "$CLASS_PATH" \
   ${VM_OPTIONS} \
-  "-XX:ErrorFile=$HOME/java_error_in_IDEA_%p.log" \
-  "-XX:HeapDumpPath=$HOME/java_error_in_IDEA.hprof" \
-  -Didea.paths.selector=IdeaIC2019.3 \
-  "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
+  "-XX:ErrorFile=$HOME/java_error_in_idea_%p.log" \
+  "-XX:HeapDumpPath=$HOME/java_error_in_idea_.hprof" \
+  "-Djb.vmOptionsFile=${USER_VM_OPTIONS_FILE:-${VM_OPTIONS_FILE}}" \
   ${IDE_PROPERTIES_PROPERTY} \
-  -Didea.platform.prefix=Idea -Didea.jre.check=true \
+  -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader -Didea.strict.classpath=true -Didea.vendor.name=JetBrains -Didea.paths.selector=IdeaIC2022.1 -Didea.platform.prefix=Idea -Didea.jre.check=true -Dsplash=true \
   com.intellij.idea.Main \
   "$@"
 ```
 
 You should change them to:
 ```shell script
+...
+CLASS_PATH="$CLASS_PATH:$IDE_HOME/lib/jnr-posix-3.0.50.jar"
+CLASS_PATH="$CLASS_PATH:$IDE_HOME/projector-server-<server-version>/lib/*"
+
+# ---------------------------------------------------------------------
+# Run the IDE.
+# ---------------------------------------------------------------------
+IFS="$(printf '\n\t')"
+# shellcheck disable=SC2086
 "$JAVA_BIN" \
-  -classpath "$CLASSPATH:$IDE_HOME/projector-server/lib/*" \
+  -classpath "$CLASS_PATH" --add-opens=java.base/java.lang.reflect=ALL-UNNAMED --add-opens=java.desktop/java.awt.dnd.peer=ALL-UNNAMED \
   ${VM_OPTIONS} \
-  "-XX:ErrorFile=$HOME/java_error_in_IDEA_%p.log" \
-  "-XX:HeapDumpPath=$HOME/java_error_in_IDEA.hprof" \
-  -Didea.paths.selector=IdeaIC2019.3 \
-  "-Djb.vmOptionsFile=$VM_OPTIONS_FILE" \
+  "-XX:ErrorFile=$HOME/java_error_in_idea_%p.log" \
+  "-XX:HeapDumpPath=$HOME/java_error_in_idea_.hprof" \
+  "-Djb.vmOptionsFile=${USER_VM_OPTIONS_FILE:-${VM_OPTIONS_FILE}}" \
   ${IDE_PROPERTIES_PROPERTY} \
-  -Didea.platform.prefix=Idea -Didea.jre.check=true \
-  -Dorg.jetbrains.projector.server.classToLaunch=com.intellij.idea.Main \
-  org.jetbrains.projector.server.ProjectorLauncher \
+  -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader -Didea.strict.classpath=true -Didea.vendor.name=JetBrains -Didea.paths.selector=IntelliJIdea2022.1 -Didea.jre.check=true -Dsplash=true \
+  -Dorg.jetbrains.projector.server.classToLaunch=com.intellij.idea.Main org.jetbrains.projector.server.ProjectorLauncher \
   "$@"
 ```
 
-Don't forget to place JARs from `projector-server` distribution to `$IDE_HOME/projector-server/lib`.
+Don't forget to place JARs from `projector-server` distribution to `$IDE_HOME/projector-server-<server-version>/lib`.
 
 Also, you can find this example in [projector-docker](https://github.com/JetBrains/projector-docker) where these actions are done automatically.
 
@@ -104,10 +125,10 @@ When the server is launched, you can open `localhost:8887` in the browser to acc
 ## Notes
 Currently, `projector-server` supports only Linux and JetBrains Runtime 11 and 17 as JRE.
 
-To set the port which will be used by Projector Server for WebSocket, use the `-Dorg.jetbrains.projector.server.port=8001` System Property.
+To set the port which will be used by Projector Server for WebSocket, use the `-Dorg.jetbrains.projector.server.port=<port-number>` System Property.
 
 ## Contributing
-[CONTRIBUTING.md](https://github.com/JetBrains/projector-server/blob/master/docs/CONTRIBUTING.md).
+[CONTRIBUTING.md](./docs/CONTRIBUTING.md).
 
 ## License
 [GPLv2+CPE](LICENSE.txt).
