@@ -1,4 +1,4 @@
-# Unreleased
+# 1.8.0
 
 ## Added
 - Allow specifying server logger factory
