@@ -2,10 +2,11 @@
 
 Notable changes to this project are documented in this file.
 
-# Unreleased
+# 1.11.0
 
 ## Updated
 - PRJ-869: Use secure RNG for random password generation
+- Projector Server v1.8.0
 
 ## Fixed
 - PRJ-859: Do not set passwords until service start
