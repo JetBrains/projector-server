@@ -124,7 +124,6 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
   }
 
   fun transferNativeFocus() {
-    toFront()
     if (!isAgent) {
       if (target is Window)
         Toolkit.getDefaultToolkit().systemEventQueue.postEvent(WindowEvent(target, WindowEvent.WINDOW_GAINED_FOCUS))
@@ -140,6 +139,7 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
 
     if (!hasMoved && !hasResized) return
 
+    toFront()
     transferNativeFocus()
 
     if (PGraphicsEnvironment.clientDoesWindowManagement) {
