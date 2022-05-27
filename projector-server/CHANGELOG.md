@@ -1,3 +1,8 @@
+# Unreleased
+
+## Fixed
+- PRJ-857 window disappear
+
 # 1.8.0
 
 ## Added
