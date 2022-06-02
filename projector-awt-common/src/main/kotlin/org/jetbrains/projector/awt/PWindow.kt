@@ -121,6 +121,7 @@ class PWindow private constructor(val target: Component, private val isAgent: Bo
     graphics = graphicsOverride ?: PGraphics2D(target, Descriptor(id))
 
     updateGraphics()
+    repaint()
   }
 
   fun transferNativeFocus() {
