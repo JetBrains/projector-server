@@ -900,8 +900,9 @@ class ProjectorServer private constructor(
 
       generalInitializer.run()
 
-      IjInjectorAgentInitializer.init(isAgent, IdeState.isIdeAttached)
-      if (!IdeState.isIdeAttached) {
+      if (IdeState.isIdeAttached) {
+        IjInjectorAgentInitializer.init(isAgent, IdeState.isIdeAttached)
+      } else {
         logger.info { "Skipping IDE injections" }
       }
 
