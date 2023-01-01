@@ -1,7 +1,7 @@
 /*
  * GNU General Public License version 2
  *
- * Copyright (C) 2019-2022 JetBrains s.r.o.
+ * Copyright (C) 2019-2023 JetBrains s.r.o.
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License version 2 only, as
