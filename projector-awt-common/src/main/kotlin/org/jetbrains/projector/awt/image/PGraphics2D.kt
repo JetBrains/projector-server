@@ -33,6 +33,7 @@ import org.jetbrains.projector.awt.service.Defaults
 import org.jetbrains.projector.awt.service.DrawEventQueue
 import org.jetbrains.projector.awt.service.ImageCacher
 import org.jetbrains.projector.util.logging.Logger
+import sun.awt.ConstrainableGraphics
 import sun.font.FontDesignMetrics
 import sun.java2d.NullSurfaceData
 import sun.java2d.SunGraphics2D
@@ -64,7 +65,7 @@ class PGraphics2D private constructor(
   private var stroke: Stroke,
   private var font: Font,
   var device: GraphicsDevice,
-) : Graphics2D() {
+) : Graphics2D(), ConstrainableGraphics {
 
   private var backingFontRenderContext = FontRenderContext(
     transform.withoutTranslation,
@@ -807,5 +808,10 @@ class PGraphics2D private constructor(
         hints?.let { putAll(it) }
       }
     }
+  }
+
+  override fun constrain(x: Int, y: Int, w: Int, h: Int) {
+    translate(x, y)
+    setClip(0, 0, w, h);
   }
 }
