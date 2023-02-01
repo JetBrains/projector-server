@@ -29,6 +29,12 @@
   <idea-version since-build="201"/>
 
   <description><![CDATA[
+    <h2>The state of Projector</h2>
+    <p>The development of JetBrains Projector as its own standalone product has been suspended. That said, Projector remains an important part of <a href="https://www.jetbrains.com/remote-development/gateway/">JetBrains Gateway</a>, which is the primary remote development tool for JetBrains IDEs. We will focus our efforts on improving and developing Projector in this limited scenario.</p>
+    <p>Our goal is to provide a rich, full-featured remote development experience with a look and feel that is equal to or better than what you get when working with IDEs locally. The only way to get everything you’re used to having when working locally (low latency, low network traffic, user-defined and OS-specific shortcuts, themes, settings migrations, ssh-agent/port forwarding, and other things) is by installing a dedicated client-side application. The standalone version of Projector is not capable of meeting these goals.</p>
+    <p>As a result, we no longer recommend using the standalone version of JetBrains Projector or merely making tweaks to incorporate it into your existing IDE servers. We won’t provide user support or quick-fixes for issues that arise when these setups are used. If you have the option to switch from Projector to Gateway, we strongly recommend you do so.</p>
+    <p><a href="https://www.jetbrains.com/remote-development/gateway/">Learn more about JetBrains Gateway</a></p>
+
     <p>Share the IDE window using the <a href="https://github.com/JetBrains/projector-server">Projector server</a>.</p>
     <br/>
     <p>How to use: after the plugin installation, please manually restart the IDE. New status bar widget <strong>Projector</strong> will appear in the right-hand side of the status bar.</p>
