@@ -23,4 +23,4 @@
  */
 package org.jetbrains.projector.awt
 
-class PToolkit : PToolkitBase(PPeerFactoryJdk17)
+open class PToolkit : PToolkitBase(PPeerFactoryJdk17)
