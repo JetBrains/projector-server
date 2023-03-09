@@ -41,6 +41,9 @@ internal fun setupToolkit(toolkit: Toolkit) {
 }
 
 internal fun setupFontManager() {
+  val ENABLE_FONT_MANAGER = System.getProperty("org.jetbrains.projector.server.enable.font.manager") != "false"
+  if (!ENABLE_FONT_MANAGER) return
+
   FontManagerFactory::class.java.getDeclaredField("instance").apply {
     unprotect()
 
